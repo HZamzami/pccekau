@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class FellowsRotation extends Model
 {
@@ -10,7 +11,7 @@ class FellowsRotation extends Model
         'block_number',
         'start_date',
         'end_date',
-        'fellow_name',
+        'fellow_id',
         'rotation',
     ];
 
@@ -32,6 +33,11 @@ class FellowsRotation extends Model
         'elective'  => 'Elective',
         'vacation'  => 'Vacation',
     ];
+
+    public function fellow(): BelongsTo
+    {
+        return $this->belongsTo(Staff::class, 'fellow_id');
+    }
 
     public function getRotationLabelAttribute(): string
     {

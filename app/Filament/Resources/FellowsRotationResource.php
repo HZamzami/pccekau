@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\FellowsRotationResource\Pages;
 use App\Models\FellowsRotation;
+use App\Models\Staff;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
@@ -48,7 +49,10 @@ class FellowsRotationResource extends Resource
                 ]),
 
                 Grid::make(2)->schema([
-                    TextInput::make('fellow_name')
+                    Select::make('fellow_id')
+                        ->label('Fellow')
+                        ->options(fn () => Staff::active()->fellows()->orderBy('name')->pluck('name', 'id'))
+                        ->searchable()
                         ->required(),
 
                     Select::make('rotation')
@@ -67,7 +71,7 @@ class FellowsRotationResource extends Resource
                     ->label('Block')
                     ->sortable(),
 
-                TextColumn::make('fellow_name')
+                TextColumn::make('fellow.name')
                     ->label('Fellow')
                     ->sortable(),
 
@@ -90,9 +94,9 @@ class FellowsRotationResource extends Resource
                     ->date(),
             ])
             ->filters([
-                SelectFilter::make('fellow_name')
+                SelectFilter::make('fellow_id')
                     ->label('Fellow')
-                    ->options(fn () => FellowsRotation::query()->distinct()->pluck('fellow_name', 'fellow_name')),
+                    ->options(fn () => Staff::active()->fellows()->orderBy('name')->pluck('name', 'id')),
 
                 SelectFilter::make('rotation')
                     ->options(FellowsRotation::$rotationLabels),

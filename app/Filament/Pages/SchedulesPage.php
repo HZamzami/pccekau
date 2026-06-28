@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Models\ConsultantSchedule;
 use App\Models\FellowsRotation;
 use App\Models\OncallSchedule;
+use App\Models\Staff;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Pages\Page;
 use Filament\Tables\Actions\EditAction;
@@ -12,7 +13,6 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 class SchedulesPage extends Page implements HasTable
@@ -56,11 +56,11 @@ class SchedulesPage extends Page implements HasTable
                     ->color(fn (OncallSchedule $r) => $r->week_start->isSameWeek(now()) ? 'primary' : null),
 
                 TextColumn::make('hijri_date_range')->label('Hijri'),
-                TextColumn::make('clinic_doctor')->label('Clinic'),
-                TextColumn::make('inpatient_doctor')->label('Inpatient'),
-                TextColumn::make('cath_doctor')->label('Cath'),
-                TextColumn::make('service_doctor')->label('Service'),
-                TextColumn::make('ep_doctor')->label('EP'),
+                TextColumn::make('clinicStaff.name')->label('Clinic'),
+                TextColumn::make('inpatientStaff.name')->label('Inpatient'),
+                TextColumn::make('cathStaff.name')->label('Cath'),
+                TextColumn::make('serviceStaff.name')->label('Service'),
+                TextColumn::make('epStaff.name')->label('EP'),
 
                 TextColumn::make('today_oncall')
                     ->label("Today's On-Call")
@@ -86,9 +86,9 @@ class SchedulesPage extends Page implements HasTable
                     ->color(fn (ConsultantSchedule $r) => $r->week_start->isSameWeek(now()) ? 'primary' : null),
 
                 TextColumn::make('hijri_date')->label('Hijri'),
-                TextColumn::make('service_consultant')->label('Service'),
-                TextColumn::make('cath_consultant')->label('Cath'),
-                TextColumn::make('ep_consultant')->label('EP'),
+                TextColumn::make('serviceStaff.name')->label('Service'),
+                TextColumn::make('cathStaff.name')->label('Cath'),
+                TextColumn::make('epStaff.name')->label('EP'),
             ])
             ->actions([EditAction::make()
                 ->url(fn (ConsultantSchedule $r) => route('filament.admin.resources.consultant-schedules.edit', $r))])
@@ -108,11 +108,11 @@ class SchedulesPage extends Page implements HasTable
 
     public function getFellowsRotations(): Collection
     {
-        return FellowsRotation::orderBy('block_number')->orderBy('fellow_name')->get();
+        return FellowsRotation::with('fellow')->orderBy('block_number')->orderBy('fellow_id')->get();
     }
 
     public function getFellowNames(): Collection
     {
-        return FellowsRotation::query()->distinct()->orderBy('fellow_name')->pluck('fellow_name');
+        return Staff::active()->fellows()->orderBy('name')->pluck('name', 'id');
     }
 }

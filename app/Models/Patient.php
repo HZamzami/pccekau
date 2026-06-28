@@ -39,8 +39,13 @@ class Patient extends Model
     // Reusable static so MdtDiscussion can call it with a different reference date
     public static function computeAgeLabel(Carbon $dob, Carbon $referenceDate): string
     {
-        $years  = $dob->diffInYears($referenceDate);
-        $months = $dob->copy()->addYears($years)->diffInMonths($referenceDate);
+        $years  = (int) $dob->diffInYears($referenceDate);
+        $months = (int) $dob->copy()->addYears($years)->diffInMonths($referenceDate);
+
+        if ($years === 0 && $months === 0) {
+            $days = (int) $dob->diffInDays($referenceDate);
+            return $days . ' ' . ($days === 1 ? 'day' : 'days');
+        }
 
         if ($years === 0) {
             return "{$months} mo";
