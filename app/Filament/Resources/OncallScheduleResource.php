@@ -4,9 +4,11 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\OncallScheduleResource\Pages;
 use App\Models\OncallSchedule;
+use App\Models\Staff;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -47,30 +49,56 @@ class OncallScheduleResource extends Resource
 
             Section::make('Weekly Roles')->schema([
                 Grid::make(3)->schema([
-                    TextInput::make('clinic_doctor')->label('Clinic'),
-                    TextInput::make('inpatient_doctor')->label('Inpatient'),
-                    TextInput::make('consultation_doctor')->label('Consultation'),
+                    Select::make('clinic_staff_id')->label('Clinic')
+                        ->options(fn () => Staff::active()->orderBy('name')->pluck('name', 'id'))
+                        ->searchable()->nullable(),
+                    Select::make('inpatient_staff_id')->label('Inpatient')
+                        ->options(fn () => Staff::active()->orderBy('name')->pluck('name', 'id'))
+                        ->searchable()->nullable(),
+                    Select::make('consultation_staff_id')->label('Consultation')
+                        ->options(fn () => Staff::active()->orderBy('name')->pluck('name', 'id'))
+                        ->searchable()->nullable(),
                 ]),
 
                 Grid::make(3)->schema([
-                    TextInput::make('cath_doctor')->label('Cath'),
-                    TextInput::make('service_doctor')->label('Service'),
-                    TextInput::make('ep_doctor')->label('EP'),
+                    Select::make('cath_staff_id')->label('Cath')
+                        ->options(fn () => Staff::active()->orderBy('name')->pluck('name', 'id'))
+                        ->searchable()->nullable(),
+                    Select::make('service_staff_id')->label('Service')
+                        ->options(fn () => Staff::active()->orderBy('name')->pluck('name', 'id'))
+                        ->searchable()->nullable(),
+                    Select::make('ep_staff_id')->label('EP')
+                        ->options(fn () => Staff::active()->orderBy('name')->pluck('name', 'id'))
+                        ->searchable()->nullable(),
                 ]),
             ]),
 
             Section::make('Daily On-Call')->schema([
                 Grid::make(4)->schema([
-                    TextInput::make('oncall_sunday')->label('Sunday'),
-                    TextInput::make('oncall_monday')->label('Monday'),
-                    TextInput::make('oncall_tuesday')->label('Tuesday'),
-                    TextInput::make('oncall_wednesday')->label('Wednesday'),
+                    Select::make('oncall_sunday_id')->label('Sunday')
+                        ->options(fn () => Staff::active()->orderBy('name')->pluck('name', 'id'))
+                        ->searchable()->nullable(),
+                    Select::make('oncall_monday_id')->label('Monday')
+                        ->options(fn () => Staff::active()->orderBy('name')->pluck('name', 'id'))
+                        ->searchable()->nullable(),
+                    Select::make('oncall_tuesday_id')->label('Tuesday')
+                        ->options(fn () => Staff::active()->orderBy('name')->pluck('name', 'id'))
+                        ->searchable()->nullable(),
+                    Select::make('oncall_wednesday_id')->label('Wednesday')
+                        ->options(fn () => Staff::active()->orderBy('name')->pluck('name', 'id'))
+                        ->searchable()->nullable(),
                 ]),
 
                 Grid::make(3)->schema([
-                    TextInput::make('oncall_thursday')->label('Thursday'),
-                    TextInput::make('oncall_friday')->label('Friday'),
-                    TextInput::make('oncall_saturday')->label('Saturday'),
+                    Select::make('oncall_thursday_id')->label('Thursday')
+                        ->options(fn () => Staff::active()->orderBy('name')->pluck('name', 'id'))
+                        ->searchable()->nullable(),
+                    Select::make('oncall_friday_id')->label('Friday')
+                        ->options(fn () => Staff::active()->orderBy('name')->pluck('name', 'id'))
+                        ->searchable()->nullable(),
+                    Select::make('oncall_saturday_id')->label('Saturday')
+                        ->options(fn () => Staff::active()->orderBy('name')->pluck('name', 'id'))
+                        ->searchable()->nullable(),
                 ]),
             ]),
 
@@ -92,11 +120,11 @@ class OncallScheduleResource extends Resource
                 TextColumn::make('hijri_date_range')
                     ->label('Hijri'),
 
-                TextColumn::make('clinic_doctor')->label('Clinic'),
-                TextColumn::make('inpatient_doctor')->label('Inpatient'),
-                TextColumn::make('cath_doctor')->label('Cath'),
-                TextColumn::make('service_doctor')->label('Service'),
-                TextColumn::make('ep_doctor')->label('EP'),
+                TextColumn::make('clinicStaff.name')->label('Clinic'),
+                TextColumn::make('inpatientStaff.name')->label('Inpatient'),
+                TextColumn::make('cathStaff.name')->label('Cath'),
+                TextColumn::make('serviceStaff.name')->label('Service'),
+                TextColumn::make('epStaff.name')->label('EP'),
             ])
             ->actions([
                 ViewAction::make(),

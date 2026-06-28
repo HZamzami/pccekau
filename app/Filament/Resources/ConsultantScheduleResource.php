@@ -4,9 +4,11 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ConsultantScheduleResource\Pages;
 use App\Models\ConsultantSchedule;
+use App\Models\Staff;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -47,9 +49,15 @@ class ConsultantScheduleResource extends Resource
 
             Section::make('Consultant Assignments')->schema([
                 Grid::make(3)->schema([
-                    TextInput::make('service_consultant')->label('Service'),
-                    TextInput::make('cath_consultant')->label('Cath'),
-                    TextInput::make('ep_consultant')->label('EP'),
+                    Select::make('service_staff_id')->label('Service')
+                        ->options(fn () => Staff::active()->consultants()->orderBy('name')->pluck('name', 'id'))
+                        ->searchable()->nullable(),
+                    Select::make('cath_staff_id')->label('Cath')
+                        ->options(fn () => Staff::active()->consultants()->orderBy('name')->pluck('name', 'id'))
+                        ->searchable()->nullable(),
+                    Select::make('ep_staff_id')->label('EP')
+                        ->options(fn () => Staff::active()->consultants()->orderBy('name')->pluck('name', 'id'))
+                        ->searchable()->nullable(),
                 ]),
             ]),
 
@@ -71,9 +79,9 @@ class ConsultantScheduleResource extends Resource
                 TextColumn::make('hijri_date')
                     ->label('Hijri'),
 
-                TextColumn::make('service_consultant')->label('Service'),
-                TextColumn::make('cath_consultant')->label('Cath'),
-                TextColumn::make('ep_consultant')->label('EP'),
+                TextColumn::make('serviceStaff.name')->label('Service'),
+                TextColumn::make('cathStaff.name')->label('Cath'),
+                TextColumn::make('epStaff.name')->label('EP'),
             ])
             ->actions([
                 ViewAction::make(),

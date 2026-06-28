@@ -6,11 +6,11 @@
             <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
                 @foreach ([
                     'On-Call'      => $schedule->today_oncall,
-                    'Service'      => $schedule->service_doctor,
-                    'Cath'         => $schedule->cath_doctor,
-                    'EP'           => $schedule->ep_doctor,
-                    'Clinic'       => $schedule->clinic_doctor,
-                    'Inpatient'    => $schedule->inpatient_doctor,
+                    'Service'      => $schedule->serviceStaff?->name,
+                    'Cath'         => $schedule->cathStaff?->name,
+                    'EP'           => $schedule->epStaff?->name,
+                    'Clinic'       => $schedule->clinicStaff?->name,
+                    'Inpatient'    => $schedule->inpatientStaff?->name,
                 ] as $role => $doctor)
                     <div class="rounded-xl border border-gray-200 dark:border-white/10 p-4 text-center space-y-1">
                         <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">

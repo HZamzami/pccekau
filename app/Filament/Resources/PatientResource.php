@@ -83,15 +83,20 @@ class PatientResource extends Resource
                         ->options(['male' => 'Male', 'female' => 'Female'])
                         ->required(),
 
-                    TextInput::make('nationality'),
+                    Select::make('nationality')
+                        ->searchable()
+                        ->options(self::nationalities()),
                 ]),
 
                 Grid::make(3)->schema([
                     Select::make('blood_type')
                         ->options(['A+' => 'A+', 'A-' => 'A−', 'B+' => 'B+', 'B-' => 'B−', 'AB+' => 'AB+', 'AB-' => 'AB−', 'O+' => 'O+', 'O-' => 'O−'])
+                        ->placeholder('Not known')
                         ->nullable(),
 
-                    TextInput::make('contact_number'),
+                    TextInput::make('contact_number')
+                        ->tel()
+                        ->placeholder('+966 5X XXX XXXX'),
 
                     TextInput::make('referring_physician'),
                 ]),
@@ -102,18 +107,24 @@ class PatientResource extends Resource
                     TextInput::make('weight_kg')
                         ->label('Weight (kg)')
                         ->numeric()
-                        ->minValue(0),
+                        ->step(0.1)
+                        ->minValue(0)
+                        ->suffix('kg'),
 
                     TextInput::make('height_cm')
                         ->label('Height (cm)')
                         ->numeric()
-                        ->minValue(0),
+                        ->step(0.1)
+                        ->minValue(0)
+                        ->suffix('cm'),
 
                     TextInput::make('baseline_oxygen_saturation')
                         ->label('Baseline O₂ Sat (%)')
                         ->numeric()
+                        ->step(1)
                         ->minValue(0)
-                        ->maxValue(100),
+                        ->maxValue(100)
+                        ->suffix('%'),
                 ]),
 
                 Textarea::make('primary_diagnosis')
@@ -217,6 +228,56 @@ class PatientResource extends Resource
             'index'  => Pages\ListPatients::route('/'),
             'create' => Pages\CreatePatient::route('/create'),
             'edit'   => Pages\EditPatient::route('/{record}/edit'),
+        ];
+    }
+
+    private static function nationalities(): array
+    {
+        return [
+            // Most common at PCCEKAU first
+            'Saudi Arabian'  => 'Saudi Arabian',
+            'Yemeni'         => 'Yemeni',
+            'Egyptian'       => 'Egyptian',
+            'Pakistani'      => 'Pakistani',
+            'Sudanese'       => 'Sudanese',
+            'Somali'         => 'Somali',
+            'Jordanian'      => 'Jordanian',
+            'Syrian'         => 'Syrian',
+            'Lebanese'       => 'Lebanese',
+            'Indian'         => 'Indian',
+            'Bangladeshi'    => 'Bangladeshi',
+            'Filipino'       => 'Filipino',
+            'Indonesian'     => 'Indonesian',
+            'Ethiopian'      => 'Ethiopian',
+            'Eritrean'       => 'Eritrean',
+            // Alphabetical remainder
+            'Afghan'         => 'Afghan',
+            'Albanian'       => 'Albanian',
+            'Algerian'       => 'Algerian',
+            'American'       => 'American',
+            'Bahraini'       => 'Bahraini',
+            'British'        => 'British',
+            'Chadian'        => 'Chadian',
+            'Chinese'        => 'Chinese',
+            'Djibouti'       => 'Djibouti',
+            'Emirati'        => 'Emirati',
+            'French'         => 'French',
+            'German'         => 'German',
+            'Iraqi'          => 'Iraqi',
+            'Kuwaiti'        => 'Kuwaiti',
+            'Libyan'         => 'Libyan',
+            'Malaysian'      => 'Malaysian',
+            'Mauritanian'    => 'Mauritanian',
+            'Moroccan'       => 'Moroccan',
+            'Nepali'         => 'Nepali',
+            'Nigerian'       => 'Nigerian',
+            'Omani'          => 'Omani',
+            'Palestinian'    => 'Palestinian',
+            'Qatari'         => 'Qatari',
+            'Sri Lankan'     => 'Sri Lankan',
+            'Tunisian'       => 'Tunisian',
+            'Turkish'        => 'Turkish',
+            'Ugandan'        => 'Ugandan',
         ];
     }
 }

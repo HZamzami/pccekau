@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\MdtDiscussionResource\Pages;
 use App\Models\MdtDiscussion;
 use App\Models\Patient;
+use App\Models\Staff;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
@@ -79,18 +80,25 @@ class MdtDiscussionResource extends Resource
                     TextInput::make('weight_kg')
                         ->label('Weight (kg)')
                         ->numeric()
-                        ->minValue(0),
+                        ->step(0.1)
+                        ->minValue(0)
+                        ->suffix('kg'),
 
                     TextInput::make('oxygen_saturation')
                         ->label('O₂ Saturation (%)')
                         ->numeric()
+                        ->step(1)
                         ->minValue(0)
-                        ->maxValue(100),
+                        ->maxValue(100)
+                        ->suffix('%'),
                 ]),
 
                 Grid::make(2)->schema([
-                    TextInput::make('specialist_fellow')
-                        ->label('Specialist / Fellow'),
+                    Select::make('specialist_fellow_id')
+                        ->label('Specialist / Fellow')
+                        ->options(fn () => Staff::active()->orderBy('name')->pluck('name', 'id'))
+                        ->searchable()
+                        ->nullable(),
 
                     TextInput::make('contact_number'),
                 ]),
@@ -166,7 +174,7 @@ class MdtDiscussionResource extends Resource
                     ->limit(40)
                     ->tooltip(fn (TextColumn $column): ?string => strlen((string) $column->getState()) > 40 ? $column->getState() : null),
 
-                TextColumn::make('specialist_fellow')
+                TextColumn::make('specialistFellow.name')
                     ->label('Specialist / Fellow'),
 
                 TextColumn::make('discussion_results')

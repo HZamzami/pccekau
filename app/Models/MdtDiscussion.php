@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\Staff;
 
 class MdtDiscussion extends Model
 {
@@ -19,7 +20,7 @@ class MdtDiscussion extends Model
         'exam_findings',
         'echo_findings',
         'cath_findings',
-        'specialist_fellow',
+        'specialist_fellow_id',
         'discussion_results',
         'contact_number',
     ];
@@ -43,5 +44,10 @@ class MdtDiscussion extends Model
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);
+    }
+
+    public function specialistFellow(): BelongsTo
+    {
+        return $this->belongsTo(Staff::class, 'specialist_fellow_id');
     }
 }

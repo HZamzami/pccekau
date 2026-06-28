@@ -1,0 +1,127 @@
+<?php
+
+namespace App\Filament\Resources;
+
+use App\Filament\Resources\StaffResource\Pages;
+use App\Models\Staff;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\ViewAction;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
+use Filament\Tables\Table;
+
+class StaffResource extends Resource
+{
+    protected static ?string $model = Staff::class;
+
+    protected static ?string $navigationIcon = 'heroicon-o-identification';
+
+    protected static ?string $navigationGroup = 'Schedules';
+
+    protected static ?int $navigationSort = 0;
+
+    protected static ?string $navigationLabel = 'Staff';
+
+    public static function form(Form $form): Form
+    {
+        return $form->schema([
+            Section::make()->schema([
+                Grid::make(2)->schema([
+                    TextInput::make('name')
+                        ->required()
+                        ->maxLength(255),
+
+                    Select::make('role')
+                        ->options([
+                            'consultant' => 'Consultant',
+                            'fellow'     => 'Fellow',
+                        ])
+                        ->required(),
+                ]),
+
+                Grid::make(2)->schema([
+                    Select::make('specialty')
+                        ->options(Staff::$specialtyLabels)
+                        ->nullable()
+                        ->placeholder('Not specified'),
+
+                    Toggle::make('is_active')
+                        ->label('Active')
+                        ->default(true)
+                        ->inline(false),
+                ]),
+            ]),
+        ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                TextColumn::make('name')
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('role')
+                    ->badge()
+                    ->color(fn ($state) => match ($state) {
+                        'consultant' => 'info',
+                        'fellow'     => 'warning',
+                        default      => 'gray',
+                    }),
+
+                TextColumn::make('specialty')
+                    ->formatStateUsing(fn ($state) => Staff::$specialtyLabels[$state] ?? $state)
+                    ->placeholder('—'),
+
+                IconColumn::make('is_active')
+                    ->label('Active')
+                    ->boolean(),
+            ])
+            ->filters([
+                SelectFilter::make('role')
+                    ->options([
+                        'consultant' => 'Consultant',
+                        'fellow'     => 'Fellow',
+                    ]),
+
+                TernaryFilter::make('is_active')
+                    ->label('Active'),
+            ])
+            ->actions([
+                ViewAction::make(),
+                EditAction::make(),
+            ])
+            ->bulkActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
+            ])
+            ->defaultSort('name');
+    }
+
+    public static function getRelations(): array
+    {
+        return [];
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index'  => Pages\ListStaff::route('/'),
+            'create' => Pages\CreateStaff::route('/create'),
+            'edit'   => Pages\EditStaff::route('/{record}/edit'),
+        ];
+    }
+}

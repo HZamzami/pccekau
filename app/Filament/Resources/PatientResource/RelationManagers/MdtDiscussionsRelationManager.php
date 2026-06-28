@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources\PatientResource\RelationManagers;
 
+use App\Models\Staff;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -42,16 +44,23 @@ class MdtDiscussionsRelationManager extends RelationManager
                     TextInput::make('weight_kg')
                         ->label('Weight (kg)')
                         ->numeric()
-                        ->minValue(0),
+                        ->step(0.1)
+                        ->minValue(0)
+                        ->suffix('kg'),
 
                     TextInput::make('oxygen_saturation')
                         ->label('O₂ Saturation (%)')
                         ->numeric()
+                        ->step(1)
                         ->minValue(0)
-                        ->maxValue(100),
+                        ->maxValue(100)
+                        ->suffix('%'),
 
-                    TextInput::make('specialist_fellow')
-                        ->label('Specialist / Fellow'),
+                    Select::make('specialist_fellow_id')
+                        ->label('Specialist / Fellow')
+                        ->options(fn () => Staff::active()->orderBy('name')->pluck('name', 'id'))
+                        ->searchable()
+                        ->nullable(),
                 ]),
 
                 TextInput::make('contact_number'),
@@ -107,7 +116,7 @@ class MdtDiscussionsRelationManager extends RelationManager
                     ->limit(40)
                     ->tooltip(fn (TextColumn $column): ?string => strlen((string) $column->getState()) > 40 ? $column->getState() : null),
 
-                TextColumn::make('specialist_fellow')->label('Specialist / Fellow'),
+                TextColumn::make('specialistFellow.name')->label('Specialist / Fellow'),
 
                 TextColumn::make('discussion_results')
                     ->label('Results')

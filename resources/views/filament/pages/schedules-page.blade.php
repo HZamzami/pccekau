@@ -34,11 +34,11 @@
                         <div class="grid grid-cols-3 gap-3 sm:grid-cols-6 mb-4">
                             @foreach ([
                                 'On-Call Today' => $current->today_oncall,
-                                'Service'       => $current->service_doctor,
-                                'Cath'          => $current->cath_doctor,
-                                'EP'            => $current->ep_doctor,
-                                'Clinic'        => $current->clinic_doctor,
-                                'Inpatient'     => $current->inpatient_doctor,
+                                'Service'       => $current->serviceStaff?->name,
+                                'Cath'          => $current->cathStaff?->name,
+                                'EP'            => $current->epStaff?->name,
+                                'Clinic'        => $current->clinicStaff?->name,
+                                'Inpatient'     => $current->inpatientStaff?->name,
                             ] as $role => $doctor)
                                 <div class="rounded-xl border border-gray-200 dark:border-white/10 p-3 text-center">
                                     <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ $role }}</p>
@@ -49,13 +49,13 @@
 
                         <div class="grid grid-cols-7 gap-2 text-center text-sm">
                             @foreach ([
-                                'Sun' => $current->oncall_sunday,
-                                'Mon' => $current->oncall_monday,
-                                'Tue' => $current->oncall_tuesday,
-                                'Wed' => $current->oncall_wednesday,
-                                'Thu' => $current->oncall_thursday,
-                                'Fri' => $current->oncall_friday,
-                                'Sat' => $current->oncall_saturday,
+                                'Sun' => $current->oncallSundayStaff?->name,
+                                'Mon' => $current->oncallMondayStaff?->name,
+                                'Tue' => $current->oncallTuesdayStaff?->name,
+                                'Wed' => $current->oncallWednesdayStaff?->name,
+                                'Thu' => $current->oncallThursdayStaff?->name,
+                                'Fri' => $current->oncallFridayStaff?->name,
+                                'Sat' => $current->oncallSaturdayStaff?->name,
                             ] as $day => $doctor)
                                 <div @class([
                                     'rounded-lg border p-2',
@@ -93,7 +93,7 @@
                     <div class="flex gap-4 flex-wrap">
                         @foreach ($rotations->get($currentBlock->block_number, collect()) as $rotation)
                             <div class="flex-1 min-w-[120px] rounded-xl border border-primary-300 dark:border-primary-700 bg-primary-50 dark:bg-primary-900/20 p-4 text-center">
-                                <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $rotation->fellow_name }}</p>
+                                <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $rotation->fellow?->name ?? '—' }}</p>
                                 <p class="text-xs text-primary-600 dark:text-primary-400 mt-1 font-medium">{{ $rotation->rotation_label }}</p>
                             </div>
                         @endforeach
@@ -108,8 +108,8 @@
                             <tr class="border-b border-gray-200 dark:border-white/10 text-xs text-gray-500 uppercase tracking-wide">
                                 <th class="pb-3 pr-4 text-left font-medium">Block</th>
                                 <th class="pb-3 pr-4 text-left font-medium">Dates</th>
-                                @foreach ($fellows as $fellow)
-                                    <th class="pb-3 pr-4 text-left font-medium">{{ $fellow }}</th>
+                                @foreach ($fellows as $fellowId => $fellowName)
+                                    <th class="pb-3 pr-4 text-left font-medium">{{ $fellowName }}</th>
                                 @endforeach
                             </tr>
                         </thead>
@@ -125,8 +125,8 @@
                                     <td class="py-3 pr-4 text-xs text-gray-500">
                                         {{ $first->start_date->format('d M') }} – {{ $first->end_date->format('d M') }}
                                     </td>
-                                    @foreach ($fellows as $fellow)
-                                        @php $row = $blockRows->firstWhere('fellow_name', $fellow) @endphp
+                                    @foreach ($fellows as $fellowId => $fellowName)
+                                        @php $row = $blockRows->firstWhere('fellow_id', $fellowId) @endphp
                                         <td class="py-3 pr-4">
                                             @if ($row)
                                                 <span @class([
