@@ -3,6 +3,10 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PatientResource\Pages;
+use App\Filament\Resources\PatientResource\RelationManagers\ClinicVisitsRelationManager;
+use App\Filament\Resources\PatientResource\RelationManagers\DocumentsRelationManager;
+use App\Filament\Resources\PatientResource\RelationManagers\ImagingReportsRelationManager;
+use App\Filament\Resources\PatientResource\RelationManagers\MdtDiscussionsRelationManager;
 use App\Models\Patient;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
@@ -177,7 +181,10 @@ class PatientResource extends Resource
     public static function getRelations(): array
     {
         return [
-            // Relation managers added in Phase 4
+            ImagingReportsRelationManager::class,
+            ClinicVisitsRelationManager::class,
+            MdtDiscussionsRelationManager::class,
+            DocumentsRelationManager::class,
         ];
     }
 
