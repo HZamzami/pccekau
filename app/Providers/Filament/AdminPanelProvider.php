@@ -2,18 +2,19 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Widgets\PatientSearchWidget;
+use App\Filament\Widgets\TodayOncallWidget;
+use App\Filament\Widgets\UpcomingMdtWidget;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use App\Filament\Widgets\PatientSearchWidget;
-use App\Filament\Widgets\TodayOncallWidget;
-use App\Filament\Widgets\UpcomingMdtWidget;
+use Filament\Navigation\NavigationGroup;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
-use Filament\Widgets;
+use Filament\Support\Enums\MaxWidth;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -30,9 +31,18 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+
+            // Branding
+            ->brandName('PCCEKAU')
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Blue,
             ])
+
+            // Layout
+            ->maxContentWidth(MaxWidth::Full)
+            ->sidebarCollapsibleOnDesktop()
+
+            // Resources, pages, widgets
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
@@ -44,6 +54,24 @@ class AdminPanelProvider extends PanelProvider
                 TodayOncallWidget::class,
                 UpcomingMdtWidget::class,
             ])
+
+            // Explicit navigation group order
+            ->navigationGroups([
+                NavigationGroup::make('Patients')
+                    ->icon('heroicon-o-users'),
+                NavigationGroup::make('Clinical')
+                    ->icon('heroicon-o-heart'),
+                NavigationGroup::make('Schedules')
+                    ->icon('heroicon-o-calendar'),
+            ])
+
+            // Global search
+            ->globalSearchKeyBindings(['command+k', 'ctrl+k'])
+            ->globalSearchDebounce('300ms')
+
+            // SPA mode
+            ->spa()
+
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -57,7 +85,6 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ])
-            ->spa();
+            ]);
     }
 }

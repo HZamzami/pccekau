@@ -9,6 +9,7 @@ use App\Filament\Resources\PatientResource\RelationManagers\ImagingReportsRelati
 use App\Filament\Resources\PatientResource\RelationManagers\MdtDiscussionsRelationManager;
 use App\Models\Patient;
 use Filament\Forms\Components\DatePicker;
+use Illuminate\Database\Eloquent\Model;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
@@ -33,6 +34,28 @@ class PatientResource extends Resource
     protected static ?string $navigationGroup = 'Patients';
 
     protected static ?int $navigationSort = 1;
+
+    // Global search — makes patients findable from the ⌘K bar anywhere in the panel
+    protected static ?string $recordTitleAttribute = 'name';
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name', 'mrn', 'primary_diagnosis'];
+    }
+
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        return [
+            'MRN'    => $record->mrn,
+            'Age'    => $record->age,
+            'Status' => ucfirst($record->status),
+        ];
+    }
+
+    public static function getGlobalSearchResultUrl(Model $record): string
+    {
+        return static::getUrl('edit', ['record' => $record]);
+    }
 
     public static function form(Form $form): Form
     {

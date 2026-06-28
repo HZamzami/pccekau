@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\MdtDiscussionResource\Pages;
 use App\Models\MdtDiscussion;
 use App\Models\Patient;
+use Illuminate\Database\Eloquent\Model;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
@@ -29,6 +30,27 @@ class MdtDiscussionResource extends Resource
     protected static ?string $navigationGroup = 'Clinical';
 
     protected static ?int $navigationSort = 3;
+
+    protected static ?string $recordTitleAttribute = 'diagnosis';
+
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['diagnosis', 'reason_for_discussion', 'discussion_results'];
+    }
+
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        return [
+            'Patient' => $record->patient?->name,
+            'Date'    => $record->discussion_date?->format('d M Y'),
+            'Age'     => $record->age_snapshot,
+        ];
+    }
+
+    public static function getGlobalSearchResultUrl(Model $record): string
+    {
+        return static::getUrl('edit', ['record' => $record]);
+    }
 
     public static function form(Form $form): Form
     {
