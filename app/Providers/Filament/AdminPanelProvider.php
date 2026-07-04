@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Widgets\GettingStartedWidget;
 use App\Filament\Widgets\PatientSearchWidget;
 use App\Filament\Widgets\TodayOncallWidget;
 use App\Filament\Widgets\UpcomingMdtWidget;
@@ -50,6 +51,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
+                GettingStartedWidget::class,
                 PatientSearchWidget::class,
                 TodayOncallWidget::class,
                 UpcomingMdtWidget::class,

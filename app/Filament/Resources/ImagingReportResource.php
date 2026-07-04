@@ -41,6 +41,7 @@ class ImagingReportResource extends Resource
     {
         return $form->schema([
             Section::make()
+                ->description('Reports start as drafts. Set a Reader, then use Finalize to sign and lock the report — locked reports can only be reopened with the Amend action, which records the reason.')
                 ->disabled(fn (?ImagingReport $record) => $record?->isLocked() ?? false)
                 ->schema([
                     Grid::make(2)->schema([

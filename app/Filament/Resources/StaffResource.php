@@ -117,7 +117,9 @@ class StaffResource extends Resource
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('name');
+            ->defaultSort('name')
+            ->emptyStateHeading('No staff yet')
+            ->emptyStateDescription('Add your consultants and fellows first — they appear in the doctor dropdowns on reports, clinic visits, and on-call schedules.');
     }
 
     public static function getRelations(): array
