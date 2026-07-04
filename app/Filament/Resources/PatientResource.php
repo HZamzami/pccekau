@@ -210,7 +210,9 @@ class PatientResource extends Resource
             ])
             ->actions([
                 ViewAction::make(),
-                EditAction::make(),
+                EditAction::make()
+                    ->label('Open Chart')
+                    ->icon('heroicon-o-folder-open'),
                 RestoreAction::make(),
                 ForceDeleteAction::make(),
             ])
@@ -220,7 +222,9 @@ class PatientResource extends Resource
                     RestoreBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('name');
+            ->defaultSort('name')
+            ->emptyStateHeading('No patients yet')
+            ->emptyStateDescription('Register your first patient — their chart will hold imaging reports, clinic visits, MDT discussions, and documents.');
     }
 
     public static function getEloquentQuery(): Builder
