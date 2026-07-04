@@ -34,7 +34,7 @@ class SendDailyDigest extends Command
             $todayMdts > 0 ? "{$todayMdts} MDT discussion(s) scheduled today" : null,
         ]);
 
-        Notification::make()
+        $notification = Notification::make()
             ->title('Daily clinical digest')
             ->body(implode(' — ', $lines))
             ->icon('heroicon-o-bell-alert')
@@ -47,8 +47,13 @@ class SendDailyDigest extends Command
                     ->label('MDT')
                     ->url('/admin/mdt-discussions')
                     ->visible($todayMdts > 0),
-            ])
-            ->sendToDatabase($recipients);
+            ]);
+
+        // notifyNow: Filament's DatabaseNotification is queued by default,
+        // but a daily command should not depend on a queue worker running.
+        foreach ($recipients as $recipient) {
+            $recipient->notifyNow($notification->toDatabase());
+        }
 
         $this->info("Digest sent to {$recipients->count()} user(s): " . implode('; ', $lines));
 
