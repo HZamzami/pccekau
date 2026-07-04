@@ -37,8 +37,12 @@ class EditImagingReport extends EditRecord
                 ->modalDescription(fn () => $this->record->signed_by
                     ? 'Finalizing locks this report against further edits. Amendments will be tracked.'
                     : 'A signing physician must be set (and saved) before the report can be finalized.')
-                ->modalSubmitAction(fn ($action) => $this->record->signed_by ? null : $action->hidden())
+                ->modalSubmitAction(fn ($action) => $action->disabled(blank($this->record->signed_by)))
                 ->action(function () {
+                    if (blank($this->record->signed_by)) {
+                        return;
+                    }
+
                     $this->record->finalize();
                     $this->refreshFormData(['status']);
                 }),

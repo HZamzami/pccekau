@@ -49,6 +49,12 @@ class ZScoreService
             return null;
         }
 
+        // Pettersen regressions are unreliable below ~0.15 m² (preterm
+        // neonates) — hide the z-score rather than show a misleading one.
+        if ($bsa < 0.15) {
+            return null;
+        }
+
         [$a, $b1, $b2, $b3, $mse] = self::COEFFICIENTS[$measurement];
 
         $lnMean = $a + ($b1 * $bsa) + ($b2 * $bsa ** 2) + ($b3 * $bsa ** 3);

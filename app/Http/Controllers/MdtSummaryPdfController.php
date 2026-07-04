@@ -14,7 +14,7 @@ class MdtSummaryPdfController extends Controller
     {
         $this->authorize('view', $discussion);
 
-        $discussion->load(['patient', 'specialistFellow']);
+        $discussion->load(['patient', 'specialistFellow', 'imagingReports']);
 
         return Pdf::loadView('pdf.mdt-summary', [
             'discussion' => $discussion,

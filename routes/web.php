@@ -3,6 +3,7 @@
 use App\Http\Controllers\ImagingReportPdfController;
 use App\Http\Controllers\MdtSummaryPdfController;
 use App\Http\Controllers\PatientDocumentDownloadController;
+use App\Http\Controllers\PatientSummaryPdfController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect('/admin'));
@@ -16,4 +17,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('patient-documents/{document}/download/{index}', PatientDocumentDownloadController::class)
         ->name('patient-documents.download');
+
+    Route::get('patients/{patient}/summary-pdf', PatientSummaryPdfController::class)
+        ->name('patients.summary-pdf');
 });

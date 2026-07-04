@@ -80,6 +80,10 @@ class AdminPanelProvider extends PanelProvider
             // SPA mode
             ->spa()
 
+            // The patient View page is the working chart — keep its
+            // relation managers editable, not read-only.
+            ->readOnlyRelationManagersOnResourceViewPagesByDefault(false)
+
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

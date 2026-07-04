@@ -13,6 +13,11 @@ class EditMdtDiscussion extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('pdf')
+                ->label('PDF')
+                ->icon('heroicon-o-document-arrow-down')
+                ->url(fn () => route('mdt-discussions.pdf', $this->record))
+                ->openUrlInNewTab(),
             Actions\DeleteAction::make(),
         ];
     }

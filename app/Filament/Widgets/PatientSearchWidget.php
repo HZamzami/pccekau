@@ -17,12 +17,17 @@ class PatientSearchWidget extends Widget
 
     public function getResults(): \Illuminate\Support\Collection
     {
-        if (strlen(trim($this->search)) < 2) {
+        $term = trim($this->search);
+
+        if (strlen($term) < 2) {
             return collect();
         }
 
-        return Patient::where('mrn', 'like', "%{$this->search}%")
-            ->orWhere('name', 'like', "%{$this->search}%")
+        // Escape LIKE wildcards so "%" or "_" in the input match literally
+        $term = addcslashes($term, '%_\\');
+
+        return Patient::where('mrn', 'like', "%{$term}%")
+            ->orWhere('name', 'like', "%{$term}%")
             ->limit(10)
             ->get();
     }

@@ -2,11 +2,14 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Resources\ClinicVisitResource;
+use App\Filament\Resources\PatientResource;
 use App\Models\ClinicVisit;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Pages\Page;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
@@ -29,19 +32,17 @@ class ClinicFollowUpsPage extends Page implements HasTable
 
     public function getTodayCount(): int
     {
-        return ClinicVisit::whereDate('next_follow_up_date', today())->count();
+        return $this->baseQuery()->whereDate('next_follow_up_date', today())->count();
     }
 
     public function getUpcomingCount(): int
     {
-        return ClinicVisit::whereDate('next_follow_up_date', '>', today())->count();
+        return $this->baseQuery()->whereDate('next_follow_up_date', '>', today())->count();
     }
 
     public function getOverdueCount(): int
     {
-        return ClinicVisit::whereNotNull('next_follow_up_date')
-            ->whereDate('next_follow_up_date', '<', today())
-            ->count();
+        return $this->baseQuery()->whereDate('next_follow_up_date', '<', today())->count();
     }
 
     public function setTab(string $tab): void
@@ -64,7 +65,7 @@ class ClinicFollowUpsPage extends Page implements HasTable
                     ->label('Patient')
                     ->searchable()
                     ->sortable()
-                    ->url(fn (ClinicVisit $record) => route('filament.admin.resources.patients.edit', $record->patient)),
+                    ->url(fn (ClinicVisit $record) => PatientResource::getUrl('view', ['record' => $record->patient_id])),
 
                 TextColumn::make('visit_date')
                     ->date()
@@ -97,30 +98,43 @@ class ClinicFollowUpsPage extends Page implements HasTable
                     ->visible(fn () => $this->activeTab === 'overdue'),
             ])
             ->actions([
-                ViewAction::make()
-                    ->url(fn (ClinicVisit $record) => route('filament.admin.resources.patients.edit', $record->patient)),
+                Action::make('reschedule')
+                    ->label('Done / Reschedule')
+                    ->icon('heroicon-o-check')
+                    ->color('success')
+                    ->visible(fn () => auth()->user()?->canWrite() ?? false)
+                    ->form([
+                        DatePicker::make('next_follow_up_date')
+                            ->label('Next follow-up (leave blank to mark done)')
+                            ->minDate(today()),
+                    ])
+                    ->fillForm(fn (ClinicVisit $record) => ['next_follow_up_date' => null])
+                    ->action(fn (ClinicVisit $record, array $data) => $record->update([
+                        'next_follow_up_date' => $data['next_follow_up_date'] ?? null,
+                    ])),
+
+                EditAction::make()
+                    ->label('Open Visit')
+                    ->url(fn (ClinicVisit $record) => ClinicVisitResource::getUrl('edit', ['record' => $record])),
             ])
             ->defaultSort('next_follow_up_date', 'asc')
             ->emptyStateHeading('No follow-ups found')
             ->emptyStateIcon('heroicon-o-calendar');
     }
 
+    private function baseQuery(): Builder
+    {
+        return ClinicVisit::followUpEligible()->whereNotNull('next_follow_up_date');
+    }
+
     protected function getQuery(): Builder
     {
+        $query = $this->baseQuery()->with(['patient', 'seenBy']);
+
         return match ($this->activeTab) {
-            'today' => ClinicVisit::with('patient')
-                ->whereDate('next_follow_up_date', today()),
-
-            'upcoming' => ClinicVisit::with('patient')
-                ->whereDate('next_follow_up_date', '>', today())
-                ->orderBy('next_follow_up_date'),
-
-            'overdue' => ClinicVisit::with('patient')
-                ->whereNotNull('next_follow_up_date')
-                ->whereDate('next_follow_up_date', '<', today())
-                ->orderBy('next_follow_up_date'),
-
-            default => ClinicVisit::with('patient')->whereDate('next_follow_up_date', today()),
+            'upcoming' => $query->whereDate('next_follow_up_date', '>', today()),
+            'overdue'  => $query->whereDate('next_follow_up_date', '<', today()),
+            default    => $query->whereDate('next_follow_up_date', today()),
         };
     }
 }

@@ -2,11 +2,12 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Resources\MdtDiscussionResource;
+use App\Filament\Resources\PatientResource;
 use App\Models\MdtDiscussion;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
-use Illuminate\Database\Eloquent\Builder;
 
 class UpcomingMdtWidget extends BaseWidget
 {
@@ -21,10 +22,11 @@ class UpcomingMdtWidget extends BaseWidget
         return $table
             ->query(
                 MdtDiscussion::query()
-                    ->with('patient')
+                    ->with(['patient', 'specialistFellow'])
                     ->whereDate('discussion_date', '>=', today())
                     ->orderBy('discussion_date')
             )
+            ->recordUrl(fn (MdtDiscussion $record) => MdtDiscussionResource::getUrl('edit', ['record' => $record]))
             ->columns([
                 TextColumn::make('discussion_date')
                     ->label('Date')
@@ -35,7 +37,8 @@ class UpcomingMdtWidget extends BaseWidget
                     ->label('MRN'),
 
                 TextColumn::make('patient.name')
-                    ->label('Patient'),
+                    ->label('Patient')
+                    ->url(fn (MdtDiscussion $record) => PatientResource::getUrl('view', ['record' => $record->patient_id])),
 
                 TextColumn::make('age_snapshot')
                     ->label('Age'),
@@ -49,8 +52,9 @@ class UpcomingMdtWidget extends BaseWidget
                     ->limit(40)
                     ->tooltip(fn (TextColumn $column): ?string => strlen((string) $column->getState()) > 40 ? $column->getState() : null),
 
-                TextColumn::make('specialist_fellow')
-                    ->label('Specialist / Fellow'),
+                TextColumn::make('specialistFellow.name')
+                    ->label('Specialist / Fellow')
+                    ->placeholder('—'),
             ]);
     }
 }
