@@ -48,6 +48,7 @@ class MdtDiscussionsRelationManager extends RelationManager
                         ->numeric()
                         ->step(0.1)
                         ->minValue(0)
+                        ->maxValue(250)
                         ->suffix('kg'),
 
                     TextInput::make('oxygen_saturation')

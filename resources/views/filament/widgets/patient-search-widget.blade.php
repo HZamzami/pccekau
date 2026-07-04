@@ -19,7 +19,7 @@
                     <div class="divide-y divide-gray-100 dark:divide-white/10 rounded-xl border border-gray-200 dark:border-white/10 overflow-hidden">
                         @foreach ($results as $patient)
                             <a
-                                href="{{ route('filament.admin.resources.patients.edit', $patient) }}"
+                                href="{{ route('filament.admin.resources.patients.view', $patient) }}"
                                 class="flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-white/5 transition"
                             >
                                 <div class="flex items-center gap-4">

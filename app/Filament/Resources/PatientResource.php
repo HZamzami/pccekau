@@ -7,6 +7,9 @@ use App\Filament\Resources\PatientResource\RelationManagers\ClinicVisitsRelation
 use App\Filament\Resources\PatientResource\RelationManagers\DocumentsRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\ImagingReportsRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\MdtDiscussionsRelationManager;
+use App\Enums\CardiacLesion;
+use App\Enums\PatientStatus;
+use App\Filament\Resources\PatientResource\RelationManagers\InterventionsRelationManager;
 use App\Models\Patient;
 use Filament\Forms\Components\DatePicker;
 use Illuminate\Database\Eloquent\Model;
@@ -16,6 +19,10 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Infolists\Components\Grid as InfolistGrid;
+use Filament\Infolists\Components\Section as InfolistSection;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
@@ -54,13 +61,93 @@ class PatientResource extends Resource
         return [
             'MRN'    => $record->mrn,
             'Age'    => $record->age,
-            'Status' => ucfirst($record->status),
+            'Status' => $record->status?->getLabel() ?? '',
         ];
     }
 
     public static function getGlobalSearchResultUrl(Model $record): string
     {
-        return static::getUrl('edit', ['record' => $record]);
+        return static::getUrl('view', ['record' => $record]);
+    }
+
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist->schema([
+            InfolistSection::make()
+                ->schema([
+                    InfolistGrid::make(4)->schema([
+                        TextEntry::make('mrn')
+                            ->label('MRN')
+                            ->copyable()
+                            ->weight('bold'),
+
+                        TextEntry::make('age')
+                            ->label('Age')
+                            ->state(fn (Patient $record) => $record->age),
+
+                        TextEntry::make('gender')
+                            ->formatStateUsing(fn ($state) => ucfirst($state)),
+
+                        TextEntry::make('status')
+                            ->badge(),
+                    ]),
+
+                    InfolistGrid::make(4)->schema([
+                        TextEntry::make('date_of_birth')
+                            ->label('Date of birth')
+                            ->date(),
+
+                        TextEntry::make('weight_kg')
+                            ->label('Weight')
+                            ->formatStateUsing(fn ($state) => $state . ' kg')
+                            ->placeholder('—'),
+
+                        TextEntry::make('height_cm')
+                            ->label('Height')
+                            ->formatStateUsing(fn ($state) => $state . ' cm')
+                            ->placeholder('—'),
+
+                        TextEntry::make('baseline_oxygen_saturation')
+                            ->label('Baseline O₂ sat')
+                            ->formatStateUsing(fn ($state) => $state . '%')
+                            ->placeholder('—'),
+                    ]),
+
+                    InfolistGrid::make(4)->schema([
+                        TextEntry::make('blood_type')
+                            ->label('Blood type')
+                            ->placeholder('Not known'),
+
+                        TextEntry::make('nationality')
+                            ->placeholder('—'),
+
+                        TextEntry::make('referring_physician')
+                            ->label('Referring physician')
+                            ->placeholder('—'),
+
+                        TextEntry::make('contact_number')
+                            ->label('Contact')
+                            ->placeholder('—'),
+                    ]),
+
+                    TextEntry::make('lesions')
+                        ->label('Cardiac lesions')
+                        ->badge()
+                        ->formatStateUsing(fn (string $state) => CardiacLesion::tryFrom($state)?->getLabel() ?? $state)
+                        ->placeholder('None recorded')
+                        ->columnSpanFull(),
+
+                    TextEntry::make('primary_diagnosis')
+                        ->label('Primary diagnosis')
+                        ->placeholder('—')
+                        ->columnSpanFull(),
+
+                    TextEntry::make('current_plan')
+                        ->label('Current plan')
+                        ->placeholder('—')
+                        ->columnSpanFull(),
+                ]),
+        ]);
     }
 
     public static function form(Form $form): Form
@@ -115,6 +202,7 @@ class PatientResource extends Resource
                         ->numeric()
                         ->step(0.1)
                         ->minValue(0)
+                        ->maxValue(250)
                         ->suffix('kg'),
 
                     TextInput::make('height_cm')
@@ -122,6 +210,7 @@ class PatientResource extends Resource
                         ->numeric()
                         ->step(0.1)
                         ->minValue(0)
+                        ->maxValue(220)
                         ->suffix('cm'),
 
                     TextInput::make('baseline_oxygen_saturation')
@@ -132,6 +221,13 @@ class PatientResource extends Resource
                         ->maxValue(100)
                         ->suffix('%'),
                 ]),
+
+                Select::make('lesions')
+                    ->label('Cardiac lesions')
+                    ->multiple()
+                    ->options(CardiacLesion::class)
+                    ->searchable()
+                    ->columnSpanFull(),
 
                 Textarea::make('primary_diagnosis')
                     ->rows(2)
@@ -148,13 +244,8 @@ class PatientResource extends Resource
                     ->columnSpanFull(),
 
                 Select::make('status')
-                    ->options([
-                        'active'     => 'Active',
-                        'follow-up'  => 'Follow-Up',
-                        'post-op'    => 'Post-Op',
-                        'discharged' => 'Discharged',
-                    ])
-                    ->default('active')
+                    ->options(PatientStatus::class)
+                    ->default(PatientStatus::Active)
                     ->required(),
             ]),
         ]);
@@ -180,39 +271,49 @@ class PatientResource extends Resource
                 TextColumn::make('gender')
                     ->formatStateUsing(fn ($state) => ucfirst($state)),
 
+                TextColumn::make('lesions')
+                    ->label('Lesions')
+                    ->badge()
+                    ->formatStateUsing(fn (string $state) => CardiacLesion::tryFrom($state)?->getLabel() ?? $state)
+                    ->limitList(3)
+                    ->placeholder('—'),
+
                 TextColumn::make('primary_diagnosis')
                     ->limit(40)
                     ->tooltip(fn (TextColumn $column): ?string => strlen((string) $column->getState()) > 40 ? $column->getState() : null),
 
                 TextColumn::make('status')
-                    ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'active'     => 'success',
-                        'follow-up'  => 'warning',
-                        'post-op'    => 'info',
-                        'discharged' => 'gray',
-                        default      => 'gray',
-                    }),
+                    ->badge(),
             ])
             ->filters([
                 SelectFilter::make('status')
-                    ->options([
-                        'active'     => 'Active',
-                        'follow-up'  => 'Follow-Up',
-                        'post-op'    => 'Post-Op',
-                        'discharged' => 'Discharged',
-                    ]),
+                    ->options(PatientStatus::class),
+
+                SelectFilter::make('lesions')
+                    ->label('Lesion')
+                    ->multiple()
+                    ->options(CardiacLesion::labels())
+                    // whereJsonContains works on pgsql jsonb and sqlite >= 3.39
+                    ->query(fn (Builder $query, array $data) => filled($data['values'] ?? null)
+                        ? $query->where(function (Builder $query) use ($data) {
+                            foreach ($data['values'] as $value) {
+                                $query->orWhereJsonContains('lesions', $value);
+                            }
+                        })
+                        : $query),
 
                 SelectFilter::make('gender')
                     ->options(['male' => 'Male', 'female' => 'Female']),
 
                 TrashedFilter::make(),
             ])
+            ->recordUrl(fn (Patient $record) => static::getUrl('view', ['record' => $record]))
             ->actions([
-                ViewAction::make(),
-                EditAction::make()
+                ViewAction::make()
                     ->label('Open Chart')
-                    ->icon('heroicon-o-folder-open'),
+                    ->icon('heroicon-o-folder-open')
+                    ->url(fn (Patient $record) => static::getUrl('view', ['record' => $record])),
+                EditAction::make(),
                 RestoreAction::make(),
                 ForceDeleteAction::make(),
             ])
@@ -238,6 +339,7 @@ class PatientResource extends Resource
     {
         return [
             ImagingReportsRelationManager::class,
+            InterventionsRelationManager::class,
             ClinicVisitsRelationManager::class,
             MdtDiscussionsRelationManager::class,
             DocumentsRelationManager::class,
@@ -249,6 +351,7 @@ class PatientResource extends Resource
         return [
             'index'  => Pages\ListPatients::route('/'),
             'create' => Pages\CreatePatient::route('/create'),
+            'view'   => Pages\ViewPatient::route('/{record}'),
             'edit'   => Pages\EditPatient::route('/{record}/edit'),
         ];
     }

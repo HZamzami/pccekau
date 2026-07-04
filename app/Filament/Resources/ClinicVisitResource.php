@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ClinicVisitResource\Pages;
+use App\Filament\Resources\PatientResource;
 use App\Models\ClinicVisit;
 use App\Models\Patient;
 use Filament\Forms\Components\DatePicker;
@@ -61,6 +62,48 @@ class ClinicVisitResource extends Resource
                 ]),
             ]),
 
+
+            Section::make('Vitals')->schema([
+                Grid::make(3)->schema([
+                    TextInput::make('weight_kg')
+                        ->label('Weight (kg)')
+                        ->numeric()
+                        ->minValue(0.3)
+                        ->maxValue(250),
+
+                    TextInput::make('height_cm')
+                        ->label('Height (cm)')
+                        ->numeric()
+                        ->minValue(20)
+                        ->maxValue(220),
+
+                    TextInput::make('oxygen_saturation')
+                        ->label('O2 Sat (%)')
+                        ->numeric()
+                        ->minValue(0)
+                        ->maxValue(100)
+                        ->suffix('%'),
+
+                    TextInput::make('heart_rate')
+                        ->label('Heart rate (bpm)')
+                        ->numeric()
+                        ->minValue(20)
+                        ->maxValue(300),
+
+                    TextInput::make('bp_systolic')
+                        ->label('BP systolic')
+                        ->numeric()
+                        ->minValue(30)
+                        ->maxValue(250),
+
+                    TextInput::make('bp_diastolic')
+                        ->label('BP diastolic')
+                        ->numeric()
+                        ->minValue(10)
+                        ->maxValue(150),
+                ]),
+            ])->collapsible(),
+
             Section::make('SOAP Note')->schema([
                 Textarea::make('subjective')
                     ->label('Subjective — Patient complaints & history')
@@ -101,7 +144,8 @@ class ClinicVisitResource extends Resource
                 TextColumn::make('patient.name')
                     ->label('Patient')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->url(fn (ClinicVisit $record) => PatientResource::getUrl('view', ['record' => $record->patient_id])),
 
                 TextColumn::make('visit_date')
                     ->date()
@@ -110,6 +154,11 @@ class ClinicVisitResource extends Resource
                 TextColumn::make('seenBy.name')
                     ->label('Seen by')
                     ->sortable(),
+
+                TextColumn::make('oxygen_saturation')
+                    ->label('O₂ Sat')
+                    ->formatStateUsing(fn ($state) => $state . '%')
+                    ->placeholder('—'),
 
                 TextColumn::make('assessment')
                     ->limit(40)

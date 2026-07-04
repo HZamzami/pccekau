@@ -69,19 +69,25 @@
             @foreach ([
                 'ivsd' => 'IVSd (cm)', 'lvidd' => 'LVIDd (cm)', 'lvpwd' => 'LVPWd (cm)', 'lvids' => 'LVIDs (cm)',
                 'la' => 'LA (cm)', 'ao_annulus' => 'Ao annulus (cm)', 'ao_root' => 'Ao root (cm)',
-                'ef' => 'EF (%)', 'fs' => 'FS (%)',
+                'ef' => 'EF (%)', 'fs' => 'FS (%)', 'tapse' => 'TAPSE (cm)', 'rv_function' => 'RV function',
                 'mv_peak_velocity' => 'MV Vmax (m/s)', 'mv_peak_gradient' => 'MV PG (mmHg)',
-                'tv_peak_velocity' => 'TV Vmax (m/s)', 'tv_peak_gradient' => 'TV PG (mmHg)',
-                'pv_peak_velocity' => 'PV Vmax (m/s)', 'pv_peak_gradient' => 'PV PG (mmHg)',
+                'mv_mean_gradient' => 'MV mean gradient (mmHg)', 'mv_regurg' => 'MR grade',
+                'tv_peak_velocity' => 'TV Vmax (m/s)', 'tv_peak_gradient' => 'TV PG (mmHg)', 'tv_regurg' => 'TR grade',
                 'av_peak_velocity' => 'AV Vmax (m/s)', 'av_peak_gradient' => 'AV PG (mmHg)',
+                'av_mean_gradient' => 'AV mean gradient (mmHg)', 'av_regurg' => 'AI grade',
+                'pv_peak_velocity' => 'PV Vmax (m/s)', 'pv_peak_gradient' => 'PV PG (mmHg)', 'pv_regurg' => 'PI grade',
+                'coarct_peak_gradient' => 'Coarctation PG (mmHg)', 'coarct_mean_gradient' => 'Coarctation mean (mmHg)',
+                'pda_size_mm' => 'PDA size (mm)',
             ] as $key => $label)
                 @continue($measurement->{$key} === null)
                 @php
-                    $z = $bsa ? \App\Services\ZScoreService::zScore($key, (float) $measurement->{$key}, $bsa) : null;
+                    $value = $measurement->{$key};
+                    $display = $value instanceof \Filament\Support\Contracts\HasLabel ? $value->getLabel() : $value;
+                    $z = $bsa ? \App\Services\ZScoreService::zScore($key, (float) (is_object($value) ? 0 : $value), $bsa) : null;
                 @endphp
                 <tr>
                     <td>{{ $label }}</td>
-                    <td>{{ $measurement->{$key} }}</td>
+                    <td>{{ $display }}</td>
                     <td @class(['z-abnormal' => $z !== null && abs($z) > 2])>{{ $z ?? '—' }}</td>
                 </tr>
             @endforeach

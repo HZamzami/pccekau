@@ -48,7 +48,8 @@ class ImagingWorklistPage extends Page implements HasTable
 
                 TextColumn::make('patient.name')
                     ->label('Patient')
-                    ->searchable(),
+                    ->searchable()
+                    ->url(fn (ImagingReport $record) => \App\Filament\Resources\PatientResource::getUrl('view', ['record' => $record->patient_id])),
 
                 TextColumn::make('type')
                     ->badge()
@@ -69,6 +70,13 @@ class ImagingWorklistPage extends Page implements HasTable
                 TextColumn::make('date_age')
                     ->label('Waiting')
                     ->state(fn (ImagingReport $record) => $record->date->diffForHumans(short: true)),
+            ])
+            ->headerActions([
+                Action::make('newReport')
+                    ->label('New Imaging Report')
+                    ->icon('heroicon-o-plus')
+                    ->url(fn () => ImagingReportResource::getUrl('create'))
+                    ->visible(fn () => auth()->user()?->canWrite() ?? false),
             ])
             ->actions([
                 Action::make('assign')

@@ -17,6 +17,12 @@ class ClinicVisit extends Model
     protected $fillable = [
         'patient_id',
         'visit_date',
+        'weight_kg',
+        'height_cm',
+        'oxygen_saturation',
+        'heart_rate',
+        'bp_systolic',
+        'bp_diastolic',
         'subjective',
         'objective',
         'assessment',
@@ -40,10 +46,17 @@ class ClinicVisit extends Model
         return $this->belongsTo(Staff::class, 'seen_by_id');
     }
 
+    // Excludes patients who no longer attend follow-up
+    public function scopeFollowUpEligible(Builder $query): Builder
+    {
+        return $query->whereHas('patient', fn (Builder $q) => $q->whereNotIn('status', ['deceased', 'transferred']));
+    }
+
     // Visits whose follow-up is due today or overdue
     public function scopeDueFollowUps(Builder $query): Builder
     {
-        return $query->whereNotNull('next_follow_up_date')
+        return $query->followUpEligible()
+            ->whereNotNull('next_follow_up_date')
             ->whereDate('next_follow_up_date', '<=', today());
     }
 

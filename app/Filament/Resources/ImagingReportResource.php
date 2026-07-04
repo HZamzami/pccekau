@@ -6,6 +6,7 @@ use App\Enums\ImagingType;
 use App\Enums\ReportStatus;
 use App\Filament\Forms\EchoMeasurementsSection;
 use App\Filament\Resources\ImagingReportResource\Pages;
+use App\Filament\Resources\PatientResource;
 use App\Models\ImagingReport;
 use App\Models\Patient;
 use Filament\Forms\Components\DatePicker;
@@ -16,8 +17,10 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
-use Filament\Support\Colors\Color;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
@@ -51,6 +54,18 @@ class ImagingReportResource extends Resource
                             ->searchable()
                             ->preload()
                             ->required()
+                            ->live()
+                            // Prefill echo biometrics from the patient's baseline
+                            ->afterStateUpdated(function (Set $set, Get $get, $state) {
+                                $patient = Patient::find($state);
+
+                                if ($patient === null) {
+                                    return;
+                                }
+
+                                blank($get('height_cm')) && $patient->height_cm !== null && $set('height_cm', $patient->height_cm);
+                                blank($get('weight_kg')) && $patient->weight_kg !== null && $set('weight_kg', $patient->weight_kg);
+                            })
                             ->getOptionLabelFromRecordUsing(fn (Patient $record) => "{$record->mrn} — {$record->name}"),
 
                         Select::make('type')
@@ -83,6 +98,13 @@ class ImagingReportResource extends Resource
                             ->content(fn (?ImagingReport $record) => $record?->status?->getLabel() ?? 'Draft'),
                     ]),
 
+                    Placeholder::make('mdt_display')
+                        ->label('Presented at MDT')
+                        ->content(fn (ImagingReport $record) => $record->mdtDiscussions
+                            ->map(fn ($mdt) => $mdt->discussion_date->format('d M Y'))
+                            ->join(', '))
+                        ->visible(fn (?ImagingReport $record) => $record !== null && $record->mdtDiscussions->isNotEmpty()),
+
                     Textarea::make('report')
                         ->required()
                         ->rows(8)
@@ -110,7 +132,8 @@ class ImagingReportResource extends Resource
                 TextColumn::make('patient.name')
                     ->label('Patient')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->url(fn (ImagingReport $record) => PatientResource::getUrl('view', ['record' => $record->patient_id])),
 
                 TextColumn::make('type')
                     ->badge()
@@ -126,6 +149,12 @@ class ImagingReportResource extends Resource
                 TextColumn::make('signedBy.name')
                     ->label('Reader')
                     ->placeholder('Unassigned'),
+
+                TextColumn::make('mdt_discussions_count')
+                    ->label('MDT')
+                    ->counts('mdtDiscussions')
+                    ->badge()
+                    ->color('gray'),
 
                 TextColumn::make('report')
                     ->limit(50)
@@ -179,8 +208,20 @@ class ImagingReportResource extends Resource
                 ->modalDescription(fn (ImagingReport $record) => $record->signed_by
                     ? 'Finalizing locks this report against further edits. Amendments will be tracked.'
                     : 'A signing physician must be set before the report can be finalized.')
-                ->modalSubmitAction(fn ($action, ImagingReport $record) => $record->signed_by ? null : $action->hidden())
-                ->action(fn (ImagingReport $record) => $record->finalize()),
+                ->modalSubmitAction(fn ($action, ImagingReport $record) => $action->disabled(blank($record->signed_by)))
+                ->action(function (ImagingReport $record) {
+                    if (blank($record->signed_by)) {
+                        Notification::make()
+                            ->danger()
+                            ->title('Set a signing physician first')
+                            ->body('Choose a Reader / Signing physician on the report, save, then finalize.')
+                            ->send();
+
+                        return;
+                    }
+
+                    $record->finalize();
+                }),
 
             Action::make('amend')
                 ->label('Amend')

@@ -44,6 +44,48 @@ class ClinicVisitsRelationManager extends RelationManager
                 DatePicker::make('next_follow_up_date'),
             ]),
 
+
+            Section::make('Vitals')->schema([
+                Grid::make(3)->schema([
+                    TextInput::make('weight_kg')
+                        ->label('Weight (kg)')
+                        ->numeric()
+                        ->minValue(0.3)
+                        ->maxValue(250),
+
+                    TextInput::make('height_cm')
+                        ->label('Height (cm)')
+                        ->numeric()
+                        ->minValue(20)
+                        ->maxValue(220),
+
+                    TextInput::make('oxygen_saturation')
+                        ->label('O2 Sat (%)')
+                        ->numeric()
+                        ->minValue(0)
+                        ->maxValue(100)
+                        ->suffix('%'),
+
+                    TextInput::make('heart_rate')
+                        ->label('Heart rate (bpm)')
+                        ->numeric()
+                        ->minValue(20)
+                        ->maxValue(300),
+
+                    TextInput::make('bp_systolic')
+                        ->label('BP systolic')
+                        ->numeric()
+                        ->minValue(30)
+                        ->maxValue(250),
+
+                    TextInput::make('bp_diastolic')
+                        ->label('BP diastolic')
+                        ->numeric()
+                        ->minValue(10)
+                        ->maxValue(150),
+                ]),
+            ])->collapsible(),
+
             Section::make('SOAP Note')->schema([
                 Textarea::make('subjective')
                     ->label('Subjective — Patient complaints & history')

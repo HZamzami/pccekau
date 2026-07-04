@@ -34,6 +34,18 @@
         </tr>
     </table>
 
+    @if ($discussion->imagingReports->isNotEmpty())
+        <h2>Reports Presented</h2>
+        <table class="meta">
+            @foreach ($discussion->imagingReports as $report)
+                <tr>
+                    <td class="label">{{ $report->date->format('d M Y') }}</td>
+                    <td>{{ $report->type->getLabel() }} — {{ $report->status->getLabel() }}</td>
+                </tr>
+            @endforeach
+        </table>
+    @endif
+
     @foreach ([
         'reason_for_discussion' => 'Reason for Discussion',
         'history' => 'History',

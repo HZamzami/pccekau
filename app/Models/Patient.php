@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\CardiacLesion;
+use App\Enums\PatientStatus;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -25,6 +27,7 @@ class Patient extends Model
         'height_cm',
         'baseline_oxygen_saturation',
         'primary_diagnosis',
+        'lesions',
         'surgical_history',
         'current_plan',
         'contact_number',
@@ -34,7 +37,17 @@ class Patient extends Model
 
     protected $casts = [
         'date_of_birth' => 'date',
+        // Plain array cast (not AsEnumCollection): Filament Select multiple
+        // works with scalar arrays; use lesionEnums() for labels.
+        'lesions' => 'array',
+        'status' => PatientStatus::class,
     ];
+
+    /** @return array<CardiacLesion|null> */
+    public function lesionEnums(): array
+    {
+        return array_map(CardiacLesion::tryFrom(...), $this->lesions ?? []);
+    }
 
     // DB cascadeOnDelete only fires on hard deletes, so soft deletes and
     // restores must cascade to the clinical children at the model layer.
@@ -45,13 +58,13 @@ class Patient extends Model
                 return;
             }
 
-            foreach (['imagingReports', 'clinicVisits', 'mdtDiscussions', 'documents'] as $relation) {
+            foreach (['imagingReports', 'clinicVisits', 'mdtDiscussions', 'documents', 'interventions'] as $relation) {
                 $patient->{$relation}()->get()->each->delete();
             }
         });
 
         static::restored(function (Patient $patient) {
-            foreach (['imagingReports', 'clinicVisits', 'mdtDiscussions', 'documents'] as $relation) {
+            foreach (['imagingReports', 'clinicVisits', 'mdtDiscussions', 'documents', 'interventions'] as $relation) {
                 $patient->{$relation}()->onlyTrashed()->get()->each->restore();
             }
         });
@@ -99,6 +112,11 @@ class Patient extends Model
     public function documents(): HasMany
     {
         return $this->hasMany(PatientDocument::class)->orderByDesc('created_at');
+    }
+
+    public function interventions(): HasMany
+    {
+        return $this->hasMany(Intervention::class)->orderByDesc('date');
     }
 
     public function getActivitylogOptions(): LogOptions

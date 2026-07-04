@@ -35,6 +35,12 @@ class ZScoreServiceTest extends TestCase
         $this->assertNull(ZScoreService::zScore('nonsense', 1, 0.67));
     }
 
+    public function test_z_score_null_below_neonatal_bsa_threshold(): void
+    {
+        $this->assertNull(ZScoreService::zScore('lvidd', 1.5, 0.14));
+        $this->assertNotNull(ZScoreService::zScore('lvidd', 1.5, 0.16));
+    }
+
     public function test_z_score_null_for_invalid_inputs(): void
     {
         $this->assertNull(ZScoreService::zScore('lvidd', 0, 0.67));
