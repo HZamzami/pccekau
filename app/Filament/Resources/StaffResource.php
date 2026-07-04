@@ -61,6 +61,15 @@ class StaffResource extends Resource
                         ->default(true)
                         ->inline(false),
                 ]),
+
+                Select::make('user_id')
+                    ->label('Login account')
+                    ->relationship('user', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->nullable()
+                    ->helperText('Optional — link this staff member to a panel login.')
+                    ->visible(fn () => auth()->user()?->isAdmin() ?? false),
             ]),
         ]);
     }

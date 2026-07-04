@@ -3,11 +3,17 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\Support\LogOptions;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
 
 class Patient extends Model
 {
+    use HasFactory, LogsActivity, SoftDeletes;
+
     protected $fillable = [
         'mrn',
         'name',
@@ -29,6 +35,27 @@ class Patient extends Model
     protected $casts = [
         'date_of_birth' => 'date',
     ];
+
+    // DB cascadeOnDelete only fires on hard deletes, so soft deletes and
+    // restores must cascade to the clinical children at the model layer.
+    protected static function booted(): void
+    {
+        static::deleted(function (Patient $patient) {
+            if ($patient->isForceDeleting()) {
+                return;
+            }
+
+            foreach (['imagingReports', 'clinicVisits', 'mdtDiscussions', 'documents'] as $relation) {
+                $patient->{$relation}()->get()->each->delete();
+            }
+        });
+
+        static::restored(function (Patient $patient) {
+            foreach (['imagingReports', 'clinicVisits', 'mdtDiscussions', 'documents'] as $relation) {
+                $patient->{$relation}()->onlyTrashed()->get()->each->restore();
+            }
+        });
+    }
 
     // Returns age as a human-readable string: "5 yr 3 mo" or "8 mo" for infants
     public function getAgeAttribute(): string
@@ -72,5 +99,13 @@ class Patient extends Model
     public function documents(): HasMany
     {
         return $this->hasMany(PatientDocument::class)->orderByDesc('created_at');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }

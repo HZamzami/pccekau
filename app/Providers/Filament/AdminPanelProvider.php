@@ -63,7 +63,13 @@ class AdminPanelProvider extends PanelProvider
                     ->icon('heroicon-o-heart'),
                 NavigationGroup::make('Schedules')
                     ->icon('heroicon-o-calendar'),
+                NavigationGroup::make('Admin')
+                    ->icon('heroicon-o-shield-check'),
             ])
+
+            // In-app notifications (daily digest, etc.)
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('60s')
 
             // Global search
             ->globalSearchKeyBindings(['command+k', 'ctrl+k'])

@@ -12,6 +12,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
@@ -54,13 +55,18 @@ class PatientDocumentResource extends Resource
                         ->default('other')
                         ->required(),
 
-                    TextInput::make('uploaded_by'),
+                    Select::make('uploaded_by_id')
+                        ->label('Uploaded by')
+                        ->relationship('uploadedBy', 'name', fn ($query) => $query->active())
+                        ->searchable()
+                        ->preload(),
                 ]),
 
                 FileUpload::make('files')
                     ->multiple()
                     ->required()
-                    ->disk('public')
+                    ->disk('local')
+                    ->visibility('private')
                     ->directory('patient-documents')
                     ->acceptedFileTypes(['application/pdf', 'image/*'])
                     ->maxSize(10240)
@@ -91,7 +97,8 @@ class PatientDocumentResource extends Resource
                     ->badge()
                     ->color('gray'),
 
-                TextColumn::make('uploaded_by'),
+                TextColumn::make('uploadedBy.name')
+                    ->label('Uploaded by'),
 
                 TextColumn::make('created_at')
                     ->label('Uploaded')
@@ -105,6 +112,19 @@ class PatientDocumentResource extends Resource
             ->actions([
                 ViewAction::make(),
                 EditAction::make(),
+                Action::make('download')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->form(fn (PatientDocument $record) => [
+                        Select::make('index')
+                            ->label('File')
+                            ->options(collect($record->files)->map(fn ($path) => basename($path)))
+                            ->default(0)
+                            ->required(),
+                    ])
+                    ->action(fn (PatientDocument $record, array $data) => redirect()->route('patient-documents.download', [
+                        'document' => $record,
+                        'index' => $data['index'],
+                    ])),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
