@@ -6,8 +6,8 @@ use App\Models\ClinicVisit;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Actions\BulkActionGroup;
@@ -34,7 +34,11 @@ class ClinicVisitsRelationManager extends RelationManager
                         ->required()
                         ->maxDate(now()),
 
-                    TextInput::make('seen_by')->required(),
+                    Select::make('seen_by_id')
+                        ->label('Seen by')
+                        ->relationship('seenBy', 'name', fn ($query) => $query->active())
+                        ->searchable()
+                        ->preload(),
                 ]),
 
                 DatePicker::make('next_follow_up_date'),
@@ -77,7 +81,8 @@ class ClinicVisitsRelationManager extends RelationManager
                     ->date()
                     ->sortable(),
 
-                TextColumn::make('seen_by'),
+                TextColumn::make('seenBy.name')
+                    ->label('Seen by'),
 
                 TextColumn::make('assessment')
                     ->limit(50)

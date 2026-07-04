@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PatientResource\RelationManagers;
 
+use App\Models\MdtDiscussion;
 use App\Models\Staff;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
@@ -11,6 +12,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\CreateAction;
 use Filament\Tables\Actions\DeleteAction;
@@ -129,6 +131,11 @@ class MdtDiscussionsRelationManager extends RelationManager
             ->actions([
                 ViewAction::make(),
                 EditAction::make(),
+                Action::make('pdf')
+                    ->label('PDF')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->url(fn (MdtDiscussion $record) => route('mdt-discussions.pdf', $record))
+                    ->openUrlInNewTab(),
                 DeleteAction::make(),
             ])
             ->bulkActions([

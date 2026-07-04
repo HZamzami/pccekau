@@ -51,7 +51,11 @@ class ClinicVisitResource extends Resource
                 ]),
 
                 Grid::make(2)->schema([
-                    TextInput::make('seen_by')->required(),
+                    Select::make('seen_by_id')
+                        ->label('Seen by')
+                        ->relationship('seenBy', 'name', fn ($query) => $query->active())
+                        ->searchable()
+                        ->preload(),
 
                     DatePicker::make('next_follow_up_date'),
                 ]),
@@ -103,7 +107,8 @@ class ClinicVisitResource extends Resource
                     ->date()
                     ->sortable(),
 
-                TextColumn::make('seen_by')
+                TextColumn::make('seenBy.name')
+                    ->label('Seen by')
                     ->sortable(),
 
                 TextColumn::make('assessment')

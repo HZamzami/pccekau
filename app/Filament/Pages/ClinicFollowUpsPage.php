@@ -70,8 +70,8 @@ class ClinicFollowUpsPage extends Page implements HasTable
                     ->date()
                     ->sortable(),
 
-                TextColumn::make('seen_by')
-                    ->sortable(),
+                TextColumn::make('seenBy.name')
+                    ->label('Seen by'),
 
                 TextColumn::make('assessment')
                     ->limit(50)
@@ -100,7 +100,7 @@ class ClinicFollowUpsPage extends Page implements HasTable
                 ViewAction::make()
                     ->url(fn (ClinicVisit $record) => route('filament.admin.resources.patients.edit', $record->patient)),
             ])
-            ->defaultSort(fn () => $this->activeTab === 'overdue' ? 'next_follow_up_date' : 'next_follow_up_date', fn () => $this->activeTab === 'overdue' ? 'asc' : 'asc')
+            ->defaultSort('next_follow_up_date', 'asc')
             ->emptyStateHeading('No follow-ups found')
             ->emptyStateIcon('heroicon-o-calendar');
     }

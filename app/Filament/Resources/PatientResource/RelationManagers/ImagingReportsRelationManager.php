@@ -2,15 +2,19 @@
 
 namespace App\Filament\Resources\PatientResource\RelationManagers;
 
+use App\Enums\ImagingType;
+use App\Enums\ReportStatus;
+use App\Filament\Forms\EchoMeasurementsSection;
+use App\Filament\Resources\ImagingReportResource;
 use App\Models\ImagingReport;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\CreateAction;
 use Filament\Tables\Actions\DeleteAction;
@@ -30,28 +34,46 @@ class ImagingReportsRelationManager extends RelationManager
     public function form(Form $form): Form
     {
         return $form->schema([
-            Section::make()->schema([
-                Grid::make(2)->schema([
-                    Select::make('type')
-                        ->options(ImagingReport::$typeLabels)
-                        ->required(),
+            Section::make()
+                ->disabled(fn (?ImagingReport $record) => $record?->isLocked() ?? false)
+                ->schema([
+                    Grid::make(2)->schema([
+                        Select::make('type')
+                            ->options(ImagingType::class)
+                            ->required()
+                            ->live(),
 
-                    DatePicker::make('date')
+                        DatePicker::make('date')
+                            ->required()
+                            ->maxDate(now()),
+                    ]),
+
+                    Grid::make(2)->schema([
+                        Select::make('performed_by_id')
+                            ->label('Performed by')
+                            ->relationship('performedBy', 'name', fn ($query) => $query->active())
+                            ->searchable()
+                            ->preload(),
+
+                        Select::make('signed_by')
+                            ->label('Reader / Signing physician')
+                            ->relationship('signedBy', 'name', fn ($query) => $query->active())
+                            ->searchable()
+                            ->preload(),
+                    ]),
+
+                    Textarea::make('report')
                         ->required()
-                        ->maxDate(now()),
+                        ->rows(8)
+                        ->columnSpanFull(),
+
+                    Textarea::make('notes')
+                        ->rows(3)
+                        ->columnSpanFull(),
                 ]),
 
-                TextInput::make('performed_by'),
-
-                Textarea::make('report')
-                    ->required()
-                    ->rows(8)
-                    ->columnSpanFull(),
-
-                Textarea::make('notes')
-                    ->rows(3)
-                    ->columnSpanFull(),
-            ]),
+            EchoMeasurementsSection::make()
+                ->disabled(fn (?ImagingReport $record) => $record?->isLocked() ?? false),
         ]);
     }
 
@@ -61,15 +83,19 @@ class ImagingReportsRelationManager extends RelationManager
             ->recordTitleAttribute('type')
             ->columns([
                 TextColumn::make('type')
-                    ->formatStateUsing(fn ($state) => ImagingReport::$typeLabels[$state] ?? $state)
                     ->badge()
                     ->color('info'),
+
+                TextColumn::make('status')
+                    ->badge(),
 
                 TextColumn::make('date')
                     ->date()
                     ->sortable(),
 
-                TextColumn::make('performed_by'),
+                TextColumn::make('signedBy.name')
+                    ->label('Reader')
+                    ->placeholder('Unassigned'),
 
                 TextColumn::make('report')
                     ->limit(60)
@@ -77,7 +103,10 @@ class ImagingReportsRelationManager extends RelationManager
             ])
             ->filters([
                 SelectFilter::make('type')
-                    ->options(ImagingReport::$typeLabels),
+                    ->options(ImagingType::labels()),
+
+                SelectFilter::make('status')
+                    ->options(ReportStatus::class),
             ])
             ->headerActions([
                 CreateAction::make(),
@@ -85,6 +114,12 @@ class ImagingReportsRelationManager extends RelationManager
             ->actions([
                 ViewAction::make(),
                 EditAction::make(),
+                ...ImagingReportResource::workflowActions(),
+                Action::make('pdf')
+                    ->label('PDF')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->url(fn (ImagingReport $record) => route('imaging-reports.pdf', $record))
+                    ->openUrlInNewTab(),
                 DeleteAction::make(),
             ])
             ->bulkActions([
