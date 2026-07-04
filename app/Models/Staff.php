@@ -3,15 +3,20 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Staff extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'name',
         'role',
         'specialty',
         'is_active',
+        'user_id',
     ];
 
     protected $casts = [
@@ -28,6 +33,11 @@ class Staff extends Model
         'imaging'  => 'Imaging',
         'general'  => 'General',
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function scopeActive(Builder $query): Builder
     {

@@ -4,10 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Staff;
+use Spatie\Activitylog\Support\LogOptions;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
 
 class MdtDiscussion extends Model
 {
+    use LogsActivity, SoftDeletes;
+
     protected $fillable = [
         'patient_id',
         'discussion_date',
@@ -49,5 +54,13 @@ class MdtDiscussion extends Model
     public function specialistFellow(): BelongsTo
     {
         return $this->belongsTo(Staff::class, 'specialist_fellow_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
     }
 }
