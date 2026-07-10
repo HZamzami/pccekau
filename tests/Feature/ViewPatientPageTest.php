@@ -3,9 +3,16 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Filament\Resources\PatientResource\Pages\ViewPatient;
+use App\Filament\Resources\PatientResource\RelationManagers\ClinicVisitsRelationManager;
+use App\Filament\Resources\PatientResource\RelationManagers\DocumentsRelationManager;
+use App\Filament\Resources\PatientResource\RelationManagers\EpStudiesRelationManager;
+use App\Filament\Resources\PatientResource\RelationManagers\ImagingReportsRelationManager;
+use App\Filament\Resources\PatientResource\RelationManagers\InterventionsRelationManager;
 use App\Models\Patient;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class ViewPatientPageTest extends TestCase
@@ -30,5 +37,31 @@ class ViewPatientPageTest extends TestCase
             ->assertSee('Imaging Reports')
             ->assertSee('Interventions')
             ->assertSee('Clinic Visits');
+    }
+
+    // Regression: a missing form-component import only blows up when the
+    // create modal renders, which page-load tests never exercise.
+    public function test_relation_manager_create_modals_open(): void
+    {
+        $doctor = User::factory()->create(['role' => UserRole::Doctor]);
+        $patient = Patient::factory()->create();
+
+        $managers = [
+            ClinicVisitsRelationManager::class,
+            ImagingReportsRelationManager::class,
+            EpStudiesRelationManager::class,
+            InterventionsRelationManager::class,
+            DocumentsRelationManager::class,
+        ];
+
+        foreach ($managers as $manager) {
+            Livewire::actingAs($doctor)
+                ->test($manager, [
+                    'ownerRecord' => $patient,
+                    'pageClass' => ViewPatient::class,
+                ])
+                ->mountTableAction('create')
+                ->assertSuccessful();
+        }
     }
 }
