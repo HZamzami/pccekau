@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Enums\ImagingType;
 use App\Enums\ReportStatus;
+use App\Filament\Actions\ReportWorkflowActions;
 use App\Filament\Forms\EchoMeasurementsSection;
 use App\Filament\Resources\ImagingReportResource\Pages;
 use App\Filament\Resources\PatientResource;
@@ -20,7 +21,6 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
-use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkActionGroup;
@@ -222,56 +222,7 @@ class ImagingReportResource extends Resource
     /** @return array<Action> Status transitions shared by the table and relation manager. */
     public static function workflowActions(): array
     {
-        $canWrite = fn () => auth()->user()?->canWrite() ?? false;
-
-        return [
-            Action::make('markPreliminary')
-                ->label('Mark Preliminary')
-                ->icon('heroicon-o-clock')
-                ->color('warning')
-                ->visible(fn (ImagingReport $record) => $canWrite() && $record->status === ReportStatus::Draft)
-                ->action(fn (ImagingReport $record) => $record->markPreliminary()),
-
-            Action::make('finalize')
-                ->label('Finalize')
-                ->icon('heroicon-o-check-badge')
-                ->color('success')
-                ->visible(fn (ImagingReport $record) => $canWrite()
-                    && in_array($record->status, [ReportStatus::Draft, ReportStatus::Preliminary, ReportStatus::Amended], true))
-                ->requiresConfirmation()
-                ->modalDescription(fn (ImagingReport $record) => $record->signed_by
-                    ? 'Finalizing locks this report against further edits. Amendments will be tracked.'
-                    : 'A signing physician must be set before the report can be finalized.')
-                ->modalSubmitAction(fn ($action, ImagingReport $record) => $action->disabled(blank($record->signed_by)))
-                ->action(function (ImagingReport $record) {
-                    if (blank($record->signed_by)) {
-                        Notification::make()
-                            ->danger()
-                            ->title('Set a signing physician first')
-                            ->body('Choose a Reader / Signing physician on the report, save, then finalize.')
-                            ->send();
-
-                        return;
-                    }
-
-                    $record->finalize();
-                }),
-
-            Action::make('amend')
-                ->label('Amend')
-                ->icon('heroicon-o-pencil-square')
-                ->color('danger')
-                ->visible(fn (ImagingReport $record) => $canWrite() && $record->status === ReportStatus::Final)
-                ->form([
-                    Textarea::make('reason')
-                        ->label('Amendment reason')
-                        ->required()
-                        ->rows(3),
-                ])
-                ->requiresConfirmation()
-                ->modalDescription('This reopens a finalized report for editing. The reason is recorded in the audit log.')
-                ->action(fn (ImagingReport $record, array $data) => $record->amend($data['reason'])),
-        ];
+        return ReportWorkflowActions::make();
     }
 
     public static function getRelations(): array

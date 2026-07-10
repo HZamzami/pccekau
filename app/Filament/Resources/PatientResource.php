@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\PatientResource\Pages;
 use App\Filament\Resources\PatientResource\RelationManagers\ClinicVisitsRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\DocumentsRelationManager;
+use App\Filament\Resources\PatientResource\RelationManagers\EpStudiesRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\ImagingReportsRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\MdtDiscussionsRelationManager;
 use App\Enums\CardiacLesion;
@@ -353,6 +354,7 @@ class PatientResource extends Resource
     {
         return [
             ImagingReportsRelationManager::class,
+            EpStudiesRelationManager::class,
             InterventionsRelationManager::class,
             ClinicVisitsRelationManager::class,
             MdtDiscussionsRelationManager::class,

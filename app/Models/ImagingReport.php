@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ImagingType;
 use App\Enums\ReportStatus;
+use App\Models\Concerns\HasReportWorkflow;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,7 +16,7 @@ use Spatie\Activitylog\Models\Concerns\LogsActivity;
 
 class ImagingReport extends Model
 {
-    use HasFactory, LogsActivity, SoftDeletes;
+    use HasFactory, HasReportWorkflow, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'patient_id',
@@ -66,40 +67,9 @@ class ImagingReport extends Model
         return $this->belongsToMany(MdtDiscussion::class);
     }
 
-    public function isLocked(): bool
-    {
-        return $this->status?->isLocked() ?? false;
-    }
-
     public function isEchoType(): bool
     {
         return $this->type?->isEcho() ?? false;
-    }
-
-    public function markPreliminary(): void
-    {
-        $this->update(['status' => ReportStatus::Preliminary]);
-    }
-
-    public function finalize(): void
-    {
-        $this->update([
-            'status' => ReportStatus::Final,
-            'finalized_at' => now(),
-        ]);
-    }
-
-    public function amend(string $reason): void
-    {
-        // forceFill bypasses the locked-report update policy deliberately:
-        // amending is the sanctioned way to reopen a final report.
-        $this->forceFill(['status' => ReportStatus::Amended])->save();
-
-        activity()
-            ->performedOn($this)
-            ->causedBy(auth()->user())
-            ->withProperties(['reason' => $reason])
-            ->log('amended');
     }
 
     public function getActivitylogOptions(): LogOptions
