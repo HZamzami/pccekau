@@ -48,6 +48,16 @@ class PatientResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
+    public const PRIMARY_PHYSICIANS = [
+        'Dr. Osman Al-Radi',
+        'Dr. Ahmad Azhar',
+        'Dr. Zaher Zaher',
+        'Dr. Saud Bahidarah',
+        'Dr. Naif Alkhushi',
+        'Dr. Khadija Magrabi',
+        'Dr. Sultan Zamzami',
+    ];
+
     // Global search — makes patients findable from the ⌘K bar anywhere in the panel
     protected static ?string $recordTitleAttribute = 'name';
 
@@ -122,8 +132,8 @@ class PatientResource extends Resource
                             ->placeholder('—'),
 
                         TextEntry::make('referring_physician')
-                            ->label('Referring physician')
-                            ->placeholder('—'),
+                            ->label('Primary physician')
+                            ->placeholder('Unassigned'),
 
                         TextEntry::make('contact_number')
                             ->label('Contact')
@@ -191,7 +201,11 @@ class PatientResource extends Resource
                         ->tel()
                         ->placeholder('+966 5X XXX XXXX'),
 
-                    TextInput::make('referring_physician'),
+                    Select::make('referring_physician')
+                        ->label('Primary physician')
+                        ->options(array_combine(self::PRIMARY_PHYSICIANS, self::PRIMARY_PHYSICIANS))
+                        ->placeholder('Unassigned')
+                        ->nullable(),
                 ]),
             ]),
 
