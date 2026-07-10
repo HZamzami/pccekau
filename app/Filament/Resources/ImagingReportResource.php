@@ -51,7 +51,7 @@ class ImagingReportResource extends Resource
                         Select::make('patient_id')
                             ->label('Patient')
                             ->relationship('patient', 'name')
-                            ->searchable()
+                            ->searchable(['name', 'mrn'])
                             ->preload()
                             ->required()
                             ->live()
