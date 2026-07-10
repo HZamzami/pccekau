@@ -9,6 +9,7 @@ use App\Filament\Resources\ImagingReportResource\Pages;
 use App\Filament\Resources\PatientResource;
 use App\Models\ImagingReport;
 use App\Models\Patient;
+use App\Models\Staff;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Placeholder;
@@ -39,6 +40,18 @@ class ImagingReportResource extends Resource
     protected static ?string $navigationGroup = 'Clinical';
 
     protected static ?int $navigationSort = 1;
+
+    public static function getNavigationBadge(): ?string
+    {
+        $count = ImagingReport::whereIn('status', [ReportStatus::Draft, ReportStatus::Preliminary])->count();
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return 'Pending reads';
+    }
 
     public static function form(Form $form): Form
     {
@@ -150,6 +163,13 @@ class ImagingReportResource extends Resource
                     ->label('Reader')
                     ->placeholder('Unassigned'),
 
+                TextColumn::make('waiting')
+                    ->label('Waiting')
+                    ->state(fn (ImagingReport $record) => in_array($record->status, [ReportStatus::Draft, ReportStatus::Preliminary], true)
+                        ? $record->date->diffForHumans(short: true)
+                        : null)
+                    ->placeholder('—'),
+
                 TextColumn::make('mdt_discussions_count')
                     ->label('MDT')
                     ->counts('mdtDiscussions')
@@ -170,6 +190,20 @@ class ImagingReportResource extends Resource
             ->actions([
                 ViewAction::make(),
                 EditAction::make(),
+                Action::make('assign')
+                    ->label('Assign reader')
+                    ->icon('heroicon-o-user-plus')
+                    ->visible(fn (ImagingReport $record) => (auth()->user()?->canWrite() ?? false)
+                        && in_array($record->status, [ReportStatus::Draft, ReportStatus::Preliminary], true))
+                    ->form([
+                        Select::make('signed_by')
+                            ->label('Reader')
+                            ->options(fn () => Staff::active()->orderBy('name')->pluck('name', 'id'))
+                            ->searchable()
+                            ->required(),
+                    ])
+                    ->fillForm(fn (ImagingReport $record) => ['signed_by' => $record->signed_by])
+                    ->action(fn (ImagingReport $record, array $data) => $record->update(['signed_by' => $data['signed_by']])),
                 ...static::workflowActions(),
                 Action::make('pdf')
                     ->label('PDF')
