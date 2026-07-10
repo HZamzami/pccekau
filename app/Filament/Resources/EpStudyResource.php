@@ -2,13 +2,12 @@
 
 namespace App\Filament\Resources;
 
-use App\Enums\ImagingType;
+use App\Enums\EpStudyType;
 use App\Enums\ReportStatus;
 use App\Filament\Actions\ReportWorkflowActions;
-use App\Filament\Forms\EchoMeasurementsSection;
-use App\Filament\Resources\ImagingReportResource\Pages;
+use App\Filament\Resources\EpStudyResource\Pages;
 use App\Filament\Resources\PatientResource;
-use App\Models\ImagingReport;
+use App\Models\EpStudy;
 use App\Models\Patient;
 use App\Models\Staff;
 use Filament\Forms\Components\DatePicker;
@@ -17,10 +16,7 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkActionGroup;
@@ -31,19 +27,25 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
-class ImagingReportResource extends Resource
+class EpStudyResource extends Resource
 {
-    protected static ?string $model = ImagingReport::class;
+    protected static ?string $model = EpStudy::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-photo';
+    protected static ?string $navigationIcon = 'heroicon-o-bolt';
 
     protected static ?string $navigationGroup = 'Clinical';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 2;
+
+    protected static ?string $navigationLabel = 'Electrophysiology';
+
+    protected static ?string $modelLabel = 'EP study';
+
+    protected static ?string $pluralModelLabel = 'EP studies';
 
     public static function getNavigationBadge(): ?string
     {
-        $count = ImagingReport::whereIn('status', [ReportStatus::Draft, ReportStatus::Preliminary])->count();
+        $count = EpStudy::whereIn('status', [ReportStatus::Draft, ReportStatus::Preliminary])->count();
 
         return $count > 0 ? (string) $count : null;
     }
@@ -57,8 +59,8 @@ class ImagingReportResource extends Resource
     {
         return $form->schema([
             Section::make()
-                ->description('Reports start as drafts. Set a Reader, then use Finalize to sign and lock the report — locked reports can only be reopened with the Amend action, which records the reason.')
-                ->disabled(fn (?ImagingReport $record) => $record?->isLocked() ?? false)
+                ->description('Studies start as drafts. Set a Reader, then use Finalize to sign and lock the report — locked reports can only be reopened with the Amend action, which records the reason.')
+                ->disabled(fn (?EpStudy $record) => $record?->isLocked() ?? false)
                 ->schema([
                     Grid::make(2)->schema([
                         Select::make('patient_id')
@@ -67,24 +69,11 @@ class ImagingReportResource extends Resource
                             ->searchable(['name', 'mrn'])
                             ->preload()
                             ->required()
-                            ->live()
-                            // Prefill echo biometrics from the patient's baseline
-                            ->afterStateUpdated(function (Set $set, Get $get, $state) {
-                                $patient = Patient::find($state);
-
-                                if ($patient === null) {
-                                    return;
-                                }
-
-                                blank($get('height_cm')) && $patient->height_cm !== null && $set('height_cm', $patient->height_cm);
-                                blank($get('weight_kg')) && $patient->weight_kg !== null && $set('weight_kg', $patient->weight_kg);
-                            })
                             ->getOptionLabelFromRecordUsing(fn (Patient $record) => "{$record->mrn} — {$record->name}"),
 
                         Select::make('type')
-                            ->options(ImagingType::class)
-                            ->required()
-                            ->live(),
+                            ->options(EpStudyType::class)
+                            ->required(),
                     ]),
 
                     Grid::make(2)->schema([
@@ -108,15 +97,8 @@ class ImagingReportResource extends Resource
 
                         Placeholder::make('status_display')
                             ->label('Status')
-                            ->content(fn (?ImagingReport $record) => $record?->status?->getLabel() ?? 'Draft'),
+                            ->content(fn (?EpStudy $record) => $record?->status?->getLabel() ?? 'Draft'),
                     ]),
-
-                    Placeholder::make('mdt_display')
-                        ->label('Presented at MDT')
-                        ->content(fn (ImagingReport $record) => $record->mdtDiscussions
-                            ->map(fn ($mdt) => $mdt->discussion_date->format('d M Y'))
-                            ->join(', '))
-                        ->visible(fn (?ImagingReport $record) => $record !== null && $record->mdtDiscussions->isNotEmpty()),
 
                     Textarea::make('report')
                         ->required()
@@ -127,9 +109,6 @@ class ImagingReportResource extends Resource
                         ->rows(3)
                         ->columnSpanFull(),
                 ]),
-
-            EchoMeasurementsSection::make()
-                ->disabled(fn (?ImagingReport $record) => $record?->isLocked() ?? false),
         ]);
     }
 
@@ -146,7 +125,7 @@ class ImagingReportResource extends Resource
                     ->label('Patient')
                     ->searchable()
                     ->sortable()
-                    ->url(fn (ImagingReport $record) => PatientResource::getUrl('view', ['record' => $record->patient_id])),
+                    ->url(fn (EpStudy $record) => PatientResource::getUrl('view', ['record' => $record->patient_id])),
 
                 TextColumn::make('type')
                     ->badge()
@@ -165,16 +144,10 @@ class ImagingReportResource extends Resource
 
                 TextColumn::make('waiting')
                     ->label('Waiting')
-                    ->state(fn (ImagingReport $record) => in_array($record->status, [ReportStatus::Draft, ReportStatus::Preliminary], true)
+                    ->state(fn (EpStudy $record) => in_array($record->status, [ReportStatus::Draft, ReportStatus::Preliminary], true)
                         ? $record->date->diffForHumans(short: true)
                         : null)
                     ->placeholder('—'),
-
-                TextColumn::make('mdt_discussions_count')
-                    ->label('MDT')
-                    ->counts('mdtDiscussions')
-                    ->badge()
-                    ->color('gray'),
 
                 TextColumn::make('report')
                     ->limit(50)
@@ -182,7 +155,7 @@ class ImagingReportResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('type')
-                    ->options(ImagingType::labels()),
+                    ->options(EpStudyType::labels()),
 
                 SelectFilter::make('status')
                     ->options(ReportStatus::class),
@@ -193,7 +166,7 @@ class ImagingReportResource extends Resource
                 Action::make('assign')
                     ->label('Assign reader')
                     ->icon('heroicon-o-user-plus')
-                    ->visible(fn (ImagingReport $record) => (auth()->user()?->canWrite() ?? false)
+                    ->visible(fn (EpStudy $record) => (auth()->user()?->canWrite() ?? false)
                         && in_array($record->status, [ReportStatus::Draft, ReportStatus::Preliminary], true))
                     ->form([
                         Select::make('signed_by')
@@ -202,14 +175,9 @@ class ImagingReportResource extends Resource
                             ->searchable()
                             ->required(),
                     ])
-                    ->fillForm(fn (ImagingReport $record) => ['signed_by' => $record->signed_by])
-                    ->action(fn (ImagingReport $record, array $data) => $record->update(['signed_by' => $data['signed_by']])),
-                ...static::workflowActions(),
-                Action::make('pdf')
-                    ->label('PDF')
-                    ->icon('heroicon-o-document-arrow-down')
-                    ->url(fn (ImagingReport $record) => route('imaging-reports.pdf', $record))
-                    ->openUrlInNewTab(),
+                    ->fillForm(fn (EpStudy $record) => ['signed_by' => $record->signed_by])
+                    ->action(fn (EpStudy $record, array $data) => $record->update(['signed_by' => $data['signed_by']])),
+                ...ReportWorkflowActions::make(),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
@@ -217,12 +185,6 @@ class ImagingReportResource extends Resource
                 ]),
             ])
             ->defaultSort('date', 'desc');
-    }
-
-    /** @return array<Action> Status transitions shared by the table and relation manager. */
-    public static function workflowActions(): array
-    {
-        return ReportWorkflowActions::make();
     }
 
     public static function getRelations(): array
@@ -233,9 +195,9 @@ class ImagingReportResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListImagingReports::route('/'),
-            'create' => Pages\CreateImagingReport::route('/create'),
-            'edit'   => Pages\EditImagingReport::route('/{record}/edit'),
+            'index'  => Pages\ListEpStudies::route('/'),
+            'create' => Pages\CreateEpStudy::route('/create'),
+            'edit'   => Pages\EditEpStudy::route('/{record}/edit'),
         ];
     }
 }

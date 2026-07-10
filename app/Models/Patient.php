@@ -58,13 +58,13 @@ class Patient extends Model
                 return;
             }
 
-            foreach (['imagingReports', 'clinicVisits', 'mdtDiscussions', 'documents', 'interventions'] as $relation) {
+            foreach (['imagingReports', 'epStudies', 'clinicVisits', 'mdtDiscussions', 'documents', 'interventions'] as $relation) {
                 $patient->{$relation}()->get()->each->delete();
             }
         });
 
         static::restored(function (Patient $patient) {
-            foreach (['imagingReports', 'clinicVisits', 'mdtDiscussions', 'documents', 'interventions'] as $relation) {
+            foreach (['imagingReports', 'epStudies', 'clinicVisits', 'mdtDiscussions', 'documents', 'interventions'] as $relation) {
                 $patient->{$relation}()->onlyTrashed()->get()->each->restore();
             }
         });
@@ -97,6 +97,11 @@ class Patient extends Model
     public function imagingReports(): HasMany
     {
         return $this->hasMany(ImagingReport::class)->orderByDesc('date');
+    }
+
+    public function epStudies(): HasMany
+    {
+        return $this->hasMany(EpStudy::class)->orderByDesc('date');
     }
 
     public function clinicVisits(): HasMany

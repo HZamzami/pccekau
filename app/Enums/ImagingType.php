@@ -11,19 +11,15 @@ enum ImagingType: string implements HasLabel
     case Cath = 'cath';
     case Echo = 'echo';
     case Echo3d = 'echo_3d';
-    case Holter = 'holter';
-    case StressEcg = 'stress_ecg';
 
     public function getLabel(): string
     {
         return match ($this) {
-            self::Mri       => 'MRI',
-            self::Ct        => 'CT',
-            self::Cath      => 'Cath',
-            self::Echo      => 'Echo (TTE)',
-            self::Echo3d    => '3D Echo',
-            self::Holter    => 'Holter',
-            self::StressEcg => 'Stress ECG',
+            self::Mri    => 'MRI',
+            self::Ct     => 'CT',
+            self::Cath   => 'Cath',
+            self::Echo   => 'Echo (TTE)',
+            self::Echo3d => '3D Echo',
         };
     }
 

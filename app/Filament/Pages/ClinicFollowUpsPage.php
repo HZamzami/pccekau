@@ -24,7 +24,7 @@ class ClinicFollowUpsPage extends Page implements HasTable
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
     protected static ?string $navigationLabel = 'Clinic Follow-Ups';
     protected static ?string $navigationGroup = 'Clinical';
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 7;
     protected static ?string $title = 'Clinic Follow-Ups';
     protected static string $view = 'filament.pages.clinic-follow-ups-page';
 
