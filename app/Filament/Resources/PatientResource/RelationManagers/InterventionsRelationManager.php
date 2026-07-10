@@ -3,12 +3,8 @@
 namespace App\Filament\Resources\PatientResource\RelationManagers;
 
 use App\Enums\InterventionType;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Grid;
+use App\Filament\Resources\InterventionResource;
 use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Actions\BulkActionGroup;
@@ -30,34 +26,7 @@ class InterventionsRelationManager extends RelationManager
     public function form(Form $form): Form
     {
         return $form->schema([
-            Section::make()->schema([
-                Grid::make(3)->schema([
-                    DatePicker::make('date')
-                        ->required()
-                        ->maxDate(now()),
-
-                    Select::make('type')
-                        ->options(InterventionType::class)
-                        ->required(),
-
-                    Select::make('operator_id')
-                        ->label('Operator')
-                        ->relationship('operator', 'name', fn ($query) => $query->active())
-                        ->searchable()
-                        ->preload(),
-                ]),
-
-                TextInput::make('name')
-                    ->label('Procedure')
-                    ->placeholder('e.g. BT shunt, Glenn, Fontan, ASD device closure')
-                    ->required()
-                    ->maxLength(255)
-                    ->columnSpanFull(),
-
-                Textarea::make('notes')
-                    ->rows(3)
-                    ->columnSpanFull(),
-            ]),
+            Section::make()->schema(InterventionResource::detailsSchema()),
         ]);
     }
 
