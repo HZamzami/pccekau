@@ -37,7 +37,10 @@
             <td class="label">BSA</td><td>{{ $bsa ? $bsa . ' m²' : '—' }}</td>
         </tr>
         <tr>
-            <td class="label">Baseline O₂ sat</td><td>{{ $patient->baseline_oxygen_saturation ? $patient->baseline_oxygen_saturation . '%' : '—' }}</td>
+            @php
+                $lastSat = $patient->clinicVisits->whereNotNull('oxygen_saturation')->first()?->oxygen_saturation;
+            @endphp
+            <td class="label">Last O₂ sat</td><td>{{ $lastSat ? $lastSat . '%' : '—' }}</td>
             <td class="label">Blood type</td><td>{{ $patient->blood_type ?? '—' }}</td>
             <td class="label">Next follow-up</td><td>{{ $nextFollowUp?->format('d M Y') ?? '—' }}</td>
         </tr>

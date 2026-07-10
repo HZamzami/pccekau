@@ -118,10 +118,6 @@ class PatientResource extends Resource
                             ->formatStateUsing(fn ($state) => $state . ' cm')
                             ->placeholder('—'),
 
-                        TextEntry::make('baseline_oxygen_saturation')
-                            ->label('Baseline O₂ sat')
-                            ->formatStateUsing(fn ($state) => $state . '%')
-                            ->placeholder('—'),
                     ]),
 
                     InfolistGrid::make(4)->schema([
@@ -228,13 +224,6 @@ class PatientResource extends Resource
                         ->maxValue(220)
                         ->suffix('cm'),
 
-                    TextInput::make('baseline_oxygen_saturation')
-                        ->label('Baseline O₂ Sat (%)')
-                        ->numeric()
-                        ->step(1)
-                        ->minValue(0)
-                        ->maxValue(100)
-                        ->suffix('%'),
                 ]),
 
                 Select::make('lesions')
