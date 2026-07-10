@@ -25,7 +25,6 @@ class Patient extends Model
         'blood_type',
         'weight_kg',
         'height_cm',
-        'baseline_oxygen_saturation',
         'primary_diagnosis',
         'lesions',
         'surgical_history',

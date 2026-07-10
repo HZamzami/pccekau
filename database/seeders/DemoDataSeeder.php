@@ -73,7 +73,7 @@ class DemoDataSeeder extends Seeder
                     'patient_id' => $patient->id,
                     'discussion_date' => fake()->randomElement([today(), today()->addDays(3), today()->subWeeks(2)]),
                     'weight_kg' => $patient->weight_kg,
-                    'oxygen_saturation' => $patient->baseline_oxygen_saturation,
+                    'oxygen_saturation' => fake()->numberBetween(75, 100),
                     'diagnosis' => $patient->primary_diagnosis,
                     'reason_for_discussion' => fake()->sentence(),
                     'history' => fake()->paragraph(),

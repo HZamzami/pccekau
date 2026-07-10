@@ -20,7 +20,6 @@ class PatientFactory extends Factory
             'blood_type' => fake()->randomElement(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']),
             'weight_kg' => fake()->randomFloat(2, 3, 60),
             'height_cm' => fake()->randomFloat(1, 45, 170),
-            'baseline_oxygen_saturation' => fake()->numberBetween(75, 100),
             'primary_diagnosis' => fake()->randomElement(['VSD', 'ASD', 'TOF', 'TGA', 'PDA']),
             'status' => 'active',
         ];
