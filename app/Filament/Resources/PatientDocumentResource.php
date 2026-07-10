@@ -40,7 +40,7 @@ class PatientDocumentResource extends Resource
                     Select::make('patient_id')
                         ->label('Patient')
                         ->relationship('patient', 'name')
-                        ->searchable()
+                        ->searchable(['name', 'mrn'])
                         ->preload()
                         ->required()
                         ->getOptionLabelFromRecordUsing(fn (Patient $record) => "{$record->mrn} — {$record->name}"),
