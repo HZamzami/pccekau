@@ -71,7 +71,7 @@ class MdtDiscussionResource extends Resource
         return $form->schema([
             Section::make()->schema([
                 Grid::make(2)->schema([
-                    Select::make('patient_id')
+                    Select::make('patient_id')->default(fn () => request()->integer('patient_id') ?: null)
                         ->label('Patient')
                         ->relationship('patient', 'name')
                         ->searchable(['name', 'mrn'])

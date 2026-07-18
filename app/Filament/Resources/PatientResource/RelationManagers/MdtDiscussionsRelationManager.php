@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PatientResource\RelationManagers;
 
+use App\Filament\Resources\MdtDiscussionResource;
 use App\Models\MdtDiscussion;
 use App\Models\Staff;
 use Filament\Forms\Components\DatePicker;
@@ -146,11 +147,11 @@ class MdtDiscussionsRelationManager extends RelationManager
                     ->placeholder('All'),
             ])
             ->headerActions([
-                CreateAction::make(),
+                CreateAction::make()->url(fn () => MdtDiscussionResource::getUrl('create', ['patient_id' => $this->getOwnerRecord()->getKey()]))->openUrlInNewTab(),
             ])
             ->actions([
                 ViewAction::make(),
-                EditAction::make(),
+                EditAction::make()->url(fn ($record) => MdtDiscussionResource::getUrl('edit', ['record' => $record]))->openUrlInNewTab(),
                 Action::make('pdf')
                     ->label('PDF')
                     ->icon('heroicon-o-document-arrow-down')

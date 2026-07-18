@@ -47,7 +47,7 @@ class ApprovalRequestResource extends Resource
         return [
             Section::make()->schema([
                 Grid::make(2)->schema(array_filter([
-                    $withPatient ? Select::make('patient_id')
+                    $withPatient ? Select::make('patient_id')->default(fn () => request()->integer('patient_id') ?: null)
                         ->label('Patient')
                         ->relationship('patient', 'name')
                         ->searchable(['name', 'mrn'])

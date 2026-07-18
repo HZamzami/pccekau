@@ -109,11 +109,11 @@ class ImagingReportsRelationManager extends RelationManager
                     ->options(ReportStatus::class),
             ])
             ->headerActions([
-                CreateAction::make(),
+                CreateAction::make()->url(fn () => ImagingReportResource::getUrl('create', ['patient_id' => $this->getOwnerRecord()->getKey()]))->openUrlInNewTab(),
             ])
             ->actions([
                 ViewAction::make(),
-                EditAction::make(),
+                EditAction::make()->url(fn ($record) => ImagingReportResource::getUrl('edit', ['record' => $record]))->openUrlInNewTab(),
                 ...ImagingReportResource::workflowActions(),
                 Action::make('pdf')
                     ->label('PDF')

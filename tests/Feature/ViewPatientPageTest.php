@@ -41,31 +41,47 @@ class ViewPatientPageTest extends TestCase
             ->assertSee('Clinic Visits');
     }
 
-    // Regression: a missing form-component import only blows up when the
-    // create modal renders, which page-load tests never exercise.
-    public function test_relation_manager_create_modals_open(): void
+    // Chart create buttons are links to the full-page forms (new tab, patient
+    // preselected) so composing never blocks the rest of the app.
+    public function test_relation_manager_create_actions_link_to_full_pages(): void
     {
         $doctor = User::factory()->create(['role' => UserRole::Doctor]);
         $patient = Patient::factory()->create();
 
         $managers = [
-            AdmissionsRelationManager::class,
-            ApprovalRequestsRelationManager::class,
-            ClinicVisitsRelationManager::class,
-            ImagingReportsRelationManager::class,
-            EpStudiesRelationManager::class,
-            InterventionsRelationManager::class,
-            DocumentsRelationManager::class,
+            AdmissionsRelationManager::class      => \App\Filament\Resources\AdmissionResource::class,
+            ApprovalRequestsRelationManager::class => \App\Filament\Resources\ApprovalRequestResource::class,
+            ClinicVisitsRelationManager::class    => \App\Filament\Resources\ClinicVisitResource::class,
+            ImagingReportsRelationManager::class  => \App\Filament\Resources\ImagingReportResource::class,
+            EpStudiesRelationManager::class       => \App\Filament\Resources\EpStudyResource::class,
+            InterventionsRelationManager::class   => \App\Filament\Resources\InterventionResource::class,
+            DocumentsRelationManager::class       => \App\Filament\Resources\PatientDocumentResource::class,
         ];
 
-        foreach ($managers as $manager) {
+        foreach ($managers as $manager => $resource) {
             Livewire::actingAs($doctor)
                 ->test($manager, [
                     'ownerRecord' => $patient,
                     'pageClass' => ViewPatient::class,
                 ])
-                ->mountTableAction('create')
-                ->assertSuccessful();
+                ->assertSuccessful()
+                ->assertTableActionHasUrl('create', $resource::getUrl('create', ['patient_id' => $patient->id]));
         }
+    }
+
+    public function test_create_pages_prefill_the_patient_from_the_query_string(): void
+    {
+        $doctor = User::factory()->create(['role' => UserRole::Doctor]);
+        $patient = Patient::factory()->create();
+
+        $this->actingAs($doctor)
+            ->get(\App\Filament\Resources\ClinicVisitResource::getUrl('create', ['patient_id' => $patient->id]))
+            ->assertOk()
+            ->assertSee($patient->name);
+
+        $this->actingAs($doctor)
+            ->get(\App\Filament\Resources\AdmissionResource::getUrl('create', ['patient_id' => $patient->id]))
+            ->assertOk()
+            ->assertSee($patient->name);
     }
 }

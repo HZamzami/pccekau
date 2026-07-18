@@ -69,12 +69,12 @@ class AdmissionsRelationManager extends RelationManager
                     ),
             ])
             ->headerActions([
-                CreateAction::make()
+                CreateAction::make()->url(fn () => AdmissionResource::getUrl('create', ['patient_id' => $this->getOwnerRecord()->getKey()]))->openUrlInNewTab()
                     ->label('Admit patient'),
             ])
             ->actions([
                 ViewAction::make(),
-                EditAction::make(),
+                EditAction::make()->url(fn ($record) => AdmissionResource::getUrl('edit', ['record' => $record]))->openUrlInNewTab(),
                 AdmissionResource::dischargeAction(),
                 DeleteAction::make(),
             ])
