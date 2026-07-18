@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>MDT Summary — {{ $patient->mrn }}</title>
+    <title>Case Discussion Summary — {{ $patient->mrn }}</title>
     <style>
         body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #111; margin: 24px; }
         h2 { font-size: 13px; border-bottom: 1px solid #ccc; padding-bottom: 3px; margin: 18px 0 8px; }
@@ -14,7 +14,7 @@
 <body>
     @include('pdf.partials.letterhead')
 
-    <h2>MDT Discussion Summary</h2>
+    <h2>Case Discussion Summary</h2>
     <table class="meta">
         <tr>
             <td class="label">MRN</td><td>{{ $patient->mrn }}</td>

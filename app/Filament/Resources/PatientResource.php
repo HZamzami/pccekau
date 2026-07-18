@@ -326,7 +326,7 @@ class PatientResource extends Resource
             ])
             ->defaultSort('name')
             ->emptyStateHeading('No patients yet')
-            ->emptyStateDescription('Register your first patient — their chart will hold imaging reports, clinic visits, MDT discussions, and documents.');
+            ->emptyStateDescription('Register your first patient — their chart will hold imaging reports, clinic visits, case discussions, and documents.');
     }
 
     public static function getEloquentQuery(): Builder

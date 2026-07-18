@@ -45,7 +45,7 @@ class GettingStartedWidget extends Widget
             ],
             [
                 'label' => 'Register a patient',
-                'description' => 'Each patient gets a chart holding their reports, clinic visits, MDT discussions, and documents.',
+                'description' => 'Each patient gets a chart holding their reports, clinic visits, case discussions, and documents.',
                 'done' => Patient::query()->exists(),
                 'url' => $canWrite ? '/admin/patients/create' : null,
             ],

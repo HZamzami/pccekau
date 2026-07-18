@@ -14,7 +14,7 @@ class SendDailyDigest extends Command
 {
     protected $signature = 'pccekau:daily-digest';
 
-    protected $description = 'Notify doctors and admins about due clinic follow-ups and today\'s MDT discussions';
+    protected $description = 'Notify doctors and admins about due clinic follow-ups and today\'s case discussions';
 
     public function handle(): int
     {
@@ -31,7 +31,7 @@ class SendDailyDigest extends Command
 
         $lines = array_filter([
             $dueFollowUps > 0 ? "{$dueFollowUps} clinic follow-up(s) due or overdue" : null,
-            $todayMdts > 0 ? "{$todayMdts} MDT discussion(s) scheduled today" : null,
+            $todayMdts > 0 ? "{$todayMdts} case discussion(s) scheduled today" : null,
         ]);
 
         $notification = Notification::make()
@@ -44,7 +44,7 @@ class SendDailyDigest extends Command
                     ->url('/admin/clinic-follow-ups-page')
                     ->visible($dueFollowUps > 0),
                 Action::make('mdt')
-                    ->label('MDT')
+                    ->label('Case Discussions')
                     ->url('/admin/mdt-discussions')
                     ->visible($todayMdts > 0),
             ]);
