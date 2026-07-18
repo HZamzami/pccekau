@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClinic;
 use App\Enums\ImagingType;
 use App\Enums\ReportStatus;
 use App\Models\Concerns\HasReportWorkflow;
@@ -16,7 +17,7 @@ use Spatie\Activitylog\Models\Concerns\LogsActivity;
 
 class ImagingReport extends Model
 {
-    use HasFactory, HasReportWorkflow, LogsActivity, SoftDeletes;
+    use BelongsToClinic, HasFactory, HasReportWorkflow, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'patient_id',

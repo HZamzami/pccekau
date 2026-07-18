@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClinic;
 use App\Enums\RegurgGrade;
 use App\Enums\RvFunction;
 use App\Services\ZScoreService;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class EchoMeasurement extends Model
 {
-    use HasFactory;
+    use BelongsToClinic, HasFactory;
 
     protected $fillable = [
         'imaging_report_id',
@@ -62,6 +63,12 @@ class EchoMeasurement extends Model
 
     protected static function booted(): void
     {
+        // Created through the imaging report's form, where the tenant context
+        // may be absent (e.g. nested Livewire calls) — inherit the parent's.
+        static::creating(function (EchoMeasurement $measurement) {
+            $measurement->clinic_id ??= $measurement->imagingReport?->clinic_id;
+        });
+
         // The form shows BSA as a computed placeholder; persist it so PDFs
         // and future queries have the value without recomputing.
         static::saving(function (EchoMeasurement $measurement) {

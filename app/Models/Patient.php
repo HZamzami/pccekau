@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClinic;
 use App\Enums\CardiacLesion;
 use App\Enums\PatientStatus;
 use Carbon\Carbon;
@@ -14,7 +15,7 @@ use Spatie\Activitylog\Models\Concerns\LogsActivity;
 
 class Patient extends Model
 {
-    use HasFactory, LogsActivity, SoftDeletes;
+    use BelongsToClinic, HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'mrn',

@@ -29,7 +29,7 @@ class ViewPatientPageTest extends TestCase
         ]);
 
         $this->actingAs($doctor)
-            ->get("/admin/patients/{$patient->id}")
+            ->get(\App\Filament\Resources\PatientResource::getUrl('view', ['record' => $patient]))
             ->assertOk()
             ->assertSee('Chart Test Child')
             ->assertSee('424242')

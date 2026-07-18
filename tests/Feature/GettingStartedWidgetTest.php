@@ -16,7 +16,7 @@ class GettingStartedWidgetTest extends TestCase
         $user = User::factory()->create(['role' => UserRole::Doctor]);
 
         $this->actingAs($user)
-            ->get('/admin')
+            ->get(\Filament\Pages\Dashboard::getUrl())
             ->assertOk()
             ->assertSee('Getting started with PCCEKAU');
     }
@@ -29,7 +29,7 @@ class GettingStartedWidgetTest extends TestCase
         ]);
 
         $this->actingAs($user)
-            ->get('/admin')
+            ->get(\Filament\Pages\Dashboard::getUrl())
             ->assertOk()
             ->assertDontSee('Getting started with PCCEKAU');
     }

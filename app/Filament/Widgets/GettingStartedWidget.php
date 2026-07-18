@@ -3,10 +3,15 @@
 namespace App\Filament\Widgets;
 
 use App\Enums\ReportStatus;
+use App\Filament\Resources\ImagingReportResource;
+use App\Filament\Resources\PatientResource;
+use App\Filament\Resources\StaffResource;
+use App\Filament\Resources\UserResource;
 use App\Models\ImagingReport;
 use App\Models\Patient;
 use App\Models\Staff;
 use App\Models\User;
+use Filament\Facades\Filament;
 use Filament\Widgets\Widget;
 
 class GettingStartedWidget extends Widget
@@ -41,26 +46,29 @@ class GettingStartedWidget extends Widget
                 'label' => 'Add your staff',
                 'description' => 'Consultants and fellows must exist before they can be assigned to reports, visits, and on-call schedules.',
                 'done' => Staff::query()->exists(),
-                'url' => $canWrite ? '/admin/staff/create' : null,
+                'url' => $canWrite ? StaffResource::getUrl('create') : null,
             ],
             [
                 'label' => 'Register a patient',
                 'description' => 'Each patient gets a chart holding their reports, clinic visits, case discussions, and documents.',
                 'done' => Patient::query()->exists(),
-                'url' => $canWrite ? '/admin/patients/create' : null,
+                'url' => $canWrite ? PatientResource::getUrl('create') : null,
             ],
             [
                 'label' => 'Write an imaging report',
                 'description' => 'Open a patient\'s chart (or Clinical → Imaging Reports) and create a report. Echo reports include measurements with automatic z-scores.',
                 'done' => ImagingReport::query()->exists(),
-                'url' => $canWrite ? '/admin/imaging-reports/create' : null,
+                'url' => $canWrite ? ImagingReportResource::getUrl('create') : null,
             ],
             [
                 'label' => 'Finalize a report',
                 'description' => 'Set a signing physician, then use the Finalize action. Finalized reports are locked — use Amend to correct them.',
+                // Nested where: a bare orWhere would OR past the clinic
+                // global scope and leak other clinics' reports.
                 'done' => ImagingReport::query()
-                    ->where('status', ReportStatus::Final)
-                    ->orWhereNotNull('finalized_at')
+                    ->where(fn ($query) => $query
+                        ->where('status', ReportStatus::Final)
+                        ->orWhereNotNull('finalized_at'))
                     ->exists(),
                 'url' => null,
             ],
@@ -70,8 +78,8 @@ class GettingStartedWidget extends Widget
             $steps[] = [
                 'label' => 'Add accounts for your colleagues',
                 'description' => 'Admins manage everything, doctors write clinical records, viewers are read-only.',
-                'done' => User::query()->count() > 1,
-                'url' => '/admin/users/create',
+                'done' => User::whereBelongsTo(Filament::getTenant())->count() > 1,
+                'url' => UserResource::getUrl('create'),
             ];
         }
 

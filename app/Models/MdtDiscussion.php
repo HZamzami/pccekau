@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClinic;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,7 +14,7 @@ use Spatie\Activitylog\Models\Concerns\LogsActivity;
 
 class MdtDiscussion extends Model
 {
-    use HasFactory, LogsActivity, SoftDeletes;
+    use BelongsToClinic, HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'patient_id',
