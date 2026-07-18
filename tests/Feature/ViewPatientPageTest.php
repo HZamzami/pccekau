@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\UserRole;
 use App\Filament\Resources\PatientResource\Pages\ViewPatient;
 use App\Filament\Resources\PatientResource\RelationManagers\AdmissionsRelationManager;
+use App\Filament\Resources\PatientResource\RelationManagers\ApprovalRequestsRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\ClinicVisitsRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\DocumentsRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\EpStudiesRelationManager;
@@ -49,6 +50,7 @@ class ViewPatientPageTest extends TestCase
 
         $managers = [
             AdmissionsRelationManager::class,
+            ApprovalRequestsRelationManager::class,
             ClinicVisitsRelationManager::class,
             ImagingReportsRelationManager::class,
             EpStudiesRelationManager::class,
