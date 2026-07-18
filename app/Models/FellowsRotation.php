@@ -24,7 +24,6 @@ class FellowsRotation extends Model
         'echo'      => 'Echo',
         'ep'        => 'EP',
         'cath'      => 'Cath',
-        'opd'       => 'OPD',
         'icu'       => 'ICU',
         'inpatient' => 'Inpatient',
         'research'  => 'Research',
