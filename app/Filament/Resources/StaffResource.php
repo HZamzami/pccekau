@@ -12,6 +12,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\ViewAction;
@@ -43,10 +44,7 @@ class StaffResource extends Resource
                         ->maxLength(255),
 
                     Select::make('role')
-                        ->options([
-                            'consultant' => 'Consultant',
-                            'fellow'     => 'Fellow',
-                        ])
+                        ->options(Staff::$roleLabels)
                         ->required(),
                 ]),
 
@@ -84,10 +82,16 @@ class StaffResource extends Resource
 
                 TextColumn::make('role')
                     ->badge()
+                    ->formatStateUsing(fn ($state) => Staff::$roleLabels[$state] ?? $state)
                     ->color(fn ($state) => match ($state) {
-                        'consultant' => 'info',
-                        'fellow'     => 'warning',
-                        default      => 'gray',
+                        'consultant'      => 'info',
+                        'fellow'          => 'warning',
+                        'surgeon'         => 'danger',
+                        'specialist'      => 'success',
+                        'technician'      => 'primary',
+                        'resident'        => 'warning',
+                        'medical_student' => 'gray',
+                        default           => 'gray',
                     }),
 
                 TextColumn::make('specialty')
@@ -100,10 +104,7 @@ class StaffResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('role')
-                    ->options([
-                        'consultant' => 'Consultant',
-                        'fellow'     => 'Fellow',
-                    ]),
+                    ->options(Staff::$roleLabels),
 
                 TernaryFilter::make('is_active')
                     ->label('Active'),
@@ -111,6 +112,7 @@ class StaffResource extends Resource
             ->actions([
                 ViewAction::make(),
                 EditAction::make(),
+                DeleteAction::make(),
             ])
             ->bulkActions([
                 BulkActionGroup::make([

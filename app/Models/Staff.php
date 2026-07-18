@@ -23,15 +23,23 @@ class Staff extends Model
         'is_active' => 'boolean',
     ];
 
+    public static array $roleLabels = [
+        'consultant'      => 'Consultant',
+        'fellow'          => 'Fellow',
+        'surgeon'         => 'Surgeon',
+        'specialist'      => 'Specialist',
+        'technician'      => 'Technician',
+        'resident'        => 'Resident',
+        'medical_student' => 'Medical Student',
+    ];
+
     public static array $specialtyLabels = [
-        'ep'       => 'Electrophysiology',
-        'cath'     => 'Cath / Interventional',
-        'echo'     => 'Echocardiography',
-        'icu'      => 'ICU',
-        'opd'      => 'OPD / Outpatient',
-        'achd'     => 'ACHD',
-        'imaging'  => 'Imaging',
-        'general'  => 'General',
+        'ep'               => 'Electrophysiology',
+        'cath'             => 'Cardiac Catheterization',
+        'advanced_imaging' => 'Advanced Cardiac Imaging',
+        'icu'              => 'ICU',
+        'achd'             => 'ACHD',
+        'general'          => 'General Cardiology',
     ];
 
     public function user(): BelongsTo

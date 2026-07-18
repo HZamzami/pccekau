@@ -14,7 +14,7 @@ class StaffFactory extends Factory
         return [
             'name' => 'Dr. ' . fake()->name(),
             'role' => fake()->randomElement(['consultant', 'fellow']),
-            'specialty' => fake()->randomElement(['ep', 'cath', 'echo', 'imaging', 'general']),
+            'specialty' => fake()->randomElement(['ep', 'cath', 'advanced_imaging', 'general']),
             'is_active' => true,
         ];
     }
