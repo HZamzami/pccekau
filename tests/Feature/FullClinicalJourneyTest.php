@@ -28,7 +28,7 @@ class FullClinicalJourneyTest extends TestCase
         // 1. Department setup
         $admin = User::factory()->create(['role' => UserRole::Admin]);
         $doctor = User::factory()->create(['role' => UserRole::Doctor]);
-        $reader = Staff::factory()->create(['role' => 'consultant', 'specialty' => 'imaging']);
+        $reader = Staff::factory()->create(['role' => 'consultant', 'specialty' => 'advanced_imaging']);
         $this->actingAs($doctor);
 
         // 2. Register a patient with structured lesions
