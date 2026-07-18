@@ -112,7 +112,7 @@ class ImagingReportResource extends Resource
                     ]),
 
                     Placeholder::make('mdt_display')
-                        ->label('Presented at MDT')
+                        ->label('Presented at Case Discussion')
                         ->content(fn (ImagingReport $record) => $record->mdtDiscussions
                             ->map(fn ($mdt) => $mdt->discussion_date->format('d M Y'))
                             ->join(', '))
@@ -171,7 +171,7 @@ class ImagingReportResource extends Resource
                     ->placeholder('—'),
 
                 TextColumn::make('mdt_discussions_count')
-                    ->label('MDT')
+                    ->label('Case Discussions')
                     ->counts('mdtDiscussions')
                     ->badge()
                     ->color('gray'),

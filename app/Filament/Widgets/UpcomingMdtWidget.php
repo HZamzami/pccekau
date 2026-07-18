@@ -15,7 +15,7 @@ class UpcomingMdtWidget extends BaseWidget
 
     protected int|string|array $columnSpan = 'full';
 
-    protected static ?string $heading = 'Upcoming MDT Discussions';
+    protected static ?string $heading = 'Upcoming Case Discussions';
 
     public function table(Table $table): Table
     {

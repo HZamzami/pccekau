@@ -16,6 +16,7 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
@@ -25,7 +26,9 @@ use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\ViewAction;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
 class MdtDiscussionResource extends Resource
@@ -37,6 +40,10 @@ class MdtDiscussionResource extends Resource
     protected static ?string $navigationGroup = 'Clinical';
 
     protected static ?int $navigationSort = 5;
+
+    protected static ?string $modelLabel = 'Case Discussion';
+
+    protected static ?string $pluralModelLabel = 'Case Discussions';
 
     protected static ?string $recordTitleAttribute = 'diagnosis';
 
@@ -158,6 +165,11 @@ class MdtDiscussionResource extends Resource
             ]),
 
             Section::make('Discussion Outcome')->schema([
+                Toggle::make('discussed')
+                    ->label('Discussed')
+                    ->helperText('Mark once the case has been presented and discussed.')
+                    ->default(false),
+
                 Textarea::make('discussion_results')
                     ->label('Discussion Results')
                     ->rows(4)
@@ -204,6 +216,17 @@ class MdtDiscussionResource extends Resource
                     ->label('Results')
                     ->limit(40)
                     ->tooltip(fn (TextColumn $column): ?string => strlen((string) $column->getState()) > 40 ? $column->getState() : null),
+
+                IconColumn::make('discussed')
+                    ->label('Discussed')
+                    ->boolean(),
+            ])
+            ->filters([
+                TernaryFilter::make('discussed')
+                    ->label('Discussed')
+                    ->trueLabel('Discussed')
+                    ->falseLabel('Not discussed yet')
+                    ->placeholder('All'),
             ])
             ->actions([
                 ViewAction::make(),
