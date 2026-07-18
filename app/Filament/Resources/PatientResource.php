@@ -118,9 +118,6 @@ class PatientResource extends Resource
                             ->formatStateUsing(fn ($state) => $state . ' cm')
                             ->placeholder('—'),
 
-                    ]),
-
-                    InfolistGrid::make(4)->schema([
                         TextEntry::make('blood_type')
                             ->label('Blood type')
                             ->placeholder('Not known'),
@@ -207,7 +204,7 @@ class PatientResource extends Resource
             ]),
 
             Section::make('Clinical Baseline')->schema([
-                Grid::make(3)->schema([
+                Grid::make(2)->schema([
                     TextInput::make('weight_kg')
                         ->label('Weight (kg)')
                         ->numeric()
