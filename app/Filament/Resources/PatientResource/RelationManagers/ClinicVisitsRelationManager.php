@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PatientResource\RelationManagers;
 
+use App\Filament\Resources\ClinicVisitResource;
 use App\Models\ClinicVisit;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
@@ -142,11 +143,11 @@ class ClinicVisitsRelationManager extends RelationManager
                     }),
             ])
             ->headerActions([
-                CreateAction::make(),
+                CreateAction::make()->url(fn () => ClinicVisitResource::getUrl('create', ['patient_id' => $this->getOwnerRecord()->getKey()]))->openUrlInNewTab(),
             ])
             ->actions([
                 ViewAction::make(),
-                EditAction::make(),
+                EditAction::make()->url(fn ($record) => ClinicVisitResource::getUrl('edit', ['record' => $record]))->openUrlInNewTab(),
                 DeleteAction::make(),
             ])
             ->bulkActions([

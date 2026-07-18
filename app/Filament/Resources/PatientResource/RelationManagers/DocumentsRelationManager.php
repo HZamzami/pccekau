@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PatientResource\RelationManagers;
 
+use App\Filament\Resources\PatientDocumentResource;
 use App\Models\PatientDocument;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
@@ -86,11 +87,11 @@ class DocumentsRelationManager extends RelationManager
                     ->options(PatientDocument::$categoryLabels),
             ])
             ->headerActions([
-                CreateAction::make(),
+                CreateAction::make()->url(fn () => PatientDocumentResource::getUrl('create', ['patient_id' => $this->getOwnerRecord()->getKey()]))->openUrlInNewTab(),
             ])
             ->actions([
                 ViewAction::make(),
-                EditAction::make(),
+                EditAction::make()->url(fn ($record) => PatientDocumentResource::getUrl('edit', ['record' => $record]))->openUrlInNewTab(),
                 Action::make('download')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->form(fn (PatientDocument $record) => [

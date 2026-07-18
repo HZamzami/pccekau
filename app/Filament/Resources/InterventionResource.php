@@ -38,7 +38,7 @@ class InterventionResource extends Resource
     {
         return $form->schema([
             Section::make()->schema([
-                Select::make('patient_id')
+                Select::make('patient_id')->default(fn () => request()->integer('patient_id') ?: null)
                     ->label('Patient')
                     ->relationship('patient', 'name')
                     ->searchable(['name', 'mrn'])

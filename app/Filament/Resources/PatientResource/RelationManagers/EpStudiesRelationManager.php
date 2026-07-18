@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\PatientResource\RelationManagers;
 
+use App\Filament\Resources\EpStudyResource;
 use App\Enums\EpStudyType;
 use App\Enums\ReportStatus;
 use App\Filament\Actions\ReportWorkflowActions;
@@ -103,11 +104,11 @@ class EpStudiesRelationManager extends RelationManager
                     ->options(ReportStatus::class),
             ])
             ->headerActions([
-                CreateAction::make(),
+                CreateAction::make()->url(fn () => EpStudyResource::getUrl('create', ['patient_id' => $this->getOwnerRecord()->getKey()]))->openUrlInNewTab(),
             ])
             ->actions([
                 ViewAction::make(),
-                EditAction::make(),
+                EditAction::make()->url(fn ($record) => EpStudyResource::getUrl('edit', ['record' => $record]))->openUrlInNewTab(),
                 ...ReportWorkflowActions::make(),
                 DeleteAction::make(),
             ])

@@ -59,11 +59,11 @@ class InterventionsRelationManager extends RelationManager
                     ->options(InterventionType::class),
             ])
             ->headerActions([
-                CreateAction::make(),
+                CreateAction::make()->url(fn () => InterventionResource::getUrl('create', ['patient_id' => $this->getOwnerRecord()->getKey()]))->openUrlInNewTab(),
             ])
             ->actions([
                 ViewAction::make(),
-                EditAction::make(),
+                EditAction::make()->url(fn ($record) => InterventionResource::getUrl('edit', ['record' => $record]))->openUrlInNewTab(),
                 DeleteAction::make(),
             ])
             ->bulkActions([

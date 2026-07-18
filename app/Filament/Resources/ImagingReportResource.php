@@ -61,7 +61,7 @@ class ImagingReportResource extends Resource
                 ->disabled(fn (?ImagingReport $record) => $record?->isLocked() ?? false)
                 ->schema([
                     Grid::make(2)->schema([
-                        Select::make('patient_id')
+                        Select::make('patient_id')->default(fn () => request()->integer('patient_id') ?: null)
                             ->label('Patient')
                             ->relationship('patient', 'name')
                             ->searchable(['name', 'mrn'])

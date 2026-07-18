@@ -63,12 +63,12 @@ class ApprovalRequestsRelationManager extends RelationManager
                     ->options(ApprovalProcedure::class),
             ])
             ->headerActions([
-                CreateAction::make()
+                CreateAction::make()->url(fn () => ApprovalRequestResource::getUrl('create', ['patient_id' => $this->getOwnerRecord()->getKey()]))->openUrlInNewTab()
                     ->label('Request approval'),
             ])
             ->actions([
                 ViewAction::make(),
-                EditAction::make(),
+                EditAction::make()->url(fn ($record) => ApprovalRequestResource::getUrl('edit', ['record' => $record]))->openUrlInNewTab(),
                 ApprovalRequestResource::approveAction(),
                 ApprovalRequestResource::rejectAction(),
                 DeleteAction::make(),
