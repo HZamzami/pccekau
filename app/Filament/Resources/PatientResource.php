@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\PatientResource\Pages;
 use App\Filament\Resources\PatientResource\RelationManagers\AdmissionsRelationManager;
+use App\Filament\Resources\PatientResource\RelationManagers\ApprovalRequestsRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\ClinicVisitsRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\DocumentsRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\EpStudiesRelationManager;
@@ -349,6 +350,7 @@ class PatientResource extends Resource
             InterventionsRelationManager::class,
             ClinicVisitsRelationManager::class,
             AdmissionsRelationManager::class,
+            ApprovalRequestsRelationManager::class,
             MdtDiscussionsRelationManager::class,
             DocumentsRelationManager::class,
         ];

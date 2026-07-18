@@ -107,6 +107,31 @@ class MultiTenancyTest extends TestCase
         Patient::factory()->create(['mrn' => 'MRN-1']);
     }
 
+    // Regression: Filament associates records created through resource
+    // create pages via Clinic relationships (e.g. Clinic::patients()) —
+    // factories and relation managers don't exercise that path.
+    public function test_resource_create_pages_associate_the_tenant(): void
+    {
+        $doctor = User::factory()->create(['role' => UserRole::Doctor]);
+
+        Livewire::actingAs($doctor)
+            ->test(\App\Filament\Resources\PatientResource\Pages\CreatePatient::class)
+            ->fillForm([
+                'mrn'           => 'TEN-1',
+                'name'          => 'Tenant Association Check',
+                'date_of_birth' => now()->subYears(3)->toDateString(),
+                'gender'        => 'male',
+                'status'        => 'active',
+            ])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame(
+            $this->clinic->id,
+            Patient::where('mrn', 'TEN-1')->first()->clinic_id,
+        );
+    }
+
     public function test_daily_digest_is_isolated_per_clinic(): void
     {
         $doctorA = User::factory()->create(['role' => UserRole::Doctor]);
