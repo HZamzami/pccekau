@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\UserRole;
 use App\Filament\Resources\PatientResource\Pages\ViewPatient;
+use App\Filament\Resources\PatientResource\RelationManagers\AdmissionsRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\ClinicVisitsRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\DocumentsRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\EpStudiesRelationManager;
@@ -47,6 +48,7 @@ class ViewPatientPageTest extends TestCase
         $patient = Patient::factory()->create();
 
         $managers = [
+            AdmissionsRelationManager::class,
             ClinicVisitsRelationManager::class,
             ImagingReportsRelationManager::class,
             EpStudiesRelationManager::class,
