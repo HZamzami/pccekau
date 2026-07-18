@@ -162,7 +162,11 @@ class PatientResource extends Resource
                     TextInput::make('mrn')
                         ->label('MRN')
                         ->required()
-                        ->unique(ignoreRecord: true)
+                        // MRNs are per-clinic identifiers; DB enforces unique(clinic_id, mrn)
+                        ->unique(
+                            ignoreRecord: true,
+                            modifyRuleUsing: fn ($rule) => $rule->where('clinic_id', \Filament\Facades\Filament::getTenant()->getKey()),
+                        )
                         ->maxLength(50),
 
                     TextInput::make('name')

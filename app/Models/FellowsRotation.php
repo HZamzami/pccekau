@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClinic;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class FellowsRotation extends Model
 {
+    use BelongsToClinic;
+
     protected $fillable = [
         'block_number',
         'start_date',

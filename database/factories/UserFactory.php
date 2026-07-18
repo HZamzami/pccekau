@@ -2,7 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Models\Clinic;
 use App\Models\User;
+use Filament\Facades\Filament;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -30,6 +32,9 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            // Join the current tenant when one is set (tests), otherwise
+            // spin up an own clinic.
+            'clinic_id' => fn () => Filament::getTenant()?->getKey() ?? Clinic::factory(),
         ];
     }
 

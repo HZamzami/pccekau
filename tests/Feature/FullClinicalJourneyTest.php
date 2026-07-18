@@ -89,7 +89,7 @@ class FullClinicalJourneyTest extends TestCase
         $this->assertSame(1, $admin->notifications()->count());
 
         // 8. Chart page and printable artifacts
-        $this->get("/admin/patients/{$patient->id}")->assertOk()->assertSee('TOF');
+        $this->get(\App\Filament\Resources\PatientResource::getUrl('view', ['record' => $patient]))->assertOk()->assertSee('TOF');
         $this->get(route('patients.summary-pdf', $patient))->assertOk()->assertHeader('content-type', 'application/pdf');
         $this->get(route('imaging-reports.pdf', $report))->assertOk();
         $this->get(route('mdt-discussions.pdf', $mdt))->assertOk();

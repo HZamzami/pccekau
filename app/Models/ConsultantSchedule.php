@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClinic;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ConsultantSchedule extends Model
 {
+    use BelongsToClinic;
+
     protected $fillable = [
         'week_start',
         'hijri_date',

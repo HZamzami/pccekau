@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClinic;
 use App\Enums\EpStudyType;
 use App\Enums\ReportStatus;
 use App\Models\Concerns\HasReportWorkflow;
@@ -14,7 +15,7 @@ use Spatie\Activitylog\Support\LogOptions;
 
 class EpStudy extends Model
 {
-    use HasFactory, HasReportWorkflow, LogsActivity, SoftDeletes;
+    use BelongsToClinic, HasFactory, HasReportWorkflow, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'patient_id',

@@ -5,7 +5,10 @@ namespace App\Policies\Concerns;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
-// Shared shape for clinical records: everyone reads, doctors write, admins delete.
+// Shared shape for clinical records: everyone reads, doctors write, admins
+// delete — always within their own clinic. The same-clinic check is defense
+// in depth on top of the BelongsToClinic global scope; it is what protects
+// the non-panel routes (PDF downloads) if a record ever escapes the scope.
 trait AuthorizesClinicalRecords
 {
     public function viewAny(User $user): bool
@@ -15,7 +18,7 @@ trait AuthorizesClinicalRecords
 
     public function view(User $user, Model $model): bool
     {
-        return true;
+        return $this->sameClinic($user, $model);
     }
 
     public function create(User $user): bool
@@ -25,12 +28,12 @@ trait AuthorizesClinicalRecords
 
     public function update(User $user, Model $model): bool
     {
-        return $user->canWrite();
+        return $user->canWrite() && $this->sameClinic($user, $model);
     }
 
     public function delete(User $user, Model $model): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin() && $this->sameClinic($user, $model);
     }
 
     public function deleteAny(User $user): bool
@@ -40,11 +43,16 @@ trait AuthorizesClinicalRecords
 
     public function restore(User $user, Model $model): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin() && $this->sameClinic($user, $model);
     }
 
     public function forceDelete(User $user, Model $model): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin() && $this->sameClinic($user, $model);
+    }
+
+    protected function sameClinic(User $user, Model $model): bool
+    {
+        return $user->clinic_id !== null && $user->clinic_id === $model->clinic_id;
     }
 }

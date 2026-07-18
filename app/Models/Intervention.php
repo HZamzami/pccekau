@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClinic;
 use App\Enums\InterventionType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +13,7 @@ use Spatie\Activitylog\Support\LogOptions;
 
 class Intervention extends Model
 {
-    use HasFactory, LogsActivity, SoftDeletes;
+    use BelongsToClinic, HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'patient_id',

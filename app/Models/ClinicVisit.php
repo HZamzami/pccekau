@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToClinic;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +13,7 @@ use Spatie\Activitylog\Models\Concerns\LogsActivity;
 
 class ClinicVisit extends Model
 {
-    use HasFactory, LogsActivity, SoftDeletes;
+    use BelongsToClinic, HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'patient_id',

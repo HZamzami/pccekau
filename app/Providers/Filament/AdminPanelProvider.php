@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Auth\Register;
 use App\Filament\Widgets\GettingStartedWidget;
 use App\Filament\Widgets\PatientSearchWidget;
 use App\Filament\Widgets\TodayOncallWidget;
@@ -10,6 +11,7 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use App\Models\Clinic;
 use Filament\Navigation\NavigationGroup;
 use Filament\Pages;
 use Filament\Panel;
@@ -32,6 +34,12 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->registration(Register::class)
+            ->emailVerification()
+            ->passwordReset()
+
+            // Multi-tenancy: each clinic is an isolated workspace
+            ->tenant(Clinic::class, slugAttribute: 'slug')
 
             // Branding
             ->brandName('PCCEKAU')

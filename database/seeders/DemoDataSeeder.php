@@ -4,17 +4,23 @@ namespace Database\Seeders;
 
 use App\Enums\ImagingType;
 use App\Enums\ReportStatus;
+use App\Models\Clinic;
 use App\Models\ClinicVisit;
 use App\Models\ImagingReport;
 use App\Models\MdtDiscussion;
 use App\Models\Patient;
 use App\Models\Staff;
+use Filament\Facades\Filament;
 use Illuminate\Database\Seeder;
 
 class DemoDataSeeder extends Seeder
 {
     public function run(): void
     {
+        // Seeding runs in console where no tenant is bound; pick the first
+        // clinic (or create a demo one) so clinic_id auto-fills.
+        Filament::setTenant(Clinic::first() ?? Clinic::factory()->create(['name' => 'Demo Clinic', 'slug' => 'demo']), isQuiet: true);
+
         $consultants = Staff::factory()->count(5)->create(['role' => 'consultant']);
         $fellows = Staff::factory()->count(4)->create(['role' => 'fellow']);
         $allStaff = $consultants->concat($fellows);

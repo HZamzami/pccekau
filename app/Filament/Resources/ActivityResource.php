@@ -3,7 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ActivityResource\Pages;
+use Filament\Facades\Filament;
 use Filament\Resources\Resource;
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -21,6 +23,16 @@ class ActivityResource extends Resource
     protected static ?string $navigationLabel = 'Activity Log';
 
     protected static ?int $navigationSort = 1;
+
+    // Spatie's Activity model has no clinic() relationship, so Filament's
+    // automatic tenant scoping can't apply — scope by column instead.
+    protected static bool $isScopedToTenant = false;
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->where('clinic_id', Filament::getTenant()?->getKey());
+    }
 
     public static function canViewAny(): bool
     {

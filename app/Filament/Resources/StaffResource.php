@@ -62,7 +62,11 @@ class StaffResource extends Resource
 
                 Select::make('user_id')
                     ->label('Login account')
-                    ->relationship('user', 'name')
+                    ->relationship(
+                        'user',
+                        'name',
+                        modifyQueryUsing: fn ($query) => $query->whereBelongsTo(\Filament\Facades\Filament::getTenant()),
+                    )
                     ->searchable()
                     ->preload()
                     ->nullable()

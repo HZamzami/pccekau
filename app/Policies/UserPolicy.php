@@ -13,7 +13,7 @@ class UserPolicy
 
     public function view(User $user, User $model): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin() && $this->sameClinic($user, $model);
     }
 
     public function create(User $user): bool
@@ -23,17 +23,22 @@ class UserPolicy
 
     public function update(User $user, User $model): bool
     {
-        return $user->isAdmin();
+        return $user->isAdmin() && $this->sameClinic($user, $model);
     }
 
     public function delete(User $user, User $model): bool
     {
         // Admins can't delete their own account from the panel.
-        return $user->isAdmin() && $user->isNot($model);
+        return $user->isAdmin() && $user->isNot($model) && $this->sameClinic($user, $model);
     }
 
     public function deleteAny(User $user): bool
     {
         return $user->isAdmin();
+    }
+
+    private function sameClinic(User $user, User $model): bool
+    {
+        return $user->clinic_id !== null && $user->clinic_id === $model->clinic_id;
     }
 }
