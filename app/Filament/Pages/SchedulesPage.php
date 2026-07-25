@@ -62,7 +62,6 @@ class SchedulesPage extends Page implements HasTable
                     ->sortable()
                     ->color(fn (OncallSchedule $r) => $r->week_start->isSameWeek(now()) ? 'primary' : null),
 
-                TextColumn::make('hijri_date_range')->label('Hijri'),
                 TextColumn::make('clinicStaff.name')->label('Clinic'),
                 TextColumn::make('inpatientStaff.name')->label('Inpatient'),
                 TextColumn::make('consultationStaff.name')->label('Consultation'),
@@ -91,7 +90,6 @@ class SchedulesPage extends Page implements HasTable
                     ->sortable()
                     ->color(fn (ConsultantSchedule $r) => $r->week_start->isSameWeek(now()) ? 'primary' : null),
 
-                TextColumn::make('hijri_date')->label('Hijri'),
                 TextColumn::make('serviceStaff.name')->label('Service'),
                 TextColumn::make('cathStaff.name')->label('Cath'),
                 TextColumn::make('epStaff.name')->label('EP'),

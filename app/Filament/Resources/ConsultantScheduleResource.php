@@ -10,7 +10,6 @@ use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\BulkActionGroup;
@@ -36,15 +35,9 @@ class ConsultantScheduleResource extends Resource
     {
         return $form->schema([
             Section::make('Week')->schema([
-                Grid::make(2)->schema([
-                    DatePicker::make('week_start')
-                        ->label('Week Start (Sunday)')
-                        ->required(),
-
-                    TextInput::make('hijri_date')
-                        ->label('Hijri Date')
-                        ->placeholder('e.g. 1/7/1447'),
-                ]),
+                DatePicker::make('week_start')
+                    ->label('Week Start (Sunday)')
+                    ->required(),
             ]),
 
             Section::make('Consultant Assignments')->schema([
@@ -75,9 +68,6 @@ class ConsultantScheduleResource extends Resource
                     ->label('Week Start')
                     ->date()
                     ->sortable(),
-
-                TextColumn::make('hijri_date')
-                    ->label('Hijri'),
 
                 TextColumn::make('serviceStaff.name')->label('Service'),
                 TextColumn::make('cathStaff.name')->label('Cath'),
