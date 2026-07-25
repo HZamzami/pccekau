@@ -29,43 +29,52 @@
                 @php $current = $this->getCurrentOncall() @endphp
                 @if ($current)
                     <x-filament::section
-                        heading="This Week — {{ $current->week_start->format('d M Y') }}{{ $current->hijri_date_range ? ' · ' . $current->hijri_date_range : '' }}"
+                        heading="Specialists/Fellows Weekly Coverage — {{ $current->week_start->format('d M Y') }}{{ $current->hijri_date_range ? ' · ' . $current->hijri_date_range : '' }}"
                     >
-                        <div class="grid grid-cols-3 gap-3 sm:grid-cols-6 mb-4">
-                            @foreach ([
-                                'On-Call Today' => $current->today_oncall,
-                                'Service'       => $current->serviceStaff?->name,
-                                'Cath'          => $current->cathStaff?->name,
-                                'EP'            => $current->epStaff?->name,
-                                'Clinic'        => $current->clinicStaff?->name,
-                                'Inpatient'     => $current->inpatientStaff?->name,
-                            ] as $role => $doctor)
-                                <div class="rounded-xl border border-gray-200 dark:border-white/10 p-3 text-center">
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ $role }}</p>
-                                    <p class="text-sm font-semibold text-gray-900 dark:text-white mt-1">{{ $doctor ?: '—' }}</p>
-                                </div>
-                            @endforeach
-                        </div>
+                        @php
+                            $days = [
+                                'Sunday'    => $current->oncallSundayStaff?->name,
+                                'Monday'    => $current->oncallMondayStaff?->name,
+                                'Tuesday'   => $current->oncallTuesdayStaff?->name,
+                                'Wednesday' => $current->oncallWednesdayStaff?->name,
+                                'Thursday'  => $current->oncallThursdayStaff?->name,
+                                'Friday'    => $current->oncallFridayStaff?->name,
+                                'Saturday'  => $current->oncallSaturdayStaff?->name,
+                            ];
+                            $roles = [
+                                'Clinic'       => $current->clinicStaff?->name,
+                                'Inpatient'    => $current->inpatientStaff?->name,
+                                'Consultation' => $current->consultationStaff?->name,
+                                'Cath'         => $current->cathStaff?->name,
+                            ];
+                            $today = now()->format('l');
+                        @endphp
 
-                        <div class="grid grid-cols-7 gap-2 text-center text-sm">
-                            @foreach ([
-                                'Sun' => $current->oncallSundayStaff?->name,
-                                'Mon' => $current->oncallMondayStaff?->name,
-                                'Tue' => $current->oncallTuesdayStaff?->name,
-                                'Wed' => $current->oncallWednesdayStaff?->name,
-                                'Thu' => $current->oncallThursdayStaff?->name,
-                                'Fri' => $current->oncallFridayStaff?->name,
-                                'Sat' => $current->oncallSaturdayStaff?->name,
-                            ] as $day => $doctor)
-                                <div @class([
-                                    'rounded-lg border p-2',
-                                    'border-primary-400 bg-primary-50 dark:bg-primary-900/20' => strtolower(now()->format('D')) === strtolower($day),
-                                    'border-gray-200 dark:border-white/10' => strtolower(now()->format('D')) !== strtolower($day),
-                                ])>
-                                    <p class="text-xs text-gray-500 font-medium">{{ $day }}</p>
-                                    <p class="font-semibold text-gray-900 dark:text-white text-xs mt-1">{{ $doctor ?: '—' }}</p>
-                                </div>
-                            @endforeach
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm border-collapse">
+                                <thead>
+                                    <tr class="border-b border-gray-200 dark:border-white/10 text-xs text-gray-500 uppercase tracking-wide">
+                                        <th class="py-2 pr-4 text-left font-medium"></th>
+                                        @foreach (array_keys($roles) as $role)
+                                            <th class="py-2 pr-4 text-left font-medium">{{ $role }}</th>
+                                        @endforeach
+                                        <th class="py-2 pr-4 text-left font-medium">On-Call</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100 dark:divide-white/5">
+                                    @foreach ($days as $day => $oncall)
+                                        <tr @class([
+                                            'bg-primary-50 dark:bg-primary-900/20' => $today === $day,
+                                        ])>
+                                            <td class="py-2.5 pr-4 font-semibold text-gray-900 dark:text-white">{{ $day }}</td>
+                                            @foreach ($roles as $doctor)
+                                                <td class="py-2.5 pr-4 text-gray-700 dark:text-gray-200">{{ $doctor ?: '—' }}</td>
+                                            @endforeach
+                                            <td class="py-2.5 pr-4 font-semibold text-gray-900 dark:text-white">{{ $oncall ?: '—' }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
 
                         @if ($current->notes)
