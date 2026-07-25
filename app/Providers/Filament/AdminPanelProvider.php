@@ -35,7 +35,6 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->registration(Register::class)
-            ->emailVerification()
             ->passwordReset()
 
             // Multi-tenancy: each clinic is an isolated workspace
