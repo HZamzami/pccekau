@@ -13,7 +13,6 @@ class ConsultantSchedule extends Model
 
     protected $fillable = [
         'week_start',
-        'hijri_date',
         'service_staff_id',
         'cath_staff_id',
         'ep_staff_id',
@@ -24,9 +23,20 @@ class ConsultantSchedule extends Model
         'week_start' => 'date',
     ];
 
-    public function serviceStaff(): BelongsTo { return $this->belongsTo(Staff::class, 'service_staff_id'); }
-    public function cathStaff(): BelongsTo    { return $this->belongsTo(Staff::class, 'cath_staff_id'); }
-    public function epStaff(): BelongsTo      { return $this->belongsTo(Staff::class, 'ep_staff_id'); }
+    public function serviceStaff(): BelongsTo
+    {
+        return $this->belongsTo(Staff::class, 'service_staff_id');
+    }
+
+    public function cathStaff(): BelongsTo
+    {
+        return $this->belongsTo(Staff::class, 'cath_staff_id');
+    }
+
+    public function epStaff(): BelongsTo
+    {
+        return $this->belongsTo(Staff::class, 'ep_staff_id');
+    }
 
     public static function currentWeek(): ?self
     {

@@ -29,7 +29,7 @@
                 @php $current = $this->getCurrentOncall() @endphp
                 @if ($current)
                     <x-filament::section
-                        heading="Specialists/Fellows Weekly Coverage — {{ $current->week_start->format('d M Y') }}{{ $current->hijri_date_range ? ' · ' . $current->hijri_date_range : '' }}"
+                        heading="Specialists/Fellows Weekly Coverage — {{ $current->week_start->format('d M Y') }}"
                     >
                         @php
                             $days = [

@@ -13,7 +13,6 @@ class OncallSchedule extends Model
 
     protected $fillable = [
         'week_start',
-        'hijri_date_range',
         'clinic_staff_id',
         'inpatient_staff_id',
         'consultation_staff_id',
