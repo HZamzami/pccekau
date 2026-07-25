@@ -4,7 +4,6 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\PatientDocumentResource\Pages;
 use App\Models\Patient;
-use App\Filament\Resources\PatientResource;
 use App\Models\PatientDocument;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
@@ -144,9 +143,9 @@ class PatientDocumentResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListPatientDocuments::route('/'),
+            'index' => Pages\ListPatientDocuments::route('/'),
             'create' => Pages\CreatePatientDocument::route('/create'),
-            'edit'   => Pages\EditPatientDocument::route('/{record}/edit'),
+            'edit' => Pages\EditPatientDocument::route('/{record}/edit'),
         ];
     }
 }
