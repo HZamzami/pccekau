@@ -2,16 +2,16 @@
 
 namespace App\Models;
 
-use App\Models\Concerns\BelongsToClinic;
 use App\Enums\CardiacLesion;
 use App\Enums\PatientStatus;
+use App\Models\Concerns\BelongsToClinic;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class Patient extends Model
 {
@@ -23,12 +23,10 @@ class Patient extends Model
         'date_of_birth',
         'gender',
         'nationality',
-        'blood_type',
         'weight_kg',
         'height_cm',
         'primary_diagnosis',
         'lesions',
-        'surgical_history',
         'current_plan',
         'contact_number',
         'referring_physician',
@@ -79,12 +77,13 @@ class Patient extends Model
     // Reusable static so MdtDiscussion can call it with a different reference date
     public static function computeAgeLabel(Carbon $dob, Carbon $referenceDate): string
     {
-        $years  = (int) $dob->diffInYears($referenceDate);
+        $years = (int) $dob->diffInYears($referenceDate);
         $months = (int) $dob->copy()->addYears($years)->diffInMonths($referenceDate);
 
         if ($years === 0 && $months === 0) {
             $days = (int) $dob->diffInDays($referenceDate);
-            return $days . ' ' . ($days === 1 ? 'day' : 'days');
+
+            return $days.' '.($days === 1 ? 'day' : 'days');
         }
 
         if ($years === 0) {

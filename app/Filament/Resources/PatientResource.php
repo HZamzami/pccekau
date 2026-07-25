@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\CardiacLesion;
+use App\Enums\PatientStatus;
 use App\Filament\Resources\PatientResource\Pages;
 use App\Filament\Resources\PatientResource\RelationManagers\AdmissionsRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\ApprovalRequestsRelationManager;
@@ -9,13 +11,11 @@ use App\Filament\Resources\PatientResource\RelationManagers\ClinicVisitsRelation
 use App\Filament\Resources\PatientResource\RelationManagers\DocumentsRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\EpStudiesRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\ImagingReportsRelationManager;
-use App\Filament\Resources\PatientResource\RelationManagers\MdtDiscussionsRelationManager;
-use App\Enums\CardiacLesion;
-use App\Enums\PatientStatus;
 use App\Filament\Resources\PatientResource\RelationManagers\InterventionsRelationManager;
+use App\Filament\Resources\PatientResource\RelationManagers\MdtDiscussionsRelationManager;
 use App\Models\Patient;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
-use Illuminate\Database\Eloquent\Model;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
@@ -39,6 +39,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class PatientResource extends Resource
@@ -72,8 +73,8 @@ class PatientResource extends Resource
     public static function getGlobalSearchResultDetails(Model $record): array
     {
         return [
-            'MRN'    => $record->mrn,
-            'Age'    => $record->age,
+            'MRN' => $record->mrn,
+            'Age' => $record->age,
             'Status' => $record->status?->getLabel() ?? '',
         ];
     }
@@ -112,17 +113,13 @@ class PatientResource extends Resource
 
                         TextEntry::make('weight_kg')
                             ->label('Weight')
-                            ->formatStateUsing(fn ($state) => $state . ' kg')
+                            ->formatStateUsing(fn ($state) => $state.' kg')
                             ->placeholder('—'),
 
                         TextEntry::make('height_cm')
                             ->label('Height')
-                            ->formatStateUsing(fn ($state) => $state . ' cm')
+                            ->formatStateUsing(fn ($state) => $state.' cm')
                             ->placeholder('—'),
-
-                        TextEntry::make('blood_type')
-                            ->label('Blood type')
-                            ->placeholder('Not known'),
 
                         TextEntry::make('nationality')
                             ->placeholder('—'),
@@ -137,19 +134,19 @@ class PatientResource extends Resource
                     ]),
 
                     TextEntry::make('lesions')
-                        ->label('Cardiac lesions')
+                        ->label('Cardiac diagnosis')
                         ->badge()
                         ->formatStateUsing(fn (string $state) => CardiacLesion::tryFrom($state)?->getLabel() ?? $state)
                         ->placeholder('None recorded')
                         ->columnSpanFull(),
 
                     TextEntry::make('primary_diagnosis')
-                        ->label('Primary diagnosis')
+                        ->label('Non cardiac diagnosis')
                         ->placeholder('—')
                         ->columnSpanFull(),
 
                     TextEntry::make('current_plan')
-                        ->label('Current plan')
+                        ->label('Summary & Current Plan')
                         ->placeholder('—')
                         ->columnSpanFull(),
                 ]),
@@ -167,7 +164,7 @@ class PatientResource extends Resource
                         // MRNs are per-clinic identifiers; DB enforces unique(clinic_id, mrn)
                         ->unique(
                             ignoreRecord: true,
-                            modifyRuleUsing: fn ($rule) => $rule->where('clinic_id', \Filament\Facades\Filament::getTenant()->getKey()),
+                            modifyRuleUsing: fn ($rule) => $rule->where('clinic_id', Filament::getTenant()->getKey()),
                         )
                         ->maxLength(50),
 
@@ -191,12 +188,7 @@ class PatientResource extends Resource
                         ->options(self::nationalities()),
                 ]),
 
-                Grid::make(3)->schema([
-                    Select::make('blood_type')
-                        ->options(['A+' => 'A+', 'A-' => 'A−', 'B+' => 'B+', 'B-' => 'B−', 'AB+' => 'AB+', 'AB-' => 'AB−', 'O+' => 'O+', 'O-' => 'O−'])
-                        ->placeholder('Not known')
-                        ->nullable(),
-
+                Grid::make(2)->schema([
                     TextInput::make('contact_number')
                         ->tel()
                         ->placeholder('+966 5X XXX XXXX'),
@@ -230,24 +222,22 @@ class PatientResource extends Resource
                 ]),
 
                 Select::make('lesions')
-                    ->label('Cardiac lesions')
+                    ->label('Cardiac diagnosis')
                     ->multiple()
                     ->options(CardiacLesion::class)
                     ->searchable()
                     ->columnSpanFull(),
 
                 Textarea::make('primary_diagnosis')
+                    ->label('Non cardiac diagnosis')
                     ->rows(2)
                     ->columnSpanFull(),
             ]),
 
-            Section::make('History & Plan')->schema([
-                Textarea::make('surgical_history')
-                    ->rows(3)
-                    ->columnSpanFull(),
-
+            Section::make('Summary')->schema([
                 Textarea::make('current_plan')
-                    ->rows(3)
+                    ->label('Summary & Current Plan')
+                    ->rows(4)
                     ->columnSpanFull(),
 
                 Select::make('status')
@@ -279,13 +269,14 @@ class PatientResource extends Resource
                     ->formatStateUsing(fn ($state) => ucfirst($state)),
 
                 TextColumn::make('lesions')
-                    ->label('Lesions')
+                    ->label('Cardiac diagnosis')
                     ->badge()
                     ->formatStateUsing(fn (string $state) => CardiacLesion::tryFrom($state)?->getLabel() ?? $state)
                     ->limitList(3)
                     ->placeholder('—'),
 
                 TextColumn::make('primary_diagnosis')
+                    ->label('Non cardiac diagnosis')
                     ->limit(40)
                     ->tooltip(fn (TextColumn $column): ?string => strlen((string) $column->getState()) > 40 ? $column->getState() : null),
 
@@ -359,10 +350,10 @@ class PatientResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListPatients::route('/'),
+            'index' => Pages\ListPatients::route('/'),
             'create' => Pages\CreatePatient::route('/create'),
-            'view'   => Pages\ViewPatient::route('/{record}'),
-            'edit'   => Pages\EditPatient::route('/{record}/edit'),
+            'view' => Pages\ViewPatient::route('/{record}'),
+            'edit' => Pages\EditPatient::route('/{record}/edit'),
         ];
     }
 
@@ -370,49 +361,49 @@ class PatientResource extends Resource
     {
         return [
             // Most common at PCCEKAU first
-            'Saudi Arabian'  => 'Saudi Arabian',
-            'Yemeni'         => 'Yemeni',
-            'Egyptian'       => 'Egyptian',
-            'Pakistani'      => 'Pakistani',
-            'Sudanese'       => 'Sudanese',
-            'Somali'         => 'Somali',
-            'Jordanian'      => 'Jordanian',
-            'Syrian'         => 'Syrian',
-            'Lebanese'       => 'Lebanese',
-            'Indian'         => 'Indian',
-            'Bangladeshi'    => 'Bangladeshi',
-            'Filipino'       => 'Filipino',
-            'Indonesian'     => 'Indonesian',
-            'Ethiopian'      => 'Ethiopian',
-            'Eritrean'       => 'Eritrean',
+            'Saudi Arabian' => 'Saudi Arabian',
+            'Yemeni' => 'Yemeni',
+            'Egyptian' => 'Egyptian',
+            'Pakistani' => 'Pakistani',
+            'Sudanese' => 'Sudanese',
+            'Somali' => 'Somali',
+            'Jordanian' => 'Jordanian',
+            'Syrian' => 'Syrian',
+            'Lebanese' => 'Lebanese',
+            'Indian' => 'Indian',
+            'Bangladeshi' => 'Bangladeshi',
+            'Filipino' => 'Filipino',
+            'Indonesian' => 'Indonesian',
+            'Ethiopian' => 'Ethiopian',
+            'Eritrean' => 'Eritrean',
             // Alphabetical remainder
-            'Afghan'         => 'Afghan',
-            'Albanian'       => 'Albanian',
-            'Algerian'       => 'Algerian',
-            'American'       => 'American',
-            'Bahraini'       => 'Bahraini',
-            'British'        => 'British',
-            'Chadian'        => 'Chadian',
-            'Chinese'        => 'Chinese',
-            'Djibouti'       => 'Djibouti',
-            'Emirati'        => 'Emirati',
-            'French'         => 'French',
-            'German'         => 'German',
-            'Iraqi'          => 'Iraqi',
-            'Kuwaiti'        => 'Kuwaiti',
-            'Libyan'         => 'Libyan',
-            'Malaysian'      => 'Malaysian',
-            'Mauritanian'    => 'Mauritanian',
-            'Moroccan'       => 'Moroccan',
-            'Nepali'         => 'Nepali',
-            'Nigerian'       => 'Nigerian',
-            'Omani'          => 'Omani',
-            'Palestinian'    => 'Palestinian',
-            'Qatari'         => 'Qatari',
-            'Sri Lankan'     => 'Sri Lankan',
-            'Tunisian'       => 'Tunisian',
-            'Turkish'        => 'Turkish',
-            'Ugandan'        => 'Ugandan',
+            'Afghan' => 'Afghan',
+            'Albanian' => 'Albanian',
+            'Algerian' => 'Algerian',
+            'American' => 'American',
+            'Bahraini' => 'Bahraini',
+            'British' => 'British',
+            'Chadian' => 'Chadian',
+            'Chinese' => 'Chinese',
+            'Djibouti' => 'Djibouti',
+            'Emirati' => 'Emirati',
+            'French' => 'French',
+            'German' => 'German',
+            'Iraqi' => 'Iraqi',
+            'Kuwaiti' => 'Kuwaiti',
+            'Libyan' => 'Libyan',
+            'Malaysian' => 'Malaysian',
+            'Mauritanian' => 'Mauritanian',
+            'Moroccan' => 'Moroccan',
+            'Nepali' => 'Nepali',
+            'Nigerian' => 'Nigerian',
+            'Omani' => 'Omani',
+            'Palestinian' => 'Palestinian',
+            'Qatari' => 'Qatari',
+            'Sri Lankan' => 'Sri Lankan',
+            'Tunisian' => 'Tunisian',
+            'Turkish' => 'Turkish',
+            'Ugandan' => 'Ugandan',
         ];
     }
 }

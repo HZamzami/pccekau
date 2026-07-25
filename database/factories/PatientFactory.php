@@ -2,10 +2,11 @@
 
 namespace Database\Factories;
 
+use App\Models\Patient;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<\App\Models\Patient>
+ * @extends Factory<Patient>
  */
 class PatientFactory extends Factory
 {
@@ -17,7 +18,6 @@ class PatientFactory extends Factory
             'date_of_birth' => fake()->dateTimeBetween('-15 years', '-1 month'),
             'gender' => fake()->randomElement(['male', 'female']),
             'nationality' => 'Saudi Arabian',
-            'blood_type' => fake()->randomElement(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']),
             'weight_kg' => fake()->randomFloat(2, 3, 60),
             'height_cm' => fake()->randomFloat(1, 45, 170),
             'primary_diagnosis' => fake()->randomElement(['VSD', 'ASD', 'TOF', 'TGA', 'PDA']),
