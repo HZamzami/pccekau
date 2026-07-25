@@ -3,11 +3,12 @@
 namespace Database\Factories;
 
 use App\Enums\InterventionType;
+use App\Models\Intervention;
 use App\Models\Patient;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<\App\Models\Intervention>
+ * @extends Factory<Intervention>
  */
 class InterventionFactory extends Factory
 {
@@ -16,7 +17,7 @@ class InterventionFactory extends Factory
         return [
             'patient_id' => Patient::factory(),
             'date' => fake()->dateTimeBetween('-5 years'),
-            'type' => fake()->randomElement(InterventionType::cases()),
+            'type' => fake()->randomElement(array_keys(InterventionType::selectableLabels())),
             'name' => fake()->randomElement(['BT shunt', 'Glenn', 'Fontan', 'VSD closure', 'ASD device closure', 'PDA ligation', 'Coarctation repair', 'Balloon valvuloplasty']),
         ];
     }

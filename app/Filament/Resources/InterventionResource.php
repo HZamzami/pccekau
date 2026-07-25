@@ -6,6 +6,7 @@ use App\Enums\InterventionType;
 use App\Filament\Resources\InterventionResource\Pages;
 use App\Models\Intervention;
 use App\Models\Patient;
+use Filament\Forms\Components\Component;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
@@ -23,6 +24,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 
 class InterventionResource extends Resource
 {
@@ -32,7 +34,7 @@ class InterventionResource extends Resource
 
     protected static ?string $navigationGroup = 'Clinical';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 8;
 
     public static function form(Form $form): Form
     {
@@ -51,7 +53,7 @@ class InterventionResource extends Resource
         ]);
     }
 
-    /** @return array<\Filament\Forms\Components\Component> Fields shared with the patient chart's relation manager. */
+    /** @return array<Component> Fields shared with the patient chart's relation manager. */
     public static function detailsSchema(): array
     {
         return [
@@ -61,7 +63,7 @@ class InterventionResource extends Resource
                     ->maxDate(now()),
 
                 Select::make('type')
-                    ->options(InterventionType::class)
+                    ->options(InterventionType::selectableLabels())
                     ->required(),
 
                 Select::make('operator_id')
@@ -139,8 +141,8 @@ class InterventionResource extends Resource
                         ->when($data['from'], fn (Builder $query, $date) => $query->whereDate('date', '>=', $date))
                         ->when($data['until'], fn (Builder $query, $date) => $query->whereDate('date', '<=', $date)))
                     ->indicateUsing(fn (array $data) => array_filter([
-                        $data['from'] ? 'From ' . \Illuminate\Support\Carbon::parse($data['from'])->format('d M Y') : null,
-                        $data['until'] ? 'Until ' . \Illuminate\Support\Carbon::parse($data['until'])->format('d M Y') : null,
+                        $data['from'] ? 'From '.Carbon::parse($data['from'])->format('d M Y') : null,
+                        $data['until'] ? 'Until '.Carbon::parse($data['until'])->format('d M Y') : null,
                     ])),
             ])
             ->actions([
@@ -163,9 +165,9 @@ class InterventionResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListInterventions::route('/'),
+            'index' => Pages\ListInterventions::route('/'),
             'create' => Pages\CreateIntervention::route('/create'),
-            'edit'   => Pages\EditIntervention::route('/{record}/edit'),
+            'edit' => Pages\EditIntervention::route('/{record}/edit'),
         ];
     }
 }

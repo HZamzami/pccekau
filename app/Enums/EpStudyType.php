@@ -6,13 +6,15 @@ use Filament\Support\Contracts\HasLabel;
 
 enum EpStudyType: string implements HasLabel
 {
+    case Ecg = 'ecg';
     case Holter = 'holter';
     case StressEcg = 'stress_ecg';
 
     public function getLabel(): string
     {
         return match ($this) {
-            self::Holter    => 'Holter',
+            self::Ecg => 'ECG',
+            self::Holter => 'Holter',
             self::StressEcg => 'Stress ECG',
         };
     }
