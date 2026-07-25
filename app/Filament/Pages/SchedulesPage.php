@@ -21,10 +21,15 @@ class SchedulesPage extends Page implements HasTable
     use InteractsWithTable;
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar';
+
     protected static ?string $navigationLabel = 'Schedules';
-    protected static ?string $navigationGroup = 'Schedules';
+
+    protected static ?string $navigationGroup = 'Administration';
+
     protected static ?int $navigationSort = 4;
+
     protected static ?string $title = 'Schedules';
+
     protected static string $view = 'filament.pages.schedules-page';
 
     public string $activeTab = 'oncall';
@@ -38,9 +43,9 @@ class SchedulesPage extends Page implements HasTable
     public function table(Table $table): Table
     {
         return match ($this->activeTab) {
-            'oncall'      => $this->oncallTable($table),
+            'oncall' => $this->oncallTable($table),
             'consultants' => $this->consultantTable($table),
-            default       => $this->oncallTable($table),
+            default => $this->oncallTable($table),
         };
     }
 
@@ -58,9 +63,8 @@ class SchedulesPage extends Page implements HasTable
                 TextColumn::make('hijri_date_range')->label('Hijri'),
                 TextColumn::make('clinicStaff.name')->label('Clinic'),
                 TextColumn::make('inpatientStaff.name')->label('Inpatient'),
+                TextColumn::make('consultationStaff.name')->label('Consultation'),
                 TextColumn::make('cathStaff.name')->label('Cath'),
-                TextColumn::make('serviceStaff.name')->label('Service'),
-                TextColumn::make('epStaff.name')->label('EP'),
 
                 TextColumn::make('today_oncall')
                     ->label("Today's On-Call")

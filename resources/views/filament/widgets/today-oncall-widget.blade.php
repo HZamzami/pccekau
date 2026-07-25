@@ -3,14 +3,13 @@
         @php $schedule = $this->getSchedule() @endphp
 
         @if ($schedule)
-            <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+            <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
                 @foreach ([
                     'On-Call'      => $schedule->today_oncall,
-                    'Service'      => $schedule->serviceStaff?->name,
-                    'Cath'         => $schedule->cathStaff?->name,
-                    'EP'           => $schedule->epStaff?->name,
                     'Clinic'       => $schedule->clinicStaff?->name,
                     'Inpatient'    => $schedule->inpatientStaff?->name,
+                    'Consultation' => $schedule->consultationStaff?->name,
+                    'Cath'         => $schedule->cathStaff?->name,
                 ] as $role => $doctor)
                     <div class="rounded-xl border border-gray-200 dark:border-white/10 p-4 text-center space-y-1">
                         <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">

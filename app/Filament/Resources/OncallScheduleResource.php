@@ -26,11 +26,15 @@ class OncallScheduleResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-clock';
 
-    protected static ?string $navigationGroup = 'Schedules';
+    protected static ?string $navigationGroup = 'Administration';
 
     protected static ?int $navigationSort = 1;
 
-    protected static ?string $navigationLabel = 'On-Call Schedule';
+    protected static ?string $navigationLabel = 'Weekly Coverage';
+
+    protected static ?string $modelLabel = 'weekly coverage schedule';
+
+    protected static ?string $pluralModelLabel = 'Specialists/Fellows Weekly Coverage';
 
     public static function form(Form $form): Form
     {
@@ -48,7 +52,7 @@ class OncallScheduleResource extends Resource
             ]),
 
             Section::make('Weekly Roles')->schema([
-                Grid::make(3)->schema([
+                Grid::make(2)->schema([
                     Select::make('clinic_staff_id')->label('Clinic')
                         ->options(fn () => Staff::active()->orderBy('name')->pluck('name', 'id'))
                         ->searchable()->nullable(),
@@ -58,16 +62,7 @@ class OncallScheduleResource extends Resource
                     Select::make('consultation_staff_id')->label('Consultation')
                         ->options(fn () => Staff::active()->orderBy('name')->pluck('name', 'id'))
                         ->searchable()->nullable(),
-                ]),
-
-                Grid::make(3)->schema([
                     Select::make('cath_staff_id')->label('Cath')
-                        ->options(fn () => Staff::active()->orderBy('name')->pluck('name', 'id'))
-                        ->searchable()->nullable(),
-                    Select::make('service_staff_id')->label('Service')
-                        ->options(fn () => Staff::active()->orderBy('name')->pluck('name', 'id'))
-                        ->searchable()->nullable(),
-                    Select::make('ep_staff_id')->label('EP')
                         ->options(fn () => Staff::active()->orderBy('name')->pluck('name', 'id'))
                         ->searchable()->nullable(),
                 ]),
@@ -122,9 +117,8 @@ class OncallScheduleResource extends Resource
 
                 TextColumn::make('clinicStaff.name')->label('Clinic'),
                 TextColumn::make('inpatientStaff.name')->label('Inpatient'),
+                TextColumn::make('consultationStaff.name')->label('Consultation'),
                 TextColumn::make('cathStaff.name')->label('Cath'),
-                TextColumn::make('serviceStaff.name')->label('Service'),
-                TextColumn::make('epStaff.name')->label('EP'),
             ])
             ->actions([
                 ViewAction::make(),
@@ -146,9 +140,9 @@ class OncallScheduleResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListOncallSchedules::route('/'),
+            'index' => Pages\ListOncallSchedules::route('/'),
             'create' => Pages\CreateOncallSchedule::route('/create'),
-            'edit'   => Pages\EditOncallSchedule::route('/{record}/edit'),
+            'edit' => Pages\EditOncallSchedule::route('/{record}/edit'),
         ];
     }
 }
