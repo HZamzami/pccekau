@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\StaffResource\Pages;
 use App\Models\Staff;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
@@ -28,7 +29,7 @@ class StaffResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-identification';
 
-    protected static ?string $navigationGroup = 'Schedules';
+    protected static ?string $navigationGroup = 'Administration';
 
     protected static ?int $navigationSort = 0;
 
@@ -65,7 +66,7 @@ class StaffResource extends Resource
                     ->relationship(
                         'user',
                         'name',
-                        modifyQueryUsing: fn ($query) => $query->whereBelongsTo(\Filament\Facades\Filament::getTenant()),
+                        modifyQueryUsing: fn ($query) => $query->whereBelongsTo(Filament::getTenant()),
                     )
                     ->searchable()
                     ->preload()
@@ -88,14 +89,14 @@ class StaffResource extends Resource
                     ->badge()
                     ->formatStateUsing(fn ($state) => Staff::$roleLabels[$state] ?? $state)
                     ->color(fn ($state) => match ($state) {
-                        'consultant'      => 'info',
-                        'fellow'          => 'warning',
-                        'surgeon'         => 'danger',
-                        'specialist'      => 'success',
-                        'technician'      => 'primary',
-                        'resident'        => 'warning',
+                        'consultant' => 'info',
+                        'fellow' => 'warning',
+                        'surgeon' => 'danger',
+                        'specialist' => 'success',
+                        'technician' => 'primary',
+                        'resident' => 'warning',
                         'medical_student' => 'gray',
-                        default           => 'gray',
+                        default => 'gray',
                     }),
 
                 TextColumn::make('specialty')
@@ -136,9 +137,9 @@ class StaffResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListStaff::route('/'),
+            'index' => Pages\ListStaff::route('/'),
             'create' => Pages\CreateStaff::route('/create'),
-            'edit'   => Pages\EditStaff::route('/{record}/edit'),
+            'edit' => Pages\EditStaff::route('/{record}/edit'),
         ];
     }
 }

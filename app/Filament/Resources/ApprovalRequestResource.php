@@ -29,9 +29,9 @@ class ApprovalRequestResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-check';
 
-    protected static ?string $navigationGroup = 'Clinical';
+    protected static ?string $navigationGroup = 'Administration';
 
-    protected static ?int $navigationSort = 9;
+    protected static ?int $navigationSort = 5;
 
     public static function form(Form $form): Form
     {
@@ -171,9 +171,9 @@ class ApprovalRequestResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListApprovalRequests::route('/'),
+            'index' => Pages\ListApprovalRequests::route('/'),
             'create' => Pages\CreateApprovalRequest::route('/create'),
-            'edit'   => Pages\EditApprovalRequest::route('/{record}/edit'),
+            'edit' => Pages\EditApprovalRequest::route('/{record}/edit'),
         ];
     }
 }

@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ClinicVisitResource\Pages;
-use App\Filament\Resources\PatientResource;
 use App\Models\ClinicVisit;
 use App\Models\Patient;
 use Filament\Forms\Components\DatePicker;
@@ -31,7 +30,7 @@ class ClinicVisitResource extends Resource
 
     protected static ?string $navigationGroup = 'Clinical';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 1;
 
     public static function form(Form $form): Form
     {
@@ -61,7 +60,6 @@ class ClinicVisitResource extends Resource
                     DatePicker::make('next_follow_up_date'),
                 ]),
             ]),
-
 
             Section::make('Vitals')->schema([
                 Grid::make(3)->schema([
@@ -157,7 +155,7 @@ class ClinicVisitResource extends Resource
 
                 TextColumn::make('oxygen_saturation')
                     ->label('O₂ Sat')
-                    ->formatStateUsing(fn ($state) => $state . '%')
+                    ->formatStateUsing(fn ($state) => $state.'%')
                     ->placeholder('—'),
 
                 TextColumn::make('assessment')
@@ -169,9 +167,9 @@ class ClinicVisitResource extends Resource
                     ->date()
                     ->sortable()
                     ->color(fn (ClinicVisit $record): string => match (true) {
-                        $record->isOverdue()  => 'danger',
+                        $record->isOverdue() => 'danger',
                         $record->isDueToday() => 'warning',
-                        default               => 'gray',
+                        default => 'gray',
                     }),
             ])
             ->filters([
@@ -211,9 +209,9 @@ class ClinicVisitResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListClinicVisits::route('/'),
+            'index' => Pages\ListClinicVisits::route('/'),
             'create' => Pages\CreateClinicVisit::route('/create'),
-            'edit'   => Pages\EditClinicVisit::route('/{record}/edit'),
+            'edit' => Pages\EditClinicVisit::route('/{record}/edit'),
         ];
     }
 }

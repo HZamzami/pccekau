@@ -24,10 +24,15 @@ class HandoverBoardPage extends Page implements HasTable
     use InteractsWithTable;
 
     protected static ?string $navigationIcon = 'heroicon-o-arrows-right-left';
+
     protected static ?string $navigationLabel = 'Handover Board';
+
     protected static ?string $navigationGroup = 'Clinical';
-    protected static ?int $navigationSort = 8;
+
+    protected static ?int $navigationSort = 4;
+
     protected static ?string $title = 'Handover Board';
+
     protected static string $view = 'filament.pages.handover-board-page';
 
     public function table(Table $table): Table
@@ -37,14 +42,14 @@ class HandoverBoardPage extends Page implements HasTable
             ->columns([
                 TextColumn::make('patient.name')
                     ->label('Patient')
-                    ->description(fn (Admission $record) => $record->patient->mrn . ' · ' . $record->patient->age)
+                    ->description(fn (Admission $record) => $record->patient->mrn.' · '.$record->patient->age)
                     ->searchable()
                     ->sortable()
                     ->url(fn (Admission $record) => PatientResource::getUrl('view', ['record' => $record->patient_id])),
 
                 TextColumn::make('ward')
                     ->label('Ward / Bed')
-                    ->state(fn (Admission $record) => trim(($record->ward ?? '—') . ($record->bed ? " / {$record->bed}" : '')))
+                    ->state(fn (Admission $record) => trim(($record->ward ?? '—').($record->bed ? " / {$record->bed}" : '')))
                     ->sortable(),
 
                 TextColumn::make('presentation_diagnosis')
@@ -130,9 +135,9 @@ class HandoverBoardPage extends Page implements HasTable
                     ])
                     ->modalHeading(fn (Admission $record) => "Progress note — {$record->patient->name}")
                     ->action(fn (Admission $record, array $data) => $record->progressNotes()->create([
-                        'note'      => $data['note'],
+                        'note' => $data['note'],
                         'author_id' => auth()->id(),
-                        'noted_at'  => now(),
+                        'noted_at' => now(),
                     ])),
 
                 Action::make('open')

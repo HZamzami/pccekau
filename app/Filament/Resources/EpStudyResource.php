@@ -6,7 +6,6 @@ use App\Enums\EpStudyType;
 use App\Enums\ReportStatus;
 use App\Filament\Actions\ReportWorkflowActions;
 use App\Filament\Resources\EpStudyResource\Pages;
-use App\Filament\Resources\PatientResource;
 use App\Models\EpStudy;
 use App\Models\Patient;
 use App\Models\Staff;
@@ -35,7 +34,7 @@ class EpStudyResource extends Resource
 
     protected static ?string $navigationGroup = 'Clinical';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 7;
 
     protected static ?string $navigationLabel = 'Electrophysiology';
 
@@ -195,9 +194,9 @@ class EpStudyResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListEpStudies::route('/'),
+            'index' => Pages\ListEpStudies::route('/'),
             'create' => Pages\CreateEpStudy::route('/create'),
-            'edit'   => Pages\EditEpStudy::route('/{record}/edit'),
+            'edit' => Pages\EditEpStudy::route('/{record}/edit'),
         ];
     }
 }

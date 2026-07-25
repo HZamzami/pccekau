@@ -22,10 +22,15 @@ class ClinicFollowUpsPage extends Page implements HasTable
     use InteractsWithTable;
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
+
     protected static ?string $navigationLabel = 'Clinic Follow-Ups';
+
     protected static ?string $navigationGroup = 'Clinical';
-    protected static ?int $navigationSort = 7;
+
+    protected static ?int $navigationSort = 2;
+
     protected static ?string $title = 'Clinic Follow-Ups';
+
     protected static string $view = 'filament.pages.clinic-follow-ups-page';
 
     public string $activeTab = 'today';
@@ -83,15 +88,15 @@ class ClinicFollowUpsPage extends Page implements HasTable
                     ->date()
                     ->sortable()
                     ->color(fn (ClinicVisit $record): string => match (true) {
-                        $record->isOverdue()  => 'danger',
+                        $record->isOverdue() => 'danger',
                         $record->isDueToday() => 'warning',
-                        default               => 'success',
+                        default => 'success',
                     }),
 
                 TextColumn::make('days_overdue')
                     ->label('Days Overdue')
                     ->state(fn (ClinicVisit $record): string => $record->isOverdue()
-                        ? $record->next_follow_up_date->diffInDays(today()) . 'd'
+                        ? $record->next_follow_up_date->diffInDays(today()).'d'
                         : '—'
                     )
                     ->color('danger')
@@ -133,8 +138,8 @@ class ClinicFollowUpsPage extends Page implements HasTable
 
         return match ($this->activeTab) {
             'upcoming' => $query->whereDate('next_follow_up_date', '>', today()),
-            'overdue'  => $query->whereDate('next_follow_up_date', '<', today()),
-            default    => $query->whereDate('next_follow_up_date', today()),
+            'overdue' => $query->whereDate('next_follow_up_date', '<', today()),
+            default => $query->whereDate('next_follow_up_date', today()),
         };
     }
 }

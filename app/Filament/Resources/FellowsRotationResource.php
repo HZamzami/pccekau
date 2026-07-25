@@ -26,7 +26,7 @@ class FellowsRotationResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
 
-    protected static ?string $navigationGroup = 'Schedules';
+    protected static ?string $navigationGroup = 'Administration';
 
     protected static ?int $navigationSort = 2;
 
@@ -79,11 +79,11 @@ class FellowsRotationResource extends Resource
                     ->formatStateUsing(fn ($state) => FellowsRotation::$rotationLabels[$state] ?? $state)
                     ->badge()
                     ->color(fn ($state) => match ($state) {
-                        'vacation'  => 'gray',
-                        'elective'  => 'gray',
-                        'icu'       => 'danger',
-                        'research'  => 'warning',
-                        default     => 'info',
+                        'vacation' => 'gray',
+                        'elective' => 'gray',
+                        'icu' => 'danger',
+                        'research' => 'warning',
+                        default => 'info',
                     }),
 
                 TextColumn::make('start_date')
@@ -121,9 +121,9 @@ class FellowsRotationResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListFellowsRotations::route('/'),
+            'index' => Pages\ListFellowsRotations::route('/'),
             'create' => Pages\CreateFellowsRotation::route('/create'),
-            'edit'   => Pages\EditFellowsRotation::route('/{record}/edit'),
+            'edit' => Pages\EditFellowsRotation::route('/{record}/edit'),
         ];
     }
 }
