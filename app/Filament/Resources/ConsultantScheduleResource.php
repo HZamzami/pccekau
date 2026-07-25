@@ -26,7 +26,7 @@ class ConsultantScheduleResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
 
-    protected static ?string $navigationGroup = 'Schedules';
+    protected static ?string $navigationGroup = 'Administration';
 
     protected static ?int $navigationSort = 3;
 
@@ -103,9 +103,9 @@ class ConsultantScheduleResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListConsultantSchedules::route('/'),
+            'index' => Pages\ListConsultantSchedules::route('/'),
             'create' => Pages\CreateConsultantSchedule::route('/create'),
-            'edit'   => Pages\EditConsultantSchedule::route('/{record}/edit'),
+            'edit' => Pages\EditConsultantSchedule::route('/{record}/edit'),
         ];
     }
 }

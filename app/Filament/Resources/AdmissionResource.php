@@ -6,6 +6,8 @@ use App\Filament\Resources\AdmissionResource\Pages;
 use App\Models\Admission;
 use App\Models\Patient;
 use App\Models\Staff;
+use App\Models\User;
+use Carbon\Carbon;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Repeater;
@@ -32,7 +34,9 @@ class AdmissionResource extends Resource
 
     protected static ?string $navigationGroup = 'Clinical';
 
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 3;
+
+    protected static ?string $navigationLabel = 'Inpatients';
 
     public static function form(Form $form): Form
     {
@@ -120,7 +124,7 @@ class AdmissionResource extends Resource
                             ->required(),
                     ])
                     ->itemLabel(fn (array $state) => filled($state['noted_at'] ?? null)
-                        ? \Carbon\Carbon::parse($state['noted_at'])->format('d M Y H:i') . ' — ' . (\App\Models\User::find($state['author_id'] ?? null)?->name ?? 'Unknown')
+                        ? Carbon::parse($state['noted_at'])->format('d M Y H:i').' — '.(User::find($state['author_id'] ?? null)?->name ?? 'Unknown')
                         : 'New note')
                     ->mutateRelationshipDataBeforeCreateUsing(function (array $data) {
                         $data['author_id'] = auth()->id();
@@ -171,7 +175,7 @@ class AdmissionResource extends Resource
                     ->url(fn (Admission $record) => PatientResource::getUrl('view', ['record' => $record->patient_id])),
 
                 TextColumn::make('ward')
-                    ->state(fn (Admission $record) => trim(($record->ward ?? '—') . ($record->bed ? " / bed {$record->bed}" : '')))
+                    ->state(fn (Admission $record) => trim(($record->ward ?? '—').($record->bed ? " / bed {$record->bed}" : '')))
                     ->label('Ward / Bed'),
 
                 TextColumn::make('admitted_at')
@@ -190,7 +194,7 @@ class AdmissionResource extends Resource
                 TextColumn::make('stay')
                     ->label('Stay')
                     ->state(fn (Admission $record) => $record->admitted_at
-                        ->diffInDays($record->discharged_at ?? now()) . 'd'),
+                        ->diffInDays($record->discharged_at ?? now()).'d'),
             ])
             ->filters([
                 TernaryFilter::make('admitted')
@@ -240,8 +244,8 @@ class AdmissionResource extends Resource
             ])
             ->modalHeading(fn (Admission $record) => "Discharge {$record->patient->name}")
             ->action(fn (Admission $record, array $data) => $record->update([
-                'discharged_at'    => now(),
-                'discharge_note'   => $data['discharge_note'],
+                'discharged_at' => now(),
+                'discharge_note' => $data['discharge_note'],
                 'discharged_by_id' => $data['discharged_by_id'] ?? null,
             ]));
     }
@@ -254,9 +258,9 @@ class AdmissionResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListAdmissions::route('/'),
+            'index' => Pages\ListAdmissions::route('/'),
             'create' => Pages\CreateAdmission::route('/create'),
-            'edit'   => Pages\EditAdmission::route('/{record}/edit'),
+            'edit' => Pages\EditAdmission::route('/{record}/edit'),
         ];
     }
 }

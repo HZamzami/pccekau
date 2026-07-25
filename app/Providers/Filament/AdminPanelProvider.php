@@ -7,11 +7,11 @@ use App\Filament\Widgets\GettingStartedWidget;
 use App\Filament\Widgets\PatientSearchWidget;
 use App\Filament\Widgets\TodayOncallWidget;
 use App\Filament\Widgets\UpcomingMdtWidget;
+use App\Models\Clinic;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use App\Models\Clinic;
 use Filament\Navigation\NavigationGroup;
 use Filament\Pages;
 use Filament\Panel;
@@ -71,7 +71,7 @@ class AdminPanelProvider extends PanelProvider
                     ->icon('heroicon-o-users'),
                 NavigationGroup::make('Clinical')
                     ->icon('heroicon-o-heart'),
-                NavigationGroup::make('Schedules')
+                NavigationGroup::make('Administration')
                     ->icon('heroicon-o-calendar'),
                 NavigationGroup::make('Admin')
                     ->icon('heroicon-o-shield-check'),
