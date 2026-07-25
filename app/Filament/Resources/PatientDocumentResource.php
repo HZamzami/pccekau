@@ -66,7 +66,7 @@ class PatientDocumentResource extends Resource
                 FileUpload::make('files')
                     ->multiple()
                     ->required()
-                    ->disk('local')
+                    ->disk(config('filesystems.patient_documents'))
                     ->visibility('private')
                     ->directory('patient-documents')
                     ->acceptedFileTypes(['application/pdf', 'image/*'])

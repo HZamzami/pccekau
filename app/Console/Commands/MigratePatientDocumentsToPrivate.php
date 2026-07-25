@@ -15,7 +15,7 @@ class MigratePatientDocumentsToPrivate extends Command
     public function handle(): int
     {
         $public = Storage::disk('public');
-        $local = Storage::disk('local');
+        $local = Storage::disk(config('filesystems.patient_documents'));
         $dryRun = $this->option('dry-run');
         $moved = 0;
         $skipped = 0;
