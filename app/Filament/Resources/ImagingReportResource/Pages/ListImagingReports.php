@@ -37,8 +37,10 @@ class ListImagingReports extends ListRecords
 
         if ($staffId !== null) {
             $tabs['my_reads'] = Tab::make('My reads')
-                ->modifyQueryUsing(fn (Builder $query) => $query->whereIn('status', $pending)->where('signed_by', $staffId))
-                ->badge(ImagingReport::whereIn('status', $pending)->where('signed_by', $staffId)->count() ?: null)
+                ->modifyQueryUsing(fn (Builder $query) => $query->whereIn('status', $pending)
+                    ->whereHas('readers', fn (Builder $q) => $q->where('staff.id', $staffId)))
+                ->badge(ImagingReport::whereIn('status', $pending)
+                    ->whereHas('readers', fn (Builder $q) => $q->where('staff.id', $staffId))->count() ?: null)
                 ->badgeColor('info');
         }
 

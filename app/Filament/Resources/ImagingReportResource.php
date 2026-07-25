@@ -5,9 +5,7 @@ namespace App\Filament\Resources;
 use App\Enums\ImagingType;
 use App\Enums\ReportStatus;
 use App\Filament\Actions\ReportWorkflowActions;
-use App\Filament\Forms\EchoMeasurementsSection;
 use App\Filament\Resources\ImagingReportResource\Pages;
-use App\Filament\Resources\PatientResource;
 use App\Models\ImagingReport;
 use App\Models\Patient;
 use App\Models\Staff;
@@ -17,10 +15,7 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkActionGroup;
@@ -39,7 +34,7 @@ class ImagingReportResource extends Resource
 
     protected static ?string $navigationGroup = 'Clinical';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 6;
 
     public static function getNavigationBadge(): ?string
     {
@@ -67,24 +62,11 @@ class ImagingReportResource extends Resource
                             ->searchable(['name', 'mrn'])
                             ->preload()
                             ->required()
-                            ->live()
-                            // Prefill echo biometrics from the patient's baseline
-                            ->afterStateUpdated(function (Set $set, Get $get, $state) {
-                                $patient = Patient::find($state);
-
-                                if ($patient === null) {
-                                    return;
-                                }
-
-                                blank($get('height_cm')) && $patient->height_cm !== null && $set('height_cm', $patient->height_cm);
-                                blank($get('weight_kg')) && $patient->weight_kg !== null && $set('weight_kg', $patient->weight_kg);
-                            })
                             ->getOptionLabelFromRecordUsing(fn (Patient $record) => "{$record->mrn} — {$record->name}"),
 
                         Select::make('type')
-                            ->options(ImagingType::class)
-                            ->required()
-                            ->live(),
+                            ->options(ImagingType::selectableLabels())
+                            ->required(),
                     ]),
 
                     Grid::make(2)->schema([
@@ -92,17 +74,19 @@ class ImagingReportResource extends Resource
                             ->required()
                             ->maxDate(now()),
 
-                        Select::make('performed_by_id')
+                        Select::make('performers')
                             ->label('Performed by')
-                            ->relationship('performedBy', 'name', fn ($query) => $query->active())
+                            ->multiple()
+                            ->relationship('performers', 'name', fn ($query) => $query->active())
                             ->searchable()
                             ->preload(),
                     ]),
 
                     Grid::make(2)->schema([
-                        Select::make('signed_by')
+                        Select::make('readers')
                             ->label('Reader / Signing physician')
-                            ->relationship('signedBy', 'name', fn ($query) => $query->active())
+                            ->multiple()
+                            ->relationship('readers', 'name', fn ($query) => $query->active())
                             ->searchable()
                             ->preload(),
 
@@ -127,9 +111,6 @@ class ImagingReportResource extends Resource
                         ->rows(3)
                         ->columnSpanFull(),
                 ]),
-
-            EchoMeasurementsSection::make()
-                ->disabled(fn (?ImagingReport $record) => $record?->isLocked() ?? false),
         ]);
     }
 
@@ -159,8 +140,9 @@ class ImagingReportResource extends Resource
                     ->date()
                     ->sortable(),
 
-                TextColumn::make('signedBy.name')
+                TextColumn::make('readers.name')
                     ->label('Reader')
+                    ->listWithLineBreaks()
                     ->placeholder('Unassigned'),
 
                 TextColumn::make('waiting')
@@ -196,14 +178,15 @@ class ImagingReportResource extends Resource
                     ->visible(fn (ImagingReport $record) => (auth()->user()?->canWrite() ?? false)
                         && in_array($record->status, [ReportStatus::Draft, ReportStatus::Preliminary], true))
                     ->form([
-                        Select::make('signed_by')
-                            ->label('Reader')
+                        Select::make('readers')
+                            ->label('Readers')
+                            ->multiple()
                             ->options(fn () => Staff::active()->orderBy('name')->pluck('name', 'id'))
                             ->searchable()
                             ->required(),
                     ])
-                    ->fillForm(fn (ImagingReport $record) => ['signed_by' => $record->signed_by])
-                    ->action(fn (ImagingReport $record, array $data) => $record->update(['signed_by' => $data['signed_by']])),
+                    ->fillForm(fn (ImagingReport $record) => ['readers' => $record->readers->pluck('id')->all()])
+                    ->action(fn (ImagingReport $record, array $data) => $record->readers()->sync($data['readers'])),
                 ...static::workflowActions(),
                 Action::make('pdf')
                     ->label('PDF')
@@ -233,9 +216,9 @@ class ImagingReportResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListImagingReports::route('/'),
+            'index' => Pages\ListImagingReports::route('/'),
             'create' => Pages\CreateImagingReport::route('/create'),
-            'edit'   => Pages\EditImagingReport::route('/{record}/edit'),
+            'edit' => Pages\EditImagingReport::route('/{record}/edit'),
         ];
     }
 }

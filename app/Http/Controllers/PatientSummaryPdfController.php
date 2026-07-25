@@ -18,14 +18,8 @@ class PatientSummaryPdfController extends Controller
         $patient->load([
             'interventions.operator',
             'clinicVisits' => fn ($q) => $q->limit(1),
-            'imagingReports' => fn ($q) => $q->with('signedBy')->limit(5),
+            'imagingReports' => fn ($q) => $q->with('readers')->limit(5),
         ]);
-
-        $latestEcho = $patient->imagingReports()
-            ->whereIn('type', ['echo', 'echo_3d'])
-            ->whereHas('echoMeasurement')
-            ->with('echoMeasurement')
-            ->first();
 
         $nextFollowUp = $patient->clinicVisits()
             ->whereNotNull('next_follow_up_date')
@@ -35,9 +29,7 @@ class PatientSummaryPdfController extends Controller
 
         return Pdf::loadView('pdf.patient-summary', [
             'patient' => $patient,
-            'latestEcho' => $latestEcho,
-            'bsa' => $latestEcho?->echoMeasurement?->bsa
-                ?? ZScoreService::bsaHaycock((float) $patient->height_cm, (float) $patient->weight_kg),
+            'bsa' => ZScoreService::bsaHaycock((float) $patient->height_cm, (float) $patient->weight_kg),
             'nextFollowUp' => $nextFollowUp,
         ])->stream("patient-summary-{$patient->mrn}.pdf");
     }

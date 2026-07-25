@@ -34,12 +34,12 @@ class EditImagingReport extends EditRecord
                 ->visible(fn () => $canWrite()
                     && in_array($this->record->status, [ReportStatus::Draft, ReportStatus::Preliminary, ReportStatus::Amended], true))
                 ->requiresConfirmation()
-                ->modalDescription(fn () => $this->record->signed_by
+                ->modalDescription(fn () => $this->record->hasSigner()
                     ? 'Finalizing locks this report against further edits. Amendments will be tracked.'
                     : 'A signing physician must be set (and saved) before the report can be finalized.')
-                ->modalSubmitAction(fn ($action) => $action->disabled(blank($this->record->signed_by)))
+                ->modalSubmitAction(fn ($action) => $action->disabled(! $this->record->hasSigner()))
                 ->action(function () {
-                    if (blank($this->record->signed_by)) {
+                    if (! $this->record->hasSigner()) {
                         return;
                     }
 

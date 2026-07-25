@@ -16,6 +16,13 @@ trait HasReportWorkflow
         return $this->status?->isLocked() ?? false;
     }
 
+    // Finalizing requires a signing physician. Models with multiple
+    // signers (imaging reports) override this.
+    public function hasSigner(): bool
+    {
+        return filled($this->signed_by);
+    }
+
     public function markPreliminary(): void
     {
         $this->update(['status' => ReportStatus::Preliminary]);

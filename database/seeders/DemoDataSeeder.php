@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Enums\ImagingType;
 use App\Enums\ReportStatus;
 use App\Models\Clinic;
 use App\Models\ClinicVisit;
@@ -31,32 +30,18 @@ class DemoDataSeeder extends Seeder
                 ->for($patient)
                 ->create([
                     'status' => fake()->randomElement(ReportStatus::cases()),
-                    'performed_by_id' => $allStaff->random()->id,
-                    'signed_by' => fake()->boolean(70) ? $allStaff->random()->id : null,
                 ])
-                ->each(function (ImagingReport $report) {
-                    if ($report->status === ReportStatus::Final) {
-                        $report->signed_by
-                            ? $report->updateQuietly(['finalized_at' => $report->date->addDays(2)])
-                            : $report->updateQuietly(['status' => ReportStatus::Preliminary]);
+                ->each(function (ImagingReport $report) use ($allStaff) {
+                    $report->performers()->attach($allStaff->random()->id);
+
+                    if (fake()->boolean(70)) {
+                        $report->readers()->attach($allStaff->random()->id);
                     }
 
-                    if ($report->type->isEcho()) {
-                        $height = fake()->randomFloat(1, 50, 160);
-                        $weight = fake()->randomFloat(2, 4, 55);
-                        $report->echoMeasurement()->create([
-                            'height_cm' => $height,
-                            'weight_kg' => $weight,
-                            'ivsd' => fake()->randomFloat(2, 0.4, 1.0),
-                            'lvidd' => fake()->randomFloat(2, 2.0, 4.8),
-                            'lvpwd' => fake()->randomFloat(2, 0.4, 1.0),
-                            'lvids' => fake()->randomFloat(2, 1.4, 3.2),
-                            'la' => fake()->randomFloat(2, 1.5, 3.5),
-                            'ao_annulus' => fake()->randomFloat(2, 1.0, 2.2),
-                            'ao_root' => fake()->randomFloat(2, 1.4, 2.8),
-                            'ef' => fake()->randomFloat(1, 55, 75),
-                            'fs' => fake()->randomFloat(1, 28, 45),
-                        ]);
+                    if ($report->status === ReportStatus::Final) {
+                        $report->hasSigner()
+                            ? $report->updateQuietly(['finalized_at' => $report->date->addDays(2)])
+                            : $report->updateQuietly(['status' => ReportStatus::Preliminary]);
                     }
                 });
 

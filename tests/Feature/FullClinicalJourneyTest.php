@@ -5,20 +5,19 @@ namespace Tests\Feature;
 use App\Enums\PatientStatus;
 use App\Enums\ReportStatus;
 use App\Enums\UserRole;
+use App\Filament\Resources\PatientResource;
 use App\Models\ClinicVisit;
-use App\Models\EchoMeasurement;
 use App\Models\ImagingReport;
 use App\Models\MdtDiscussion;
 use App\Models\Patient;
 use App\Models\Staff;
 use App\Models\User;
-use App\Services\ZScoreService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 // The full life of one case, start to finish: registration, echo study,
-// measurements with z-scores, sign-off, MDT presentation, clinic
-// follow-up with vitals, daily digest, and the printable summary.
+// sign-off, MDT presentation, clinic follow-up with vitals, daily digest,
+// and the printable summary.
 class FullClinicalJourneyTest extends TestCase
 {
     use RefreshDatabase;
@@ -39,29 +38,17 @@ class FullClinicalJourneyTest extends TestCase
             'status' => PatientStatus::Active,
         ]);
 
-        // 3. Echo report with structured measurements
+        // 3. Echo report performed by staff
         $report = ImagingReport::factory()->for($patient)->create([
             'type' => 'echo',
             'status' => ReportStatus::Draft,
             'date' => today(),
-            'performed_by_id' => $reader->id,
         ]);
-
-        $measurement = EchoMeasurement::create([
-            'imaging_report_id' => $report->id,
-            'height_cm' => 100,
-            'weight_kg' => 16,
-            'lvidd' => 3.2,
-        ]);
-
-        // BSA stored, z-score computable, baseline refreshed
-        $bsa = $measurement->fresh()->bsa;
-        $this->assertEqualsWithDelta(0.67, $bsa, 0.01);
-        $this->assertNotNull(ZScoreService::zScore('lvidd', 3.2, $bsa));
-        $this->assertEquals(16, $patient->fresh()->weight_kg);
+        $report->performers()->attach($reader);
 
         // 4. Assign reader and finalize — report locks
-        $report->update(['signed_by' => $reader->id]);
+        $report->readers()->attach($reader);
+        $this->assertTrue($report->hasSigner());
         $report->finalize();
         $this->assertTrue($report->fresh()->isLocked());
         $this->assertFalse($doctor->can('update', $report->fresh()));
@@ -89,7 +76,7 @@ class FullClinicalJourneyTest extends TestCase
         $this->assertSame(1, $admin->notifications()->count());
 
         // 8. Chart page and printable artifacts
-        $this->get(\App\Filament\Resources\PatientResource::getUrl('view', ['record' => $patient]))->assertOk()->assertSee('TOF');
+        $this->get(PatientResource::getUrl('view', ['record' => $patient]))->assertOk()->assertSee('TOF');
         $this->get(route('patients.summary-pdf', $patient))->assertOk()->assertHeader('content-type', 'application/pdf');
         $this->get(route('imaging-reports.pdf', $report))->assertOk();
         $this->get(route('mdt-discussions.pdf', $mdt))->assertOk();

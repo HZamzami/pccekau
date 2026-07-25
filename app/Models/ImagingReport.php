@@ -2,18 +2,17 @@
 
 namespace App\Models;
 
-use App\Models\Concerns\BelongsToClinic;
 use App\Enums\ImagingType;
 use App\Enums\ReportStatus;
+use App\Models\Concerns\BelongsToClinic;
 use App\Models\Concerns\HasReportWorkflow;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class ImagingReport extends Model
 {
@@ -25,9 +24,7 @@ class ImagingReport extends Model
         'status',
         'date',
         'report',
-        'performed_by_id',
         'notes',
-        'signed_by',
         'finalized_at',
     ];
 
@@ -48,19 +45,14 @@ class ImagingReport extends Model
         return $this->belongsTo(Patient::class);
     }
 
-    public function performedBy(): BelongsTo
+    public function performers(): BelongsToMany
     {
-        return $this->belongsTo(Staff::class, 'performed_by_id');
+        return $this->belongsToMany(Staff::class, 'imaging_report_performers');
     }
 
-    public function signedBy(): BelongsTo
+    public function readers(): BelongsToMany
     {
-        return $this->belongsTo(Staff::class, 'signed_by');
-    }
-
-    public function echoMeasurement(): HasOne
-    {
-        return $this->hasOne(EchoMeasurement::class);
+        return $this->belongsToMany(Staff::class, 'imaging_report_readers');
     }
 
     public function mdtDiscussions(): BelongsToMany
@@ -68,9 +60,9 @@ class ImagingReport extends Model
         return $this->belongsToMany(MdtDiscussion::class);
     }
 
-    public function isEchoType(): bool
+    public function hasSigner(): bool
     {
-        return $this->type?->isEcho() ?? false;
+        return $this->readers()->exists();
     }
 
     public function getActivitylogOptions(): LogOptions

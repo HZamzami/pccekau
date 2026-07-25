@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\ImagingReport;
-use App\Services\ZScoreService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
@@ -15,18 +14,11 @@ class ImagingReportPdfController extends Controller
     {
         $this->authorize('view', $report);
 
-        $report->load(['patient', 'performedBy', 'signedBy', 'echoMeasurement']);
-
-        $measurement = $report->echoMeasurement;
-        $bsa = $measurement
-            ? ZScoreService::bsaHaycock((float) $measurement->height_cm, (float) $measurement->weight_kg)
-            : null;
+        $report->load(['patient', 'performers', 'readers']);
 
         return Pdf::loadView('pdf.imaging-report', [
             'report' => $report,
             'patient' => $report->patient,
-            'measurement' => $measurement,
-            'bsa' => $bsa,
         ])->stream("imaging-report-{$report->patient->mrn}-{$report->date->format('Y-m-d')}.pdf");
     }
 }

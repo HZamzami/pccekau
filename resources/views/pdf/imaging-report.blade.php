@@ -39,7 +39,7 @@
         </tr>
         <tr>
             <td class="label">Gender</td><td>{{ ucfirst($patient->gender) }}</td>
-            <td class="label">Diagnosis</td><td>{{ $patient->primary_diagnosis }}</td>
+            <td class="label">Non cardiac diagnosis</td><td>{{ $patient->primary_diagnosis }}</td>
         </tr>
     </table>
 
@@ -50,49 +50,10 @@
             <td class="label">Date</td><td>{{ $report->date->format('d M Y') }}</td>
         </tr>
         <tr>
-            <td class="label">Performed by</td><td>{{ $report->performedBy?->name ?? '—' }}</td>
+            <td class="label">Performed by</td><td>{{ $report->performers->pluck('name')->join(', ') ?: '—' }}</td>
             <td class="label">Status</td><td>{{ $report->status->getLabel() }}</td>
         </tr>
     </table>
-
-    @if ($measurement)
-        <h2>Echo Measurements</h2>
-        <table class="meta">
-            <tr>
-                <td class="label">Height</td><td>{{ $measurement->height_cm ? $measurement->height_cm . ' cm' : '—' }}</td>
-                <td class="label">Weight</td><td>{{ $measurement->weight_kg ? $measurement->weight_kg . ' kg' : '—' }}</td>
-                <td class="label">BSA (Haycock)</td><td>{{ $bsa ? $bsa . ' m²' : '—' }}</td>
-            </tr>
-        </table>
-        <table class="measurements">
-            <tr><th>Measurement</th><th>Value</th><th>Z-score</th></tr>
-            @foreach ([
-                'ivsd' => 'IVSd (cm)', 'lvidd' => 'LVIDd (cm)', 'lvpwd' => 'LVPWd (cm)', 'lvids' => 'LVIDs (cm)',
-                'la' => 'LA (cm)', 'ao_annulus' => 'Ao annulus (cm)', 'ao_root' => 'Ao root (cm)',
-                'ef' => 'EF (%)', 'fs' => 'FS (%)', 'tapse' => 'TAPSE (cm)', 'rv_function' => 'RV function',
-                'mv_peak_velocity' => 'MV Vmax (m/s)', 'mv_peak_gradient' => 'MV PG (mmHg)',
-                'mv_mean_gradient' => 'MV mean gradient (mmHg)', 'mv_regurg' => 'MR grade',
-                'tv_peak_velocity' => 'TV Vmax (m/s)', 'tv_peak_gradient' => 'TV PG (mmHg)', 'tv_regurg' => 'TR grade',
-                'av_peak_velocity' => 'AV Vmax (m/s)', 'av_peak_gradient' => 'AV PG (mmHg)',
-                'av_mean_gradient' => 'AV mean gradient (mmHg)', 'av_regurg' => 'AI grade',
-                'pv_peak_velocity' => 'PV Vmax (m/s)', 'pv_peak_gradient' => 'PV PG (mmHg)', 'pv_regurg' => 'PI grade',
-                'coarct_peak_gradient' => 'Coarctation PG (mmHg)', 'coarct_mean_gradient' => 'Coarctation mean (mmHg)',
-                'pda_size_mm' => 'PDA size (mm)',
-            ] as $key => $label)
-                @continue($measurement->{$key} === null)
-                @php
-                    $value = $measurement->{$key};
-                    $display = $value instanceof \Filament\Support\Contracts\HasLabel ? $value->getLabel() : $value;
-                    $z = $bsa ? \App\Services\ZScoreService::zScore($key, (float) (is_object($value) ? 0 : $value), $bsa) : null;
-                @endphp
-                <tr>
-                    <td>{{ $label }}</td>
-                    <td>{{ $display }}</td>
-                    <td @class(['z-abnormal' => $z !== null && abs($z) > 2])>{{ $z ?? '—' }}</td>
-                </tr>
-            @endforeach
-        </table>
-    @endif
 
     <h2>Report</h2>
     <div class="report-body">{{ $report->report }}</div>
@@ -103,7 +64,7 @@
     @endif
 
     <div class="signature">
-        {{ $report->signedBy?->name ?? 'Unsigned' }}<br>
+        {{ $report->readers->pluck('name')->join(', ') ?: 'Unsigned' }}<br>
         @if ($report->finalized_at)
             Finalized {{ $report->finalized_at->format('d M Y H:i') }}
         @endif
