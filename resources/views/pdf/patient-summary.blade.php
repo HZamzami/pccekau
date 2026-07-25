@@ -41,13 +41,12 @@
                 $lastSat = $patient->clinicVisits->whereNotNull('oxygen_saturation')->first()?->oxygen_saturation;
             @endphp
             <td class="label">Last O₂ sat</td><td>{{ $lastSat ? $lastSat . '%' : '—' }}</td>
-            <td class="label">Blood type</td><td>{{ $patient->blood_type ?? '—' }}</td>
             <td class="label">Next follow-up</td><td>{{ $nextFollowUp?->format('d M Y') ?? '—' }}</td>
         </tr>
     </table>
 
     @if (filled($patient->lesions))
-        <h2>Cardiac Lesions</h2>
+        <h2>Cardiac Diagnosis</h2>
         <div>
             @foreach ($patient->lesionEnums() as $lesion)
                 <span class="badge">{{ $lesion?->getLabel() ?? '' }}</span>
@@ -56,7 +55,7 @@
     @endif
 
     @if ($patient->primary_diagnosis)
-        <h2>Primary Diagnosis</h2>
+        <h2>Non Cardiac Diagnosis</h2>
         <div class="block">{{ $patient->primary_diagnosis }}</div>
     @endif
 
@@ -73,27 +72,6 @@
                 </tr>
             @endforeach
         </table>
-    @elseif ($patient->surgical_history)
-        <h2>Surgical History</h2>
-        <div class="block">{{ $patient->surgical_history }}</div>
-    @endif
-
-    @if ($latestEcho?->echoMeasurement)
-        <h2>Latest Echo Measurements — {{ $latestEcho->date->format('d M Y') }}</h2>
-        <table class="list">
-            <tr><th>Measurement</th><th>Value</th><th>Z-score</th></tr>
-            @foreach (\App\Models\EchoMeasurement::Z_SCORED as $key)
-                @continue($latestEcho->echoMeasurement->{$key} === null)
-                @php
-                    $z = $bsa ? \App\Services\ZScoreService::zScore($key, (float) $latestEcho->echoMeasurement->{$key}, (float) $bsa) : null;
-                @endphp
-                <tr>
-                    <td>{{ strtoupper(str_replace('_', ' ', $key)) }} (cm)</td>
-                    <td>{{ $latestEcho->echoMeasurement->{$key} }}</td>
-                    <td @class(['z-abnormal' => $z !== null && abs($z) > 2])>{{ $z ?? '—' }}</td>
-                </tr>
-            @endforeach
-        </table>
     @endif
 
     <h2>Recent Imaging Reports</h2>
@@ -107,14 +85,14 @@
                     <td>{{ $report->date->format('d M Y') }}</td>
                     <td>{{ $report->type->getLabel() }}</td>
                     <td>{{ $report->status->getLabel() }}</td>
-                    <td>{{ $report->signedBy?->name ?? '—' }}</td>
+                    <td>{{ $report->readers->pluck('name')->join(', ') ?: '—' }}</td>
                 </tr>
             @endforeach
         </table>
     @endif
 
     @if ($patient->current_plan)
-        <h2>Current Plan</h2>
+        <h2>Summary &amp; Current Plan</h2>
         <div class="block">{{ $patient->current_plan }}</div>
     @endif
 </body>

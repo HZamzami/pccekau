@@ -38,9 +38,9 @@ class ImagingReportLockingTest extends TestCase
         $staff = Staff::factory()->create();
         $report = ImagingReport::factory()->create([
             'status' => ReportStatus::Final,
-            'signed_by' => $staff->id,
             'finalized_at' => now(),
         ]);
+        $report->readers()->attach($staff);
 
         $report->amend('Measurement transcription error');
 

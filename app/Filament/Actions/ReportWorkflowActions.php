@@ -3,8 +3,8 @@
 namespace App\Filament\Actions;
 
 use App\Enums\ReportStatus;
-use Filament\Notifications\Notification;
 use Filament\Forms\Components\Textarea;
+use Filament\Notifications\Notification;
 use Filament\Tables\Actions\Action;
 use Illuminate\Database\Eloquent\Model;
 
@@ -35,12 +35,12 @@ class ReportWorkflowActions
                 ->visible(fn (Model $record) => $canWrite()
                     && in_array($record->status, [ReportStatus::Draft, ReportStatus::Preliminary, ReportStatus::Amended], true))
                 ->requiresConfirmation()
-                ->modalDescription(fn (Model $record) => $record->signed_by
+                ->modalDescription(fn (Model $record) => $record->hasSigner()
                     ? 'Finalizing locks this report against further edits. Amendments will be tracked.'
                     : 'A signing physician must be set before the report can be finalized.')
-                ->modalSubmitAction(fn ($action, Model $record) => $action->disabled(blank($record->signed_by)))
+                ->modalSubmitAction(fn ($action, Model $record) => $action->disabled(! $record->hasSigner()))
                 ->action(function (Model $record) {
-                    if (blank($record->signed_by)) {
+                    if (! $record->hasSigner()) {
                         Notification::make()
                             ->danger()
                             ->title('Set a signing physician first')

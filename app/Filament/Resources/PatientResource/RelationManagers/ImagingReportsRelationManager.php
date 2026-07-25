@@ -4,7 +4,6 @@ namespace App\Filament\Resources\PatientResource\RelationManagers;
 
 use App\Enums\ImagingType;
 use App\Enums\ReportStatus;
-use App\Filament\Forms\EchoMeasurementsSection;
 use App\Filament\Resources\ImagingReportResource;
 use App\Models\ImagingReport;
 use Filament\Forms\Components\DatePicker;
@@ -39,9 +38,8 @@ class ImagingReportsRelationManager extends RelationManager
                 ->schema([
                     Grid::make(2)->schema([
                         Select::make('type')
-                            ->options(ImagingType::class)
-                            ->required()
-                            ->live(),
+                            ->options(ImagingType::selectableLabels())
+                            ->required(),
 
                         DatePicker::make('date')
                             ->required()
@@ -49,15 +47,17 @@ class ImagingReportsRelationManager extends RelationManager
                     ]),
 
                     Grid::make(2)->schema([
-                        Select::make('performed_by_id')
+                        Select::make('performers')
                             ->label('Performed by')
-                            ->relationship('performedBy', 'name', fn ($query) => $query->active())
+                            ->multiple()
+                            ->relationship('performers', 'name', fn ($query) => $query->active())
                             ->searchable()
                             ->preload(),
 
-                        Select::make('signed_by')
+                        Select::make('readers')
                             ->label('Reader / Signing physician')
-                            ->relationship('signedBy', 'name', fn ($query) => $query->active())
+                            ->multiple()
+                            ->relationship('readers', 'name', fn ($query) => $query->active())
                             ->searchable()
                             ->preload(),
                     ]),
@@ -71,9 +71,6 @@ class ImagingReportsRelationManager extends RelationManager
                         ->rows(3)
                         ->columnSpanFull(),
                 ]),
-
-            EchoMeasurementsSection::make()
-                ->disabled(fn (?ImagingReport $record) => $record?->isLocked() ?? false),
         ]);
     }
 
@@ -93,8 +90,9 @@ class ImagingReportsRelationManager extends RelationManager
                     ->date()
                     ->sortable(),
 
-                TextColumn::make('signedBy.name')
+                TextColumn::make('readers.name')
                     ->label('Reader')
+                    ->listWithLineBreaks()
                     ->placeholder('Unassigned'),
 
                 TextColumn::make('report')
