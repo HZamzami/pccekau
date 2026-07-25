@@ -17,6 +17,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Patient Documents Disk
+    |--------------------------------------------------------------------------
+    |
+    | The disk used to store and serve patient documents. Must be a private
+    | disk; set PATIENT_DOCUMENTS_DISK=s3 in production so files survive
+    | deployments.
+    |
+    */
+
+    'patient_documents' => env('PATIENT_DOCUMENTS_DISK', 'local'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
     |

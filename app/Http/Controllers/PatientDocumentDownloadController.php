@@ -16,8 +16,10 @@ class PatientDocumentDownloadController extends Controller
 
         $path = $document->files[$index] ?? abort(404);
 
-        abort_unless(Storage::disk('local')->exists($path), 404);
+        $disk = Storage::disk(config('filesystems.patient_documents'));
 
-        return Storage::disk('local')->download($path);
+        abort_unless($disk->exists($path), 404);
+
+        return $disk->download($path);
     }
 }
