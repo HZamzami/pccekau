@@ -29,7 +29,7 @@ class StaffResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-identification';
 
-    protected static ?string $navigationGroup = 'Administration';
+    protected static ?string $navigationGroup = 'Schedules';
 
     protected static ?int $navigationSort = 0;
 

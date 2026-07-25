@@ -26,7 +26,7 @@ class FellowsRotationResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';
 
-    protected static ?string $navigationGroup = 'Administration';
+    protected static ?string $navigationGroup = 'Schedules';
 
     protected static ?int $navigationSort = 2;
 

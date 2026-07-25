@@ -25,7 +25,7 @@ class OncallScheduleResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-clock';
 
-    protected static ?string $navigationGroup = 'Administration';
+    protected static ?string $navigationGroup = 'Schedules';
 
     protected static ?int $navigationSort = 1;
 

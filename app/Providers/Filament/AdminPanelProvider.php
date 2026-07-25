@@ -70,7 +70,7 @@ class AdminPanelProvider extends PanelProvider
                     ->icon('heroicon-o-users'),
                 NavigationGroup::make('Clinical')
                     ->icon('heroicon-o-heart'),
-                NavigationGroup::make('Administration')
+                NavigationGroup::make('Schedules')
                     ->icon('heroicon-o-calendar'),
                 NavigationGroup::make('Admin')
                     ->icon('heroicon-o-shield-check'),
