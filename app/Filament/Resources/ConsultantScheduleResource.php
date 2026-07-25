@@ -25,7 +25,7 @@ class ConsultantScheduleResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
 
-    protected static ?string $navigationGroup = 'Administration';
+    protected static ?string $navigationGroup = 'Schedules';
 
     protected static ?int $navigationSort = 3;
 
