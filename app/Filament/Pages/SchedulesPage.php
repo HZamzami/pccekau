@@ -2,6 +2,8 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Resources\ConsultantScheduleResource;
+use App\Filament\Resources\OncallScheduleResource;
 use App\Models\ConsultantSchedule;
 use App\Models\FellowsRotation;
 use App\Models\OncallSchedule;
@@ -73,7 +75,7 @@ class SchedulesPage extends Page implements HasTable
                     ->color('warning'),
             ])
             ->actions([EditAction::make()
-                ->url(fn (OncallSchedule $r) => route('filament.admin.resources.oncall-schedules.edit', $r))])
+                ->url(fn (OncallSchedule $r) => OncallScheduleResource::getUrl('edit', ['record' => $r]))])
             ->emptyStateHeading('No on-call schedules entered yet')
             ->emptyStateIcon('heroicon-o-clock');
     }
@@ -95,7 +97,7 @@ class SchedulesPage extends Page implements HasTable
                 TextColumn::make('epStaff.name')->label('EP'),
             ])
             ->actions([EditAction::make()
-                ->url(fn (ConsultantSchedule $r) => route('filament.admin.resources.consultant-schedules.edit', $r))])
+                ->url(fn (ConsultantSchedule $r) => ConsultantScheduleResource::getUrl('edit', ['record' => $r]))])
             ->emptyStateHeading('No consultant schedules entered yet')
             ->emptyStateIcon('heroicon-o-user-group');
     }
