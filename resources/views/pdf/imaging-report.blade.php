@@ -34,11 +34,11 @@
             <td class="label">Name</td><td>{{ $patient->name }}</td>
         </tr>
         <tr>
-            <td class="label">Date of birth</td><td>{{ $patient->date_of_birth->format('d M Y') }}</td>
-            <td class="label">Age at study</td><td>{{ \App\Models\Patient::computeAgeLabel($patient->date_of_birth, $report->date) }}</td>
+            <td class="label">Date of birth</td><td>{{ $patient->date_of_birth?->format('d M Y') ?? '—' }}</td>
+            <td class="label">Age at study</td><td>{{ $patient->date_of_birth ? \App\Models\Patient::computeAgeLabel($patient->date_of_birth, $report->date) : '—' }}</td>
         </tr>
         <tr>
-            <td class="label">Gender</td><td>{{ ucfirst($patient->gender) }}</td>
+            <td class="label">Gender</td><td>{{ $patient->gender ? ucfirst($patient->gender) : '—' }}</td>
             <td class="label">Non cardiac diagnosis</td><td>{{ $patient->primary_diagnosis }}</td>
         </tr>
     </table>
