@@ -8,6 +8,7 @@ use App\Models\ConsultantSchedule;
 use App\Models\FellowsRotation;
 use App\Models\OncallSchedule;
 use App\Models\Staff;
+use Carbon\Carbon;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Pages\Page;
 use Filament\Tables\Actions\EditAction;
@@ -36,10 +37,32 @@ class SchedulesPage extends Page implements HasTable
 
     public string $activeTab = 'oncall';
 
+    public ?string $gridWeekStart = null;
+
+    public function mount(): void
+    {
+        $this->gridWeekStart = Carbon::now()->startOfWeek(Carbon::SUNDAY)->toDateString();
+    }
+
     public function setTab(string $tab): void
     {
         $this->activeTab = $tab;
         $this->resetTable();
+    }
+
+    public function previousGridWeek(): void
+    {
+        $this->gridWeekStart = Carbon::parse($this->gridWeekStart)->subWeek()->toDateString();
+    }
+
+    public function nextGridWeek(): void
+    {
+        $this->gridWeekStart = Carbon::parse($this->gridWeekStart)->addWeek()->toDateString();
+    }
+
+    public function currentGridWeek(): void
+    {
+        $this->gridWeekStart = Carbon::now()->startOfWeek(Carbon::SUNDAY)->toDateString();
     }
 
     public function table(Table $table): Table
@@ -102,7 +125,7 @@ class SchedulesPage extends Page implements HasTable
 
     public function getCurrentOncall(): ?OncallSchedule
     {
-        return OncallSchedule::currentWeek();
+        return OncallSchedule::forWeek($this->gridWeekStart ?? Carbon::now()->startOfWeek(Carbon::SUNDAY));
     }
 
     public function getCurrentBlock(): ?FellowsRotation

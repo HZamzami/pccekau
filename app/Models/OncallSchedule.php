@@ -96,13 +96,18 @@ class OncallSchedule extends Model
 
     public static function currentWeek(): ?self
     {
-        $sunday = Carbon::now()->startOfWeek(Carbon::SUNDAY);
+        return static::forWeek(Carbon::now()->startOfWeek(Carbon::SUNDAY));
+    }
+
+    public static function forWeek(Carbon|string $weekStart): ?self
+    {
+        $weekStart = $weekStart instanceof Carbon ? $weekStart : Carbon::parse($weekStart);
 
         return static::with([
             'clinicStaff', 'inpatientStaff', 'consultationStaff', 'cathStaff',
             'oncallSundayStaff', 'oncallMondayStaff', 'oncallTuesdayStaff',
             'oncallWednesdayStaff', 'oncallThursdayStaff', 'oncallFridayStaff',
             'oncallSaturdayStaff',
-        ])->where('week_start', $sunday->toDateString())->first();
+        ])->where('week_start', $weekStart->toDateString())->first();
     }
 }
