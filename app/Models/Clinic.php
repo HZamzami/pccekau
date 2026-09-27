@@ -88,4 +88,14 @@ class Clinic extends Model
     {
         return $this->hasMany(ApprovalRequest::class);
     }
+
+    public function procedureBookings(): HasMany
+    {
+        return $this->hasMany(ProcedureBooking::class);
+    }
+
+    public function waitlistEntries(): HasMany
+    {
+        return $this->hasMany(WaitlistEntry::class);
+    }
 }
