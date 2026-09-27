@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ImagingType;
+use App\Enums\ProcedureStatus;
 use App\Enums\ReportStatus;
 use App\Models\Concerns\BelongsToClinic;
 use App\Models\Concerns\HasReportWorkflow;
@@ -23,6 +24,7 @@ class ImagingReport extends Model
         'type',
         'status',
         'date',
+        'procedure_status',
         'report',
         'notes',
         'finalized_at',
@@ -32,6 +34,7 @@ class ImagingReport extends Model
         'date' => 'date',
         'type' => ImagingType::class,
         'status' => ReportStatus::class,
+        'procedure_status' => ProcedureStatus::class,
         'finalized_at' => 'datetime',
     ];
 

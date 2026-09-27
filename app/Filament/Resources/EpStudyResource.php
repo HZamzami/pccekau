@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Enums\EpStudyType;
+use App\Enums\ProcedureStatus;
 use App\Enums\ReportStatus;
 use App\Filament\Actions\ReportWorkflowActions;
 use App\Filament\Resources\EpStudyResource\Pages;
@@ -75,10 +76,14 @@ class EpStudyResource extends Resource
                             ->required(),
                     ]),
 
-                    Grid::make(2)->schema([
-                        DatePicker::make('date')
-                            ->required()
-                            ->maxDate(now()),
+                    Grid::make(3)->schema([
+                        DatePicker::make('date'),
+
+                        Select::make('procedure_status')
+                            ->label('Procedure Status')
+                            ->options(ProcedureStatus::class)
+                            ->default(ProcedureStatus::Ordered)
+                            ->required(),
 
                         Select::make('performed_by_id')
                             ->label('Performed by')
@@ -133,9 +138,14 @@ class EpStudyResource extends Resource
                 TextColumn::make('status')
                     ->badge(),
 
+                TextColumn::make('procedure_status')
+                    ->label('Procedure Status')
+                    ->badge(),
+
                 TextColumn::make('date')
                     ->date()
-                    ->sortable(),
+                    ->sortable()
+                    ->placeholder('—'),
 
                 TextColumn::make('signedBy.name')
                     ->label('Reader')
@@ -143,7 +153,7 @@ class EpStudyResource extends Resource
 
                 TextColumn::make('waiting')
                     ->label('Waiting')
-                    ->state(fn (EpStudy $record) => in_array($record->status, [ReportStatus::Draft, ReportStatus::Preliminary], true)
+                    ->state(fn (EpStudy $record) => $record->date && in_array($record->status, [ReportStatus::Draft, ReportStatus::Preliminary], true)
                         ? $record->date->diffForHumans(short: true)
                         : null)
                     ->placeholder('—'),
@@ -158,6 +168,10 @@ class EpStudyResource extends Resource
 
                 SelectFilter::make('status')
                     ->options(ReportStatus::class),
+
+                SelectFilter::make('procedure_status')
+                    ->label('Procedure Status')
+                    ->options(ProcedureStatus::class),
             ])
             ->actions([
                 ViewAction::make(),

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\PatientResource\RelationManagers;
 
 use App\Enums\ImagingType;
+use App\Enums\ProcedureStatus;
 use App\Enums\ReportStatus;
 use App\Filament\Resources\ImagingReportResource;
 use App\Models\ImagingReport;
@@ -36,14 +37,18 @@ class ImagingReportsRelationManager extends RelationManager
             Section::make()
                 ->disabled(fn (?ImagingReport $record) => $record?->isLocked() ?? false)
                 ->schema([
-                    Grid::make(2)->schema([
+                    Grid::make(3)->schema([
                         Select::make('type')
                             ->options(ImagingType::selectableLabels())
                             ->required(),
 
-                        DatePicker::make('date')
-                            ->required()
-                            ->maxDate(now()),
+                        DatePicker::make('date'),
+
+                        Select::make('procedure_status')
+                            ->label('Procedure Status')
+                            ->options(ProcedureStatus::class)
+                            ->default(ProcedureStatus::Ordered)
+                            ->required(),
                     ]),
 
                     Grid::make(2)->schema([

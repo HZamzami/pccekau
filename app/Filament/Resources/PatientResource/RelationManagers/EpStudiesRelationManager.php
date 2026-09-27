@@ -4,6 +4,7 @@ namespace App\Filament\Resources\PatientResource\RelationManagers;
 
 use App\Filament\Resources\EpStudyResource;
 use App\Enums\EpStudyType;
+use App\Enums\ProcedureStatus;
 use App\Enums\ReportStatus;
 use App\Filament\Actions\ReportWorkflowActions;
 use App\Models\EpStudy;
@@ -36,14 +37,18 @@ class EpStudiesRelationManager extends RelationManager
             Section::make()
                 ->disabled(fn (?EpStudy $record) => $record?->isLocked() ?? false)
                 ->schema([
-                    Grid::make(2)->schema([
+                    Grid::make(3)->schema([
                         Select::make('type')
                             ->options(EpStudyType::class)
                             ->required(),
 
-                        DatePicker::make('date')
-                            ->required()
-                            ->maxDate(now()),
+                        DatePicker::make('date'),
+
+                        Select::make('procedure_status')
+                            ->label('Procedure Status')
+                            ->options(ProcedureStatus::class)
+                            ->default(ProcedureStatus::Ordered)
+                            ->required(),
                     ]),
 
                     Grid::make(2)->schema([

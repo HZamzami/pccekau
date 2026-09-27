@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Enums\ImagingType;
+use App\Enums\ProcedureStatus;
 use App\Enums\ReportStatus;
 use App\Filament\Actions\ReportWorkflowActions;
 use App\Filament\Resources\ImagingReportResource\Pages;
@@ -69,10 +70,14 @@ class ImagingReportResource extends Resource
                             ->required(),
                     ]),
 
-                    Grid::make(2)->schema([
-                        DatePicker::make('date')
-                            ->required()
-                            ->maxDate(now()),
+                    Grid::make(3)->schema([
+                        DatePicker::make('date'),
+
+                        Select::make('procedure_status')
+                            ->label('Procedure Status')
+                            ->options(ProcedureStatus::class)
+                            ->default(ProcedureStatus::Ordered)
+                            ->required(),
 
                         Select::make('performers')
                             ->label('Performed by')
@@ -136,9 +141,14 @@ class ImagingReportResource extends Resource
                 TextColumn::make('status')
                     ->badge(),
 
+                TextColumn::make('procedure_status')
+                    ->label('Procedure Status')
+                    ->badge(),
+
                 TextColumn::make('date')
                     ->date()
-                    ->sortable(),
+                    ->sortable()
+                    ->placeholder('—'),
 
                 TextColumn::make('readers.name')
                     ->label('Reader')
@@ -147,7 +157,7 @@ class ImagingReportResource extends Resource
 
                 TextColumn::make('waiting')
                     ->label('Waiting')
-                    ->state(fn (ImagingReport $record) => in_array($record->status, [ReportStatus::Draft, ReportStatus::Preliminary], true)
+                    ->state(fn (ImagingReport $record) => $record->date && in_array($record->status, [ReportStatus::Draft, ReportStatus::Preliminary], true)
                         ? $record->date->diffForHumans(short: true)
                         : null)
                     ->placeholder('—'),
@@ -168,6 +178,10 @@ class ImagingReportResource extends Resource
 
                 SelectFilter::make('status')
                     ->options(ReportStatus::class),
+
+                SelectFilter::make('procedure_status')
+                    ->label('Procedure Status')
+                    ->options(ProcedureStatus::class),
             ])
             ->actions([
                 ViewAction::make(),
