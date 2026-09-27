@@ -18,6 +18,8 @@ class HolterReportImporter
     /** @return Collection<int, ImportRowResult> */
     public function preview(string $filePath): Collection
     {
+        $this->batchPatients = [];
+
         $sheet = IOFactory::load($filePath)->getActiveSheet();
         $rows = $sheet->toArray(null, true, true, false);
         $header = $this->mapHeaders(array_shift($rows));

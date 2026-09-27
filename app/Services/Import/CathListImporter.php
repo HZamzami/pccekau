@@ -18,6 +18,8 @@ class CathListImporter
     /** @return Collection<int, ImportRowResult> */
     public function preview(string $filePath): Collection
     {
+        $this->batchPatients = [];
+
         $spreadsheet = IOFactory::load($filePath);
         $results = collect();
 
