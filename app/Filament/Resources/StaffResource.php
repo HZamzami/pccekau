@@ -6,6 +6,7 @@ use App\Filament\Resources\StaffResource\Pages;
 use App\Models\Staff;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -73,6 +74,12 @@ class StaffResource extends Resource
                     ->nullable()
                     ->helperText('Optional — link this staff member to a panel login.')
                     ->visible(fn () => auth()->user()?->isAdmin() ?? false),
+
+                Placeholder::make('ics_url')
+                    ->label('Calendar subscription link')
+                    ->helperText('Paste this into Google/Apple/Outlook calendar as a subscription — it updates automatically as schedules change.')
+                    ->content(fn (?Staff $record) => $record?->ics_url ?? '—')
+                    ->visible(fn (?Staff $record) => $record !== null),
             ]),
         ]);
     }
@@ -91,7 +98,6 @@ class StaffResource extends Resource
                     ->color(fn ($state) => match ($state) {
                         'consultant' => 'info',
                         'fellow' => 'warning',
-                        'surgeon' => 'danger',
                         'specialist' => 'success',
                         'technician' => 'primary',
                         'resident' => 'warning',

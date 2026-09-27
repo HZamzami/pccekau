@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class Staff extends Model
 {
@@ -27,7 +28,6 @@ class Staff extends Model
     public static array $roleLabels = [
         'consultant'      => 'Consultant',
         'fellow'          => 'Fellow',
-        'surgeon'         => 'Surgeon',
         'specialist'      => 'Specialist',
         'technician'      => 'Technician',
         'resident'        => 'Resident',
@@ -41,11 +41,26 @@ class Staff extends Model
         'icu'              => 'ICU',
         'achd'             => 'ACHD',
         'general'          => 'General Cardiology',
+        'surgery'          => 'Surgery',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (Staff $staff) {
+            $staff->ics_token ??= Str::random(40);
+        });
+    }
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function getIcsUrlAttribute(): ?string
+    {
+        return $this->ics_token
+            ? route('staff.schedule.ics', ['staff' => $this->id, 'token' => $this->ics_token])
+            : null;
     }
 
     public function scopeActive(Builder $query): Builder
