@@ -107,7 +107,7 @@ class ClinicFollowUpsPage extends Page implements HasTable
                     ->label('Done / Reschedule')
                     ->icon('heroicon-o-check')
                     ->color('success')
-                    ->visible(fn () => auth()->user()?->canWrite() ?? false)
+                    ->visible(fn () => auth()->user()?->canRecordClinicalNotes() ?? false)
                     ->form([
                         DatePicker::make('next_follow_up_date')
                             ->label('Next follow-up (leave blank to mark done)')

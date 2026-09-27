@@ -106,7 +106,7 @@ class HandoverBoardPage extends Page implements HasTable
                 Action::make('updateHandover')
                     ->label('Update')
                     ->icon('heroicon-o-pencil-square')
-                    ->visible(fn () => auth()->user()?->canWrite() ?? false)
+                    ->visible(fn () => auth()->user()?->canRecordClinicalNotes() ?? false)
                     ->form([
                         Textarea::make('presentation_diagnosis')->label('Presentation / Diagnosis')->rows(2),
                         Textarea::make('active_issues')->label('Active Issues')->rows(2),
@@ -126,7 +126,7 @@ class HandoverBoardPage extends Page implements HasTable
                     ->label('Note')
                     ->icon('heroicon-o-plus')
                     ->color('success')
-                    ->visible(fn () => auth()->user()?->canWrite() ?? false)
+                    ->visible(fn () => auth()->user()?->canRecordClinicalNotes() ?? false)
                     ->form([
                         Textarea::make('note')
                             ->label('Progress note')
