@@ -16,6 +16,8 @@ class CasesDiscussionImporter
     /** @return Collection<int, ImportRowResult> */
     public function preview(string $filePath): Collection
     {
+        $this->batchPatients = [];
+
         $sheet = IOFactory::load($filePath)->getActiveSheet();
         $rows = $sheet->toArray(null, true, true, false);
         $header = $this->mapHeaders(array_shift($rows));
@@ -56,7 +58,10 @@ class CasesDiscussionImporter
         $this->fillIfBlank($patient, 'gender', strtolower((string) $this->cell($row, $header, 'Gender')) ?: null);
         $this->fillIfBlank($patient, 'nationality', $this->cell($row, $header, 'Nationality'));
         $this->fillIfBlank($patient, 'referring_physician', $this->cell($row, $header, 'Primary'));
-        $this->fillIfBlank($patient, 'weight_kg', $this->cell($row, $header, 'Weight'));
+        $weight = $this->parseNumeric($this->cell($row, $header, 'Weight'));
+        $oxygenSaturation = $this->parseNumeric($this->cell($row, $header, 'Oxygen saturation'));
+
+        $this->fillIfBlank($patient, 'weight_kg', $weight);
         $this->fillIfBlank($patient, 'contact_number', $this->cell($row, $header, 'Contact number'));
 
         $specialist = $this->matchStaffByName($this->cell($row, $header, 'Specialist/Fellow'));
@@ -64,8 +69,8 @@ class CasesDiscussionImporter
         $discussion = new MdtDiscussion([
             'discussion_date' => $discussionDate,
             'age_snapshot' => $this->cell($row, $header, 'Age'),
-            'weight_kg' => $this->cell($row, $header, 'Weight'),
-            'oxygen_saturation' => $this->cell($row, $header, 'Oxygen saturation'),
+            'weight_kg' => $weight,
+            'oxygen_saturation' => $oxygenSaturation !== null ? (int) $oxygenSaturation : null,
             'diagnosis' => $diagnosis,
             'reason_for_discussion' => $reason,
             'history' => $this->cell($row, $header, 'History'),

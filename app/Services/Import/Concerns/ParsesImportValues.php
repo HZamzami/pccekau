@@ -7,6 +7,17 @@ use Illuminate\Support\Carbon;
 
 trait ParsesImportValues
 {
+    /**
+     * Patients resolved so far in the current preview() run, keyed by MRN.
+     * Without this, a file with the same MRN on multiple rows (e.g. a
+     * patient with several Holter sessions) would build a separate unsaved
+     * Patient per row, and every occurrence after the first would fail its
+     * unique(clinic_id, mrn) insert during commit().
+     *
+     * @var array<string, Patient>
+     */
+    protected array $batchPatients = [];
+
     protected function normalizeMrn(mixed $value): ?string
     {
         if ($value === null || $value === '') {
@@ -60,6 +71,28 @@ trait ParsesImportValues
         }
     }
 
+    /**
+     * Pulls the first number out of free text like "29 kg", "3.8kg", or a
+     * range like "90-92%" (ranges take the first value — a simplification,
+     * not a clinical judgement call). Returns null if no number is found.
+     */
+    protected function parseNumeric(mixed $value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (is_int($value) || is_float($value)) {
+            return (float) $value;
+        }
+
+        if (preg_match('/-?\d+(\.\d+)?/', (string) $value, $matches)) {
+            return (float) $matches[0];
+        }
+
+        return null;
+    }
+
     protected function blank(mixed $value): bool
     {
         return $value === null || $value === '';
@@ -77,18 +110,28 @@ trait ParsesImportValues
         }
     }
 
-    /** Finds an existing patient by MRN (scoped to the current tenant via the global clinic scope), or a new unsaved instance. */
+    /**
+     * Finds an existing patient by MRN (scoped to the current tenant via the
+     * global clinic scope), or a new unsaved instance — reusing the same
+     * instance across rows within one import batch (see $batchPatients).
+     */
     protected function findOrNewPatient(string $mrn): array
     {
-        $patient = Patient::where('mrn', $mrn)->first();
-
-        if ($patient) {
-            return [$patient, false];
+        if (isset($this->batchPatients[$mrn])) {
+            return [$this->batchPatients[$mrn], false];
         }
 
-        $patient = new Patient(['mrn' => $mrn]);
+        $patient = Patient::where('mrn', $mrn)->first();
+        $isNew = false;
 
-        return [$patient, true];
+        if (! $patient) {
+            $patient = new Patient(['mrn' => $mrn]);
+            $isNew = true;
+        }
+
+        $this->batchPatients[$mrn] = $patient;
+
+        return [$patient, $isNew];
     }
 
     /** @return array<string, int> lowercased, trimmed header text => column index */
