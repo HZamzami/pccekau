@@ -70,9 +70,33 @@ class User extends Authenticatable implements FilamentUser, HasDefaultTenant, Ha
         return $this->role === UserRole::Doctor;
     }
 
+    public function isNurse(): bool
+    {
+        return $this->role === UserRole::Nurse;
+    }
+
+    public function isFrontDesk(): bool
+    {
+        return $this->role === UserRole::FrontDesk;
+    }
+
     public function canWrite(): bool
     {
         return $this->isAdmin() || $this->isDoctor();
+    }
+
+    // Admission progress notes/updates and clinic visit vitals — a level
+    // below full clinical write (report finalize/amend, approvals).
+    public function canRecordClinicalNotes(): bool
+    {
+        return $this->canWrite() || $this->isNurse();
+    }
+
+    // Patients, documents, procedure bookings, and the wait-list — no
+    // clinical note or report access.
+    public function canManageSchedule(): bool
+    {
+        return $this->canWrite() || $this->isFrontDesk();
     }
 
     /**

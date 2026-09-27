@@ -32,6 +32,7 @@ class Staff extends Model
         'technician'      => 'Technician',
         'resident'        => 'Resident',
         'medical_student' => 'Medical Student',
+        'nurse'           => 'Nurse',
     ];
 
     public static array $specialtyLabels = [
