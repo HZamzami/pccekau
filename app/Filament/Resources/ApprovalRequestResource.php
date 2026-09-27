@@ -13,6 +13,8 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Form;
+use Filament\Notifications\Actions\Action as NotificationAction;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkActionGroup;
@@ -149,7 +151,10 @@ class ApprovalRequestResource extends Resource
             ->color('success')
             ->visible(fn (ApprovalRequest $record) => $record->status === ApprovalStatus::Pending && (auth()->user()?->canWrite() ?? false))
             ->requiresConfirmation()
-            ->action(fn (ApprovalRequest $record) => $record->update(['status' => ApprovalStatus::Approved]));
+            ->action(function (ApprovalRequest $record) {
+                $record->update(['status' => ApprovalStatus::Approved]);
+                static::notifyRequester($record, 'approved', 'success');
+            });
     }
 
     public static function rejectAction(): Action
@@ -160,7 +165,32 @@ class ApprovalRequestResource extends Resource
             ->color('danger')
             ->visible(fn (ApprovalRequest $record) => $record->status === ApprovalStatus::Pending && (auth()->user()?->canWrite() ?? false))
             ->requiresConfirmation()
-            ->action(fn (ApprovalRequest $record) => $record->update(['status' => ApprovalStatus::Rejected]));
+            ->action(function (ApprovalRequest $record) {
+                $record->update(['status' => ApprovalStatus::Rejected]);
+                static::notifyRequester($record, 'rejected', 'danger');
+            });
+    }
+
+    protected static function notifyRequester(ApprovalRequest $record, string $verb, string $color): void
+    {
+        if (! $record->requestedBy) {
+            return;
+        }
+
+        // notifyNow: Filament's DatabaseNotification is queued by default,
+        // but this shouldn't depend on a queue worker running.
+        $record->requestedBy->notifyNow(
+            Notification::make()
+                ->title("Approval request {$verb}")
+                ->body("{$record->patient?->name} — {$record->procedure->getLabel()}")
+                ->color($color)
+                ->actions([
+                    NotificationAction::make('view')
+                        ->label('View request')
+                        ->url(static::getUrl('edit', ['record' => $record])),
+                ])
+                ->toDatabase()
+        );
     }
 
     public static function getRelations(): array
