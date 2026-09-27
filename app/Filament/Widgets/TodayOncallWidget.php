@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Models\ConsultantSchedule;
 use App\Models\OncallSchedule;
 use Filament\Widgets\Widget;
 
@@ -16,6 +17,11 @@ class TodayOncallWidget extends Widget
     public function getSchedule(): ?OncallSchedule
     {
         return OncallSchedule::currentWeek();
+    }
+
+    public function getConsultantSchedule(): ?ConsultantSchedule
+    {
+        return ConsultantSchedule::currentWeek();
     }
 
     public function getTodayLabel(): string
