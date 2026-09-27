@@ -1,5 +1,5 @@
 <x-filament-widgets::widget>
-    <x-filament::section heading="Today's On-Call — {{ $this->getTodayLabel() }}, {{ now()->format('d M Y') }}">
+    <x-filament::section heading="Today's Coverage — {{ $this->getTodayLabel() }}, {{ now()->format('d M Y') }}">
         @php $schedule = $this->getSchedule() @endphp
 
         @if ($schedule)
@@ -27,6 +27,29 @@
             @endif
         @else
             <p class="text-sm text-gray-500 dark:text-gray-400">No on-call schedule entered for this week.</p>
+        @endif
+
+        @php $consultants = $this->getConsultantSchedule() @endphp
+        @if ($consultants)
+            <div class="mt-6">
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">This Week's Consultants</p>
+                <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                    @foreach ([
+                        'Service' => $consultants->serviceStaff?->name,
+                        'Cath'    => $consultants->cathStaff?->name,
+                        'EP'      => $consultants->epStaff?->name,
+                    ] as $role => $doctor)
+                        <div class="rounded-xl border border-gray-200 dark:border-white/10 p-4 text-center space-y-1">
+                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                                {{ $role }}
+                            </p>
+                            <p class="text-sm font-semibold text-gray-900 dark:text-white">
+                                {{ $doctor ?: '—' }}
+                            </p>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
         @endif
     </x-filament::section>
 </x-filament-widgets::widget>
