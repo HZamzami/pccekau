@@ -3,7 +3,12 @@
 namespace App\Services\Import\Concerns;
 
 use App\Models\Patient;
+use App\Models\Staff;
+use App\Services\Import\ImportRowResult;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 trait ParsesImportValues
 {
@@ -17,6 +22,21 @@ trait ParsesImportValues
      * @var array<string, Patient>
      */
     protected array $batchPatients = [];
+
+    /**
+     * Fields actually set by fillIfBlank() for the row currently being
+     * parsed — reset at the top of each parseRow() and read once the
+     * ImportRowResult for that row is built. Powers the diff panel in the
+     * preview UI ("field: — → value").
+     *
+     * @var array<int, array{model: string, field: string, label: string, value: mixed}>
+     */
+    protected array $currentRowChanges = [];
+
+    protected function resetRowChanges(): void
+    {
+        $this->currentRowChanges = [];
+    }
 
     protected function normalizeMrn(mixed $value): ?string
     {
@@ -98,16 +118,33 @@ trait ParsesImportValues
         return $value === null || $value === '';
     }
 
-    /** Sets $model->$attribute = $value only if the model doesn't already have a value there. */
-    protected function fillIfBlank($model, string $attribute, mixed $value): void
+    /**
+     * Sets $model->$attribute = $value only if the model doesn't already
+     * have a value there, and records the change for the preview diff.
+     */
+    protected function fillIfBlank($model, string $attribute, mixed $value, ?string $label = null): void
     {
         if ($value === null || $value === '') {
             return;
         }
 
-        if ($this->blank($model->{$attribute})) {
-            $model->{$attribute} = $value;
+        if (! $this->blank($model->{$attribute})) {
+            return;
         }
+
+        $model->{$attribute} = $value;
+        $this->recordChange($model, $attribute, $value, $label);
+    }
+
+    /** Records a field set for the preview diff panel, without any blank-check (for brand-new records). */
+    protected function recordChange($model, string $attribute, mixed $value, ?string $label = null): void
+    {
+        $this->currentRowChanges[] = [
+            'model' => class_basename($model),
+            'field' => $attribute,
+            'label' => $label ?? Str::of($attribute)->replace('_', ' ')->headline(),
+            'value' => $value,
+        ];
     }
 
     /**
@@ -163,8 +200,57 @@ trait ParsesImportValues
         return is_string($value) ? (trim($value) !== '' ? trim($value) : null) : $value;
     }
 
+    /**
+     * Persists every non-error row: each row's patient + child records save
+     * inside their own transaction, so one bad row can't roll back the rest
+     * of the batch. Identical across all three importers, hence shared here.
+     *
+     * @param Collection<int, ImportRowResult> $rows
+     * @return array{created: int, updated: int, failed: int, failures: array<int, array{label: string, reason: string}>}
+     */
+    public function commit(Collection $rows): array
+    {
+        $created = 0;
+        $updated = 0;
+        $failed = 0;
+        $failures = [];
+
+        foreach ($rows as $result) {
+            if ($result->status === 'error') {
+                $failed++;
+                $failures[] = ['label' => $result->summaryLabel(), 'reason' => $result->error ?? 'Invalid row'];
+
+                continue;
+            }
+
+            try {
+                DB::transaction(function () use ($result) {
+                    $result->patient->save();
+
+                    foreach ($result->childRecords as $child) {
+                        $child->patient_id = $result->patient->id;
+                        $child->save();
+                    }
+                });
+
+                $result->isNewPatient ? $created++ : $updated++;
+            } catch (\Throwable $e) {
+                $failed++;
+                $failures[] = ['label' => $result->summaryLabel(), 'reason' => $this->humanizeDbError($e->getMessage())];
+            }
+        }
+
+        return ['created' => $created, 'updated' => $updated, 'failed' => $failed, 'failures' => $failures];
+    }
+
+    /** Postgres/MySQL driver exceptions embed the full query + bindings after this marker — keep only the human-readable part. */
+    protected function humanizeDbError(string $message): string
+    {
+        return trim(Str::before($message, '(Connection:'));
+    }
+
     /** Best-effort match against Staff.name for free-text like "D. Zaher" / "Dr. Khadijah". */
-    protected function matchStaffByName(?string $text): ?\App\Models\Staff
+    protected function matchStaffByName(?string $text): ?Staff
     {
         if ($this->blank($text)) {
             return null;
@@ -174,7 +260,7 @@ trait ParsesImportValues
         $words = array_filter(preg_split('/[\s,\/]+/', trim((string) $cleaned)), fn ($w) => mb_strlen($w) >= 3);
 
         foreach ($words as $word) {
-            $match = \App\Models\Staff::where('name', 'like', "%{$word}%")->first();
+            $match = Staff::where('name', 'like', "%{$word}%")->first();
 
             if ($match) {
                 return $match;

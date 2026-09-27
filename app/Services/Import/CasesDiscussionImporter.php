@@ -6,7 +6,6 @@ use App\Enums\PatientStatus;
 use App\Models\MdtDiscussion;
 use App\Services\Import\Concerns\ParsesImportValues;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class CasesDiscussionImporter
@@ -30,6 +29,8 @@ class CasesDiscussionImporter
 
     protected function parseRow(array $row, array $header): ImportRowResult
     {
+        $this->resetRowChanges();
+
         $mrn = $this->normalizeMrn($this->cell($row, $header, 'MRN'));
         $name = $this->cell($row, $header, 'Name');
         $diagnosis = $this->cell($row, $header, 'Diagnosis');
@@ -51,18 +52,19 @@ class CasesDiscussionImporter
         if ($isNew) {
             $patient->name = $name ?: 'Unknown';
             $patient->status = PatientStatus::Active;
+            $this->recordChange($patient, 'name', $patient->name, 'Name');
         } else {
-            $this->fillIfBlank($patient, 'name', $name);
+            $this->fillIfBlank($patient, 'name', $name, 'Name');
         }
 
-        $this->fillIfBlank($patient, 'gender', strtolower((string) $this->cell($row, $header, 'Gender')) ?: null);
-        $this->fillIfBlank($patient, 'nationality', $this->cell($row, $header, 'Nationality'));
-        $this->fillIfBlank($patient, 'referring_physician', $this->cell($row, $header, 'Primary'));
+        $this->fillIfBlank($patient, 'gender', strtolower((string) $this->cell($row, $header, 'Gender')) ?: null, 'Gender');
+        $this->fillIfBlank($patient, 'nationality', $this->cell($row, $header, 'Nationality'), 'Nationality');
+        $this->fillIfBlank($patient, 'referring_physician', $this->cell($row, $header, 'Primary'), 'Referring physician');
         $weight = $this->parseNumeric($this->cell($row, $header, 'Weight'));
         $oxygenSaturation = $this->parseNumeric($this->cell($row, $header, 'Oxygen saturation'));
 
-        $this->fillIfBlank($patient, 'weight_kg', $weight);
-        $this->fillIfBlank($patient, 'contact_number', $this->cell($row, $header, 'Contact number'));
+        $this->fillIfBlank($patient, 'weight_kg', $weight, 'Weight (kg)');
+        $this->fillIfBlank($patient, 'contact_number', $this->cell($row, $header, 'Contact number'), 'Contact number');
 
         $specialist = $this->matchStaffByName($this->cell($row, $header, 'Specialist/Fellow'));
 
@@ -82,39 +84,8 @@ class CasesDiscussionImporter
             'contact_number' => $this->cell($row, $header, 'Contact number'),
         ]);
 
-        return ImportRowResult::ok($raw, $patient, $isNew, [$discussion]);
-    }
+        $childSummary = ["MDT Discussion: {$diagnosis} — {$discussionDate->format('d M Y')}"];
 
-    /** @return array{created: int, updated: int, failed: int} */
-    public function commit(Collection $rows): array
-    {
-        $created = 0;
-        $updated = 0;
-        $failed = 0;
-
-        foreach ($rows as $result) {
-            if ($result->status === 'error') {
-                $failed++;
-
-                continue;
-            }
-
-            try {
-                DB::transaction(function () use ($result) {
-                    $result->patient->save();
-
-                    foreach ($result->childRecords as $child) {
-                        $child->patient_id = $result->patient->id;
-                        $child->save();
-                    }
-                });
-
-                $result->isNewPatient ? $created++ : $updated++;
-            } catch (\Throwable) {
-                $failed++;
-            }
-        }
-
-        return ['created' => $created, 'updated' => $updated, 'failed' => $failed];
+        return ImportRowResult::ok($raw, $patient, $isNew, [$discussion], $this->currentRowChanges, $childSummary);
     }
 }

@@ -10,6 +10,8 @@ final class ImportRowResult
     /**
      * @param array<string, mixed> $raw
      * @param array<Model> $childRecords Unsaved child records (Intervention/EpStudy/MdtDiscussion) to persist alongside the patient.
+     * @param array<int, array{model: string, field: string, label: string, value: mixed}> $fieldChanges Every field fillIfBlank() actually set — powers the preview diff panel.
+     * @param array<int, string> $childSummary One human-readable line per child record being created.
      */
     public function __construct(
         public readonly array $raw,
@@ -18,6 +20,8 @@ final class ImportRowResult
         public readonly array $childRecords,
         public readonly string $status,
         public readonly ?string $error = null,
+        public readonly array $fieldChanges = [],
+        public readonly array $childSummary = [],
     ) {
     }
 
@@ -26,9 +30,15 @@ final class ImportRowResult
         return new self($raw, null, false, [], 'error', $message);
     }
 
-    public static function ok(array $raw, Patient $patient, bool $isNewPatient, array $childRecords): self
-    {
-        return new self($raw, $patient, $isNewPatient, $childRecords, $isNewPatient ? 'new' : 'update');
+    public static function ok(
+        array $raw,
+        Patient $patient,
+        bool $isNewPatient,
+        array $childRecords,
+        array $fieldChanges = [],
+        array $childSummary = [],
+    ): self {
+        return new self($raw, $patient, $isNewPatient, $childRecords, $isNewPatient ? 'new' : 'update', null, $fieldChanges, $childSummary);
     }
 
     public function summaryLabel(): string
@@ -37,5 +47,30 @@ final class ImportRowResult
         $name = $this->raw['name'] ?? '—';
 
         return "{$mrn} — {$name}";
+    }
+
+    /** Short one-line summary of what this row will actually do, for the collapsed table row. */
+    public function changeSummary(): string
+    {
+        if ($this->status === 'error') {
+            return $this->error ?? 'Cannot be imported';
+        }
+
+        $parts = [];
+
+        if ($this->isNewPatient) {
+            $parts[] = 'New patient';
+        } elseif (count($this->fieldChanges) > 0) {
+            $fields = collect($this->fieldChanges)->pluck('label')->implode(', ');
+            $parts[] = "Fills in: {$fields}";
+        } else {
+            $parts[] = 'No new patient fields';
+        }
+
+        foreach ($this->childSummary as $line) {
+            $parts[] = $line;
+        }
+
+        return implode(' · ', $parts);
     }
 }
