@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\BelongsToClinic;
 use App\Enums\EpStudyType;
+use App\Enums\ProcedureStatus;
 use App\Enums\ReportStatus;
 use App\Models\Concerns\HasReportWorkflow;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -22,6 +23,7 @@ class EpStudy extends Model
         'type',
         'status',
         'date',
+        'procedure_status',
         'report',
         'performed_by_id',
         'notes',
@@ -33,6 +35,7 @@ class EpStudy extends Model
         'date' => 'date',
         'type' => EpStudyType::class,
         'status' => ReportStatus::class,
+        'procedure_status' => ProcedureStatus::class,
         'finalized_at' => 'datetime',
     ];
 

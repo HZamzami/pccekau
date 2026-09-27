@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\BelongsToClinic;
 use App\Enums\InterventionType;
+use App\Enums\ProcedureStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,6 +19,7 @@ class Intervention extends Model
     protected $fillable = [
         'patient_id',
         'date',
+        'procedure_status',
         'type',
         'name',
         'operator_id',
@@ -27,6 +29,7 @@ class Intervention extends Model
     protected $casts = [
         'date' => 'date',
         'type' => InterventionType::class,
+        'procedure_status' => ProcedureStatus::class,
     ];
 
     public function patient(): BelongsTo

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Enums\InterventionType;
+use App\Enums\ProcedureStatus;
 use App\Filament\Resources\InterventionResource\Pages;
 use App\Models\Intervention;
 use App\Models\Patient;
@@ -57,10 +58,14 @@ class InterventionResource extends Resource
     public static function detailsSchema(): array
     {
         return [
-            Grid::make(3)->schema([
-                DatePicker::make('date')
-                    ->required()
-                    ->maxDate(now()),
+            Grid::make(4)->schema([
+                DatePicker::make('date'),
+
+                Select::make('procedure_status')
+                    ->label('Procedure Status')
+                    ->options(ProcedureStatus::class)
+                    ->default(ProcedureStatus::Ordered)
+                    ->required(),
 
                 Select::make('type')
                     ->options(InterventionType::selectableLabels())
@@ -103,7 +108,12 @@ class InterventionResource extends Resource
 
                 TextColumn::make('date')
                     ->date()
-                    ->sortable(),
+                    ->sortable()
+                    ->placeholder('—'),
+
+                TextColumn::make('procedure_status')
+                    ->label('Procedure Status')
+                    ->badge(),
 
                 TextColumn::make('type')
                     ->badge(),
@@ -123,6 +133,10 @@ class InterventionResource extends Resource
                     ->tooltip(fn (TextColumn $column): ?string => strlen((string) $column->getState()) > 40 ? $column->getState() : null),
             ])
             ->filters([
+                SelectFilter::make('procedure_status')
+                    ->label('Procedure Status')
+                    ->options(ProcedureStatus::class),
+
                 SelectFilter::make('type')
                     ->options(InterventionType::class),
 
