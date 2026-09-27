@@ -27,6 +27,16 @@
             {{-- Current week summary card for on-call --}}
             @if ($activeTab === 'oncall')
                 @php $current = $this->getCurrentOncall() @endphp
+
+                <div class="flex items-center gap-3">
+                    <x-filament::button wire:click="previousGridWeek" size="sm" color="gray" outlined>← Prev</x-filament::button>
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                        Week of {{ \Illuminate\Support\Carbon::parse($gridWeekStart)->format('d M Y') }}
+                    </span>
+                    <x-filament::button wire:click="nextGridWeek" size="sm" color="gray" outlined>Next →</x-filament::button>
+                    <x-filament::button wire:click="currentGridWeek" size="sm" color="gray">This Week</x-filament::button>
+                </div>
+
                 @if ($current)
                     <x-filament::section
                         heading="Specialists/Fellows Weekly Coverage — {{ $current->week_start->format('d M Y') }}"
@@ -47,7 +57,7 @@
                                 'Consultation' => $current->consultationStaff?->name,
                                 'Cath'         => $current->cathStaff?->name,
                             ];
-                            $today = now()->format('l');
+                            $today = $current->week_start->isSameWeek(now()) ? now()->format('l') : null;
                         @endphp
 
                         <div class="overflow-x-auto">
@@ -81,6 +91,8 @@
                             <p class="mt-3 text-xs italic text-gray-500">{{ $current->notes }}</p>
                         @endif
                     </x-filament::section>
+                @else
+                    <p class="text-sm text-gray-500 dark:text-gray-400">No coverage schedule entered for this week.</p>
                 @endif
             @endif
 
