@@ -8,7 +8,6 @@ use App\Enums\ProcedureStatus;
 use App\Models\Intervention;
 use App\Services\Import\Concerns\ParsesImportValues;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class CathListImporter
@@ -43,6 +42,8 @@ class CathListImporter
 
     protected function parseRow(array $row, array $header, string $sheetName): ImportRowResult
     {
+        $this->resetRowChanges();
+
         $mrn = $this->normalizeMrn($this->cell($row, $header, 'MRN'));
         $name = $this->cell($row, $header, 'Name');
         $procedure = $this->cell($row, $header, 'Procedure');
@@ -62,11 +63,12 @@ class CathListImporter
         if ($isNew) {
             $patient->name = $name;
             $patient->status = PatientStatus::Active;
+            $this->recordChange($patient, 'name', $patient->name, 'Name');
         } else {
-            $this->fillIfBlank($patient, 'name', $name);
+            $this->fillIfBlank($patient, 'name', $name, 'Name');
         }
 
-        $this->fillIfBlank($patient, 'nationality', $this->cell($row, $header, 'nationality'));
+        $this->fillIfBlank($patient, 'nationality', $this->cell($row, $header, 'nationality'), 'Nationality');
 
         $notesParts = array_filter([
             ($diagnosis = $this->cell($row, $header, 'Diagnosis in English') ?? $this->cell($row, $header, 'Diagnosis')) ? "Diagnosis: {$diagnosis}" : null,
@@ -82,7 +84,12 @@ class CathListImporter
             'notes' => implode("\n", $notesParts) ?: null,
         ]);
 
-        return ImportRowResult::ok($raw, $patient, $isNew, [$intervention]);
+        $childSummary = [
+            'Intervention: '.$intervention->name
+                .($intervention->date ? ' — '.$intervention->date->format('d M Y') : ' — no date'),
+        ];
+
+        return ImportRowResult::ok($raw, $patient, $isNew, [$intervention], $this->currentRowChanges, $childSummary);
     }
 
     protected function inferInterventionType(?string $procedure): InterventionType
@@ -96,38 +103,5 @@ class CathListImporter
             str_contains($text, 'ablation') => InterventionType::Ablation,
             default => InterventionType::Other,
         };
-    }
-
-    /** @return array{created: int, updated: int, failed: int} */
-    public function commit(Collection $rows): array
-    {
-        $created = 0;
-        $updated = 0;
-        $failed = 0;
-
-        foreach ($rows as $result) {
-            if ($result->status === 'error') {
-                $failed++;
-
-                continue;
-            }
-
-            try {
-                DB::transaction(function () use ($result) {
-                    $result->patient->save();
-
-                    foreach ($result->childRecords as $child) {
-                        $child->patient_id = $result->patient->id;
-                        $child->save();
-                    }
-                });
-
-                $result->isNewPatient ? $created++ : $updated++;
-            } catch (\Throwable) {
-                $failed++;
-            }
-        }
-
-        return ['created' => $created, 'updated' => $updated, 'failed' => $failed];
     }
 }

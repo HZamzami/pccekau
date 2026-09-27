@@ -8,7 +8,6 @@ use App\Enums\ProcedureStatus;
 use App\Models\EpStudy;
 use App\Services\Import\Concerns\ParsesImportValues;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class HolterReportImporter
@@ -32,6 +31,8 @@ class HolterReportImporter
 
     protected function parseRow(array $row, array $header): ImportRowResult
     {
+        $this->resetRowChanges();
+
         $mrn = $this->normalizeMrn($this->cell($row, $header, 'MRN'));
         // This sheet's second column holds the patient name but has no header
         // text of its own — read it positionally, right after MRN.
@@ -58,11 +59,14 @@ class HolterReportImporter
         if ($isNew) {
             $patient->name = $name ?: 'Unknown';
             $patient->status = PatientStatus::Active;
+            $this->recordChange($patient, 'name', $patient->name, 'Name');
         } else {
-            $this->fillIfBlank($patient, 'name', $name);
+            $this->fillIfBlank($patient, 'name', $name, 'Name');
         }
 
         $studies = [];
+        $childSummary = [];
+        $dateLabel = $date ? $date->format('d M Y') : 'no date';
 
         if (! $this->blank($holterReport)) {
             $studies[] = new EpStudy([
@@ -71,6 +75,7 @@ class HolterReportImporter
                 'report' => $holterReport,
                 'procedure_status' => ProcedureStatus::Done,
             ]);
+            $childSummary[] = "Holter report — {$dateLabel}";
         }
 
         if (! $this->blank($stressReport)) {
@@ -80,41 +85,9 @@ class HolterReportImporter
                 'report' => $stressReport,
                 'procedure_status' => ProcedureStatus::Done,
             ]);
+            $childSummary[] = "Stress ECG report — {$dateLabel}";
         }
 
-        return ImportRowResult::ok($raw, $patient, $isNew, $studies);
-    }
-
-    /** @return array{created: int, updated: int, failed: int} */
-    public function commit(Collection $rows): array
-    {
-        $created = 0;
-        $updated = 0;
-        $failed = 0;
-
-        foreach ($rows as $result) {
-            if ($result->status === 'error') {
-                $failed++;
-
-                continue;
-            }
-
-            try {
-                DB::transaction(function () use ($result) {
-                    $result->patient->save();
-
-                    foreach ($result->childRecords as $child) {
-                        $child->patient_id = $result->patient->id;
-                        $child->save();
-                    }
-                });
-
-                $result->isNewPatient ? $created++ : $updated++;
-            } catch (\Throwable) {
-                $failed++;
-            }
-        }
-
-        return ['created' => $created, 'updated' => $updated, 'failed' => $failed];
+        return ImportRowResult::ok($raw, $patient, $isNew, $studies, $this->currentRowChanges, $childSummary);
     }
 }
