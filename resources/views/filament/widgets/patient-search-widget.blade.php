@@ -30,7 +30,7 @@
                                         {{ $patient->name }}
                                     </div>
                                     <div class="text-xs text-gray-400">
-                                        {{ $patient->age }} · {{ ucfirst($patient->gender) }} · {{ $patient->nationality }}
+                                        {{ $patient->age ?? '—' }} · {{ $patient->gender ? ucfirst($patient->gender) : '—' }} · {{ $patient->nationality }}
                                     </div>
                                 </div>
                                 <x-filament::badge :color="match($patient->status) {

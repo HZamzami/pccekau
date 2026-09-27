@@ -27,8 +27,8 @@
             <td class="label">Age</td><td>{{ $patient->age }}</td>
         </tr>
         <tr>
-            <td class="label">DOB</td><td>{{ $patient->date_of_birth->format('d M Y') }}</td>
-            <td class="label">Gender</td><td>{{ ucfirst($patient->gender) }}</td>
+            <td class="label">DOB</td><td>{{ $patient->date_of_birth?->format('d M Y') ?? '—' }}</td>
+            <td class="label">Gender</td><td>{{ $patient->gender ? ucfirst($patient->gender) : '—' }}</td>
             <td class="label">Status</td><td>{{ $patient->status?->getLabel() ?? ucfirst((string) $patient->status) }}</td>
         </tr>
         <tr>

@@ -89,18 +89,25 @@ class PatientResource extends Resource
         return $infolist->schema([
             InfolistSection::make()
                 ->schema([
-                    InfolistGrid::make(4)->schema([
+                    InfolistGrid::make(5)->schema([
                         TextEntry::make('mrn')
                             ->label('MRN')
                             ->copyable()
                             ->weight('bold'),
 
+                        TextEntry::make('phoenix_mrn')
+                            ->label('Phoenix MRN')
+                            ->copyable()
+                            ->placeholder('—'),
+
                         TextEntry::make('age')
                             ->label('Age')
-                            ->state(fn (Patient $record) => $record->age),
+                            ->state(fn (Patient $record) => $record->age)
+                            ->placeholder('—'),
 
                         TextEntry::make('gender')
-                            ->formatStateUsing(fn ($state) => ucfirst($state)),
+                            ->formatStateUsing(fn (?string $state) => $state ? ucfirst($state) : null)
+                            ->placeholder('—'),
 
                         TextEntry::make('status')
                             ->badge(),
@@ -109,7 +116,8 @@ class PatientResource extends Resource
                     InfolistGrid::make(4)->schema([
                         TextEntry::make('date_of_birth')
                             ->label('Date of birth')
-                            ->date(),
+                            ->date()
+                            ->placeholder('—'),
 
                         TextEntry::make('weight_kg')
                             ->label('Weight')
@@ -157,7 +165,7 @@ class PatientResource extends Resource
     {
         return $form->schema([
             Section::make('Demographics')->schema([
-                Grid::make(3)->schema([
+                Grid::make(4)->schema([
                     TextInput::make('mrn')
                         ->label('MRN')
                         ->required()
@@ -168,6 +176,10 @@ class PatientResource extends Resource
                         )
                         ->maxLength(50),
 
+                    TextInput::make('phoenix_mrn')
+                        ->label('Phoenix MRN')
+                        ->maxLength(50),
+
                     TextInput::make('name')
                         ->required()
                         ->maxLength(255)
@@ -176,12 +188,10 @@ class PatientResource extends Resource
 
                 Grid::make(3)->schema([
                     DatePicker::make('date_of_birth')
-                        ->required()
                         ->maxDate(now()),
 
                     Select::make('gender')
-                        ->options(['male' => 'Male', 'female' => 'Female'])
-                        ->required(),
+                        ->options(['male' => 'Male', 'female' => 'Female']),
 
                     Select::make('nationality')
                         ->searchable()
@@ -257,16 +267,24 @@ class PatientResource extends Resource
                     ->searchable()
                     ->sortable(),
 
+                TextColumn::make('phoenix_mrn')
+                    ->label('Phoenix MRN')
+                    ->searchable()
+                    ->placeholder('—')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
 
                 TextColumn::make('age')
                     ->label('Age')
-                    ->state(fn (Patient $record) => $record->age),
+                    ->state(fn (Patient $record) => $record->age)
+                    ->placeholder('—'),
 
                 TextColumn::make('gender')
-                    ->formatStateUsing(fn ($state) => ucfirst($state)),
+                    ->formatStateUsing(fn (?string $state) => $state ? ucfirst($state) : null)
+                    ->placeholder('—'),
 
                 TextColumn::make('lesions')
                     ->label('Cardiac diagnosis')

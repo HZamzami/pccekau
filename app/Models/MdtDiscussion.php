@@ -42,7 +42,7 @@ class MdtDiscussion extends Model
     protected static function booted(): void
     {
         static::saving(function (MdtDiscussion $discussion) {
-            if ($discussion->patient && $discussion->discussion_date) {
+            if ($discussion->patient?->date_of_birth && $discussion->discussion_date) {
                 $discussion->age_snapshot = Patient::computeAgeLabel(
                     $discussion->patient->date_of_birth,
                     $discussion->discussion_date

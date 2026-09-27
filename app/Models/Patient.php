@@ -19,6 +19,7 @@ class Patient extends Model
 
     protected $fillable = [
         'mrn',
+        'phoenix_mrn',
         'name',
         'date_of_birth',
         'gender',
@@ -68,10 +69,11 @@ class Patient extends Model
         });
     }
 
-    // Returns age as a human-readable string: "5 yr 3 mo" or "8 mo" for infants
-    public function getAgeAttribute(): string
+    // Returns age as a human-readable string: "5 yr 3 mo" or "8 mo" for infants.
+    // Null when date_of_birth isn't known yet (e.g. freshly imported patients).
+    public function getAgeAttribute(): ?string
     {
-        return self::computeAgeLabel($this->date_of_birth, now());
+        return $this->date_of_birth ? self::computeAgeLabel($this->date_of_birth, now()) : null;
     }
 
     // Reusable static so MdtDiscussion can call it with a different reference date
