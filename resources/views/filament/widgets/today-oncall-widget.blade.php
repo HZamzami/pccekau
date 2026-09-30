@@ -5,11 +5,11 @@
         @if ($schedule)
             <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
                 @foreach ([
-                    'On-Call'      => $schedule->today_oncall,
-                    'Clinic'       => $schedule->clinicStaff?->name,
-                    'Inpatient'    => $schedule->inpatientStaff?->name,
-                    'Consultation' => $schedule->consultationStaff?->name,
-                    'Cath'         => $schedule->cathStaff?->name,
+                    'On-Call'      => $schedule->staffForToday(\App\Enums\CoverageRole::Oncall)?->name,
+                    'Clinic'       => $schedule->staffForToday(\App\Enums\CoverageRole::Clinic)?->name,
+                    'Inpatient'    => $schedule->staffForToday(\App\Enums\CoverageRole::Inpatient)?->name,
+                    'Consultation' => $schedule->staffForToday(\App\Enums\CoverageRole::Consultation)?->name,
+                    'Cath'         => $schedule->staffForToday(\App\Enums\CoverageRole::Cath)?->name,
                 ] as $role => $doctor)
                     <div class="rounded-xl border border-gray-200 dark:border-white/10 p-4 text-center space-y-1">
                         <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
@@ -32,12 +32,12 @@
         @php $consultants = $this->getConsultantSchedule() @endphp
         @if ($consultants)
             <div class="mt-6">
-                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">This Week's Consultants</p>
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Today's Consultants</p>
                 <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
                     @foreach ([
-                        'Service' => $consultants->serviceStaff?->name,
-                        'Cath'    => $consultants->cathStaff?->name,
-                        'EP'      => $consultants->epStaff?->name,
+                        'Service' => $consultants->staffForToday(\App\Enums\CoverageRole::ConsultantService)?->name,
+                        'Cath'    => $consultants->staffForToday(\App\Enums\CoverageRole::ConsultantCath)?->name,
+                        'EP'      => $consultants->staffForToday(\App\Enums\CoverageRole::ConsultantEp)?->name,
                     ] as $role => $doctor)
                         <div class="rounded-xl border border-gray-200 dark:border-white/10 p-4 text-center space-y-1">
                             <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">

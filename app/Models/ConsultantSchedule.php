@@ -2,20 +2,18 @@
 
 namespace App\Models;
 
+use App\Enums\CoverageRole;
 use App\Models\Concerns\BelongsToClinic;
+use App\Models\Concerns\HasDailyAssignments;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ConsultantSchedule extends Model
 {
-    use BelongsToClinic;
+    use BelongsToClinic, HasDailyAssignments;
 
     protected $fillable = [
         'week_start',
-        'service_staff_id',
-        'cath_staff_id',
-        'ep_staff_id',
         'notes',
     ];
 
@@ -23,25 +21,22 @@ class ConsultantSchedule extends Model
         'week_start' => 'date',
     ];
 
-    public function serviceStaff(): BelongsTo
+    public static function roles(): array
     {
-        return $this->belongsTo(Staff::class, 'service_staff_id');
-    }
-
-    public function cathStaff(): BelongsTo
-    {
-        return $this->belongsTo(Staff::class, 'cath_staff_id');
-    }
-
-    public function epStaff(): BelongsTo
-    {
-        return $this->belongsTo(Staff::class, 'ep_staff_id');
+        return CoverageRole::forConsultants();
     }
 
     public static function currentWeek(): ?self
     {
-        $sunday = Carbon::now()->startOfWeek(Carbon::SUNDAY);
+        return static::forWeek(Carbon::now()->startOfWeek(Carbon::SUNDAY));
+    }
 
-        return static::where('week_start', $sunday->toDateString())->first();
+    public static function forWeek(Carbon|string $weekStart): ?self
+    {
+        $weekStart = $weekStart instanceof Carbon ? $weekStart : Carbon::parse($weekStart);
+
+        return static::with('assignments.staff')
+            ->whereDate('week_start', $weekStart->toDateString())
+            ->first();
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\ProcedureCategory;
 use App\Enums\ProcedureStatus;
 use App\Enums\WaitlistPriority;
 use App\Enums\WaitlistStatus;
@@ -50,7 +51,11 @@ class WaitlistEntryResource extends Resource
                     ->required()
                     ->getOptionLabelFromRecordUsing(fn (Patient $record) => "{$record->mrn} — {$record->name}"),
 
-                Grid::make(2)->schema([
+                Grid::make(3)->schema([
+                    Select::make('category')
+                        ->options(ProcedureCategory::class)
+                        ->required(),
+
                     TextInput::make('procedure')
                         ->maxLength(255),
 
@@ -97,6 +102,10 @@ class WaitlistEntryResource extends Resource
                     ->sortable()
                     ->url(fn (WaitlistEntry $record) => PatientResource::getUrl('view', ['record' => $record->patient_id])),
 
+                TextColumn::make('category')
+                    ->badge()
+                    ->placeholder('—'),
+
                 TextColumn::make('procedure')
                     ->placeholder('—'),
 
@@ -121,6 +130,9 @@ class WaitlistEntryResource extends Resource
                     ->label('Interventionist')
                     ->relationship('staff', 'name'),
 
+                SelectFilter::make('category')
+                    ->options(ProcedureCategory::class),
+
                 SelectFilter::make('priority')
                     ->options(WaitlistPriority::class),
 
@@ -143,7 +155,7 @@ class WaitlistEntryResource extends Resource
                         Select::make('slot_type')
                             ->options(ProcedureBooking::$slotTypeLabels)
                             ->required()
-                            ->default('cath_day_care'),
+                            ->default(fn (WaitlistEntry $record) => $record->category?->defaultSlotType() ?? 'cath_day_care'),
 
                         TextInput::make('slot_number')
                             ->numeric()
@@ -157,6 +169,7 @@ class WaitlistEntryResource extends Resource
                             'booking_date' => $data['booking_date'],
                             'slot_type' => $data['slot_type'],
                             'slot_number' => $data['slot_number'],
+                            'category' => $record->category,
                             'staff_id' => $record->staff_id,
                             'procedure' => $record->procedure,
                             'diagnosis' => $record->diagnosis,

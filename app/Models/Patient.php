@@ -57,13 +57,13 @@ class Patient extends Model
                 return;
             }
 
-            foreach (['imagingReports', 'epStudies', 'clinicVisits', 'admissions', 'approvalRequests', 'mdtDiscussions', 'documents', 'interventions'] as $relation) {
+            foreach (['imagingReports', 'epStudies', 'clinicVisits', 'admissions', 'approvalRequests', 'mdtDiscussions', 'documents', 'interventions', 'procedureBookings', 'waitlistEntries'] as $relation) {
                 $patient->{$relation}()->get()->each->delete();
             }
         });
 
         static::restored(function (Patient $patient) {
-            foreach (['imagingReports', 'epStudies', 'clinicVisits', 'admissions', 'approvalRequests', 'mdtDiscussions', 'documents', 'interventions'] as $relation) {
+            foreach (['imagingReports', 'epStudies', 'clinicVisits', 'admissions', 'approvalRequests', 'mdtDiscussions', 'documents', 'interventions', 'procedureBookings', 'waitlistEntries'] as $relation) {
                 $patient->{$relation}()->onlyTrashed()->get()->each->restore();
             }
         });
@@ -133,6 +133,16 @@ class Patient extends Model
     public function interventions(): HasMany
     {
         return $this->hasMany(Intervention::class)->orderByDesc('date');
+    }
+
+    public function procedureBookings(): HasMany
+    {
+        return $this->hasMany(ProcedureBooking::class)->orderByDesc('booking_date');
+    }
+
+    public function waitlistEntries(): HasMany
+    {
+        return $this->hasMany(WaitlistEntry::class)->orderByDesc('created_at');
     }
 
     public function getActivitylogOptions(): LogOptions

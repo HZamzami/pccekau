@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ProcedureCategory;
 use App\Enums\WaitlistPriority;
 use App\Enums\WaitlistStatus;
 use App\Models\Concerns\BelongsToClinic;
@@ -19,6 +20,7 @@ class WaitlistEntry extends Model
     protected $fillable = [
         'patient_id',
         'staff_id',
+        'category',
         'procedure',
         'diagnosis',
         'priority',
@@ -30,6 +32,7 @@ class WaitlistEntry extends Model
     ];
 
     protected $casts = [
+        'category' => ProcedureCategory::class,
         'priority' => WaitlistPriority::class,
         'status' => WaitlistStatus::class,
     ];

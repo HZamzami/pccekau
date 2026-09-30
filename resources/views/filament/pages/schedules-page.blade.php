@@ -24,76 +24,109 @@
         {{-- On-Call & Consultant tabs: use Filament's native table --}}
         @if (in_array($activeTab, ['oncall', 'consultants']))
 
-            {{-- Current week summary card for on-call --}}
-            @if ($activeTab === 'oncall')
-                @php $current = $this->getCurrentOncall() @endphp
+            @php
+                $current = $activeTab === 'oncall' ? $this->getCurrentOncall() : $this->getCurrentConsultants();
+                $visibleRoles = $this->getVisibleRoles();
+                $weekStart = \Illuminate\Support\Carbon::parse($gridWeekStart);
+                $todayIndex = $weekStart->isSameDay(now()->startOfWeek(\Carbon\Carbon::SUNDAY)) ? now()->dayOfWeek : null;
+            @endphp
 
-                <div class="flex items-center gap-3">
-                    <x-filament::button wire:click="previousGridWeek" size="sm" color="gray" outlined>← Prev</x-filament::button>
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-200">
-                        Week of {{ \Illuminate\Support\Carbon::parse($gridWeekStart)->format('d M Y') }}
-                    </span>
-                    <x-filament::button wire:click="nextGridWeek" size="sm" color="gray" outlined>Next →</x-filament::button>
-                    <x-filament::button wire:click="currentGridWeek" size="sm" color="gray">This Week</x-filament::button>
+            <div class="flex items-center gap-3">
+                <x-filament::button wire:click="previousGridWeek" size="sm" color="gray" outlined>← Prev</x-filament::button>
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                    Week of {{ $weekStart->format('d M Y') }}
+                </span>
+                <x-filament::button wire:click="nextGridWeek" size="sm" color="gray" outlined>Next →</x-filament::button>
+                <x-filament::button wire:click="currentGridWeek" size="sm" color="gray">This Week</x-filament::button>
+            </div>
+
+            <div class="flex flex-wrap items-end gap-3">
+                <div class="space-y-1">
+                    <span class="block text-xs font-medium text-gray-500 dark:text-gray-400">Roles</span>
+                    <div class="flex flex-wrap gap-1.5">
+                        @foreach ($this->getTabRoles() as $role)
+                            <button
+                                type="button"
+                                wire:click="toggleRole('{{ $role->value }}')"
+                                @class([
+                                    'rounded-md px-2.5 py-1 text-xs font-medium border transition',
+                                    'bg-primary-600 text-white border-primary-600' => in_array($role->value, $roleFilter, true),
+                                    'bg-white dark:bg-white/5 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10' => ! in_array($role->value, $roleFilter, true),
+                                ])
+                            >
+                                {{ $role->getLabel() }}
+                            </button>
+                        @endforeach
+                    </div>
                 </div>
 
-                @if ($current)
-                    <x-filament::section
-                        heading="Specialists/Fellows Weekly Coverage — {{ $current->week_start->format('d M Y') }}"
-                    >
-                        @php
-                            $days = [
-                                'Sunday'    => $current->oncallSundayStaff?->name,
-                                'Monday'    => $current->oncallMondayStaff?->name,
-                                'Tuesday'   => $current->oncallTuesdayStaff?->name,
-                                'Wednesday' => $current->oncallWednesdayStaff?->name,
-                                'Thursday'  => $current->oncallThursdayStaff?->name,
-                                'Friday'    => $current->oncallFridayStaff?->name,
-                                'Saturday'  => $current->oncallSaturdayStaff?->name,
-                            ];
-                            $roles = [
-                                'Clinic'       => $current->clinicStaff?->name,
-                                'Inpatient'    => $current->inpatientStaff?->name,
-                                'Consultation' => $current->consultationStaff?->name,
-                                'Cath'         => $current->cathStaff?->name,
-                            ];
-                            $today = $current->week_start->isSameWeek(now()) ? now()->format('l') : null;
-                        @endphp
+                <label class="space-y-1">
+                    <span class="block text-xs font-medium text-gray-500 dark:text-gray-400">Doctor</span>
+                    <x-filament::input.wrapper>
+                        <x-filament::input.select wire:model.live="staffFilter">
+                            <option value="">Everyone</option>
+                            @foreach ($this->getStaffOptions() as $id => $name)
+                                <option value="{{ $id }}">{{ $name }}</option>
+                            @endforeach
+                        </x-filament::input.select>
+                    </x-filament::input.wrapper>
+                </label>
 
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm border-collapse">
-                                <thead>
-                                    <tr class="border-b border-gray-200 dark:border-white/10 text-xs text-gray-500 uppercase tracking-wide">
-                                        <th class="py-2 pr-4 text-left font-medium"></th>
-                                        @foreach (array_keys($roles) as $role)
-                                            <th class="py-2 pr-4 text-left font-medium">{{ $role }}</th>
-                                        @endforeach
-                                        <th class="py-2 pr-4 text-left font-medium">On-Call</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-100 dark:divide-white/5">
-                                    @foreach ($days as $day => $oncall)
-                                        <tr @class([
-                                            'bg-primary-50 dark:bg-primary-900/20' => $today === $day,
-                                        ])>
-                                            <td class="py-2.5 pr-4 font-semibold text-gray-900 dark:text-white">{{ $day }}</td>
-                                            @foreach ($roles as $doctor)
-                                                <td class="py-2.5 pr-4 text-gray-700 dark:text-gray-200">{{ $doctor ?: '—' }}</td>
-                                            @endforeach
-                                            <td class="py-2.5 pr-4 font-semibold text-gray-900 dark:text-white">{{ $oncall ?: '—' }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-
-                        @if ($current->notes)
-                            <p class="mt-3 text-xs italic text-gray-500">{{ $current->notes }}</p>
-                        @endif
-                    </x-filament::section>
-                @else
-                    <p class="text-sm text-gray-500 dark:text-gray-400">No coverage schedule entered for this week.</p>
+                @if ($roleFilter || $staffFilter)
+                    <x-filament::button wire:click="clearGridFilters" size="sm" color="gray" outlined>Clear filters</x-filament::button>
                 @endif
+            </div>
+
+            @if ($current)
+                <x-filament::section
+                    :heading="($activeTab === 'oncall' ? 'Specialists/Fellows Weekly Coverage' : 'Consultants') . ' — ' . $current->week_start->format('d M Y')"
+                >
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm border-collapse">
+                            <thead>
+                                <tr class="border-b border-gray-200 dark:border-white/10 text-xs text-gray-500 uppercase tracking-wide">
+                                    <th class="py-2 pr-4 text-left font-medium"></th>
+                                    @foreach ($visibleRoles as $role)
+                                        <th class="py-2 pr-4 text-left font-medium">{{ $role->getLabel() }}</th>
+                                    @endforeach
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 dark:divide-white/5">
+                                @foreach (\App\Enums\CoverageRole::DAYS as $dayIndex => $dayName)
+                                    <tr @class([
+                                        'bg-primary-50 dark:bg-primary-900/20' => $todayIndex === $dayIndex,
+                                    ])>
+                                        <td class="py-2.5 pr-4 font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                                            {{ $dayName }}
+                                            <span class="text-xs text-gray-400 font-normal">{{ $weekStart->copy()->addDays($dayIndex)->format('d M') }}</span>
+                                        </td>
+                                        @foreach ($visibleRoles as $role)
+                                            @php
+                                                $doctor = $current->staffFor($role, $dayIndex);
+                                                $matches = $staffFilter && $doctor && (string) $doctor->id === (string) $staffFilter;
+                                                $hidden = $staffFilter && ! $matches;
+                                            @endphp
+                                            <td @class([
+                                                'py-2.5 pr-4',
+                                                'text-gray-700 dark:text-gray-200' => ! $matches && $role !== \App\Enums\CoverageRole::Oncall,
+                                                'font-semibold text-gray-900 dark:text-white' => ! $matches && $role === \App\Enums\CoverageRole::Oncall,
+                                                'font-semibold text-primary-700 dark:text-primary-300' => $matches,
+                                            ])>
+                                                {{ $hidden ? '—' : ($doctor?->name ?? '—') }}
+                                            </td>
+                                        @endforeach
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if ($current->notes)
+                        <p class="mt-3 text-xs italic text-gray-500">{{ $current->notes }}</p>
+                    @endif
+                </x-filament::section>
+            @else
+                <p class="text-sm text-gray-500 dark:text-gray-400">No schedule entered for this week.</p>
             @endif
 
             {{ $this->table }}
