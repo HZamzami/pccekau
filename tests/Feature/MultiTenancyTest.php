@@ -3,14 +3,16 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
-use App\Filament\Pages\Auth\Register;
 use App\Filament\Resources\PatientResource;
+use App\Filament\Resources\PatientResource\Pages\CreatePatient;
 use App\Filament\Resources\UserResource\Pages\ListUsers;
 use App\Models\Clinic;
 use App\Models\ClinicVisit;
 use App\Models\Patient;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -18,18 +20,14 @@ class MultiTenancyTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_registration_creates_a_clinic_with_its_admin(): void
+    public function test_create_clinic_command_creates_a_clinic_with_its_admin(): void
     {
-        Livewire::test(Register::class)
-            ->fillForm([
-                'name'                 => 'Dr. New Founder',
-                'clinic_name'          => 'Riyadh Heart Center',
-                'email'                => 'founder@example.com',
-                'password'             => 'super-secret-1',
-                'passwordConfirmation' => 'super-secret-1',
-            ])
-            ->call('register')
-            ->assertHasNoFormErrors();
+        $this->artisan('pccekau:create-clinic')
+            ->expectsQuestion('Clinic / hospital name', 'Riyadh Heart Center')
+            ->expectsQuestion('Admin full name', 'Dr. New Founder')
+            ->expectsQuestion('Admin email', 'founder@example.com')
+            ->expectsQuestion('Admin password (min 12 characters, letters and numbers)', 'super-secret-12')
+            ->assertSuccessful();
 
         $clinic = Clinic::where('slug', 'riyadh-heart-center')->first();
         $this->assertNotNull($clinic);
@@ -40,25 +38,39 @@ class MultiTenancyTest extends TestCase
         $this->assertSame($user->id, $clinic->created_by);
     }
 
-    public function test_registration_resolves_slug_collisions(): void
+    public function test_create_clinic_command_resolves_slug_collisions(): void
     {
         Clinic::factory()->create(['slug' => 'heart-center']);
 
-        Livewire::test(Register::class)
-            ->fillForm([
-                'name'                 => 'Second Founder',
-                'clinic_name'          => 'Heart Center',
-                'email'                => 'second@example.com',
-                'password'             => 'super-secret-1',
-                'passwordConfirmation' => 'super-secret-1',
-            ])
-            ->call('register')
-            ->assertHasNoFormErrors();
+        $this->artisan('pccekau:create-clinic')
+            ->expectsQuestion('Clinic / hospital name', 'Heart Center')
+            ->expectsQuestion('Admin full name', 'Second Founder')
+            ->expectsQuestion('Admin email', 'second@example.com')
+            ->expectsQuestion('Admin password (min 12 characters, letters and numbers)', 'super-secret-12')
+            ->assertSuccessful();
 
         $this->assertSame(
             'heart-center-2',
             User::where('email', 'second@example.com')->first()->clinic->slug,
         );
+    }
+
+    public function test_create_clinic_command_rejects_weak_passwords(): void
+    {
+        $this->artisan('pccekau:create-clinic')
+            ->expectsQuestion('Clinic / hospital name', 'Weak Clinic')
+            ->expectsQuestion('Admin full name', 'Someone')
+            ->expectsQuestion('Admin email', 'weak@example.com')
+            ->expectsQuestion('Admin password (min 12 characters, letters and numbers)', 'short1')
+            ->assertFailed();
+
+        $this->assertDatabaseMissing('users', ['email' => 'weak@example.com']);
+        $this->assertDatabaseMissing('clinics', ['name' => 'Weak Clinic']);
+    }
+
+    public function test_public_registration_is_disabled(): void
+    {
+        $this->assertFalse(Route::has('filament.admin.auth.register'));
     }
 
     public function test_cross_clinic_patient_pages_and_pdfs_are_denied(): void
@@ -85,7 +97,7 @@ class MultiTenancyTest extends TestCase
         $otherClinic = Clinic::factory()->create();
         $foreignUser = User::factory()->create([
             'clinic_id' => $otherClinic->id,
-            'role'      => UserRole::Doctor,
+            'role' => UserRole::Doctor,
         ]);
 
         Livewire::actingAs($admin)
@@ -103,7 +115,7 @@ class MultiTenancyTest extends TestCase
 
         $this->assertSame(2, Patient::withoutGlobalScope('clinic')->where('mrn', 'MRN-1')->count());
 
-        $this->expectException(\Illuminate\Database\QueryException::class);
+        $this->expectException(QueryException::class);
         Patient::factory()->create(['mrn' => 'MRN-1']);
     }
 
@@ -115,13 +127,13 @@ class MultiTenancyTest extends TestCase
         $doctor = User::factory()->create(['role' => UserRole::Doctor]);
 
         Livewire::actingAs($doctor)
-            ->test(\App\Filament\Resources\PatientResource\Pages\CreatePatient::class)
+            ->test(CreatePatient::class)
             ->fillForm([
-                'mrn'           => 'TEN-1',
-                'name'          => 'Tenant Association Check',
+                'mrn' => 'TEN-1',
+                'name' => 'Tenant Association Check',
                 'date_of_birth' => now()->subYears(3)->toDateString(),
-                'gender'        => 'male',
-                'status'        => 'active',
+                'gender' => 'male',
+                'status' => 'active',
             ])
             ->call('create')
             ->assertHasNoFormErrors();
@@ -139,7 +151,7 @@ class MultiTenancyTest extends TestCase
         $otherClinic = Clinic::factory()->create();
         $doctorB = User::factory()->create([
             'clinic_id' => $otherClinic->id,
-            'role'      => UserRole::Doctor,
+            'role' => UserRole::Doctor,
         ]);
 
         // Due follow-up only in clinic A (the test tenant).

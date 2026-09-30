@@ -15,7 +15,8 @@
         "league/flysystem-aws-s3-v3": "^3.35",
         "phpoffice/phpspreadsheet": "^5.10",
         "resend/resend-php": "^1.6",
-        "spatie/laravel-activitylog": "^5.0"
+        "spatie/laravel-activitylog": "^5.0",
+        "stephenjude/filament-two-factor-authentication": "^2.0"
     },
     "require-dev": {
         "laravel/pail": "^1.2.5",

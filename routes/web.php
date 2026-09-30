@@ -5,6 +5,7 @@ use App\Http\Controllers\MdtSummaryPdfController;
 use App\Http\Controllers\PatientDocumentDownloadController;
 use App\Http\Controllers\PatientSummaryPdfController;
 use App\Http\Controllers\StaffScheduleIcsController;
+use App\Http\Middleware\RequireTwoFactor;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect('/admin'));
@@ -14,7 +15,7 @@ Route::get('/', fn () => redirect('/admin'));
 Route::get('staff/{staff}/schedule.ics', StaffScheduleIcsController::class)
     ->name('staff.schedule.ics');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', RequireTwoFactor::class])->group(function () {
     Route::get('imaging-reports/{report}/pdf', ImagingReportPdfController::class)
         ->name('imaging-reports.pdf');
 

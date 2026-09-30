@@ -2,12 +2,12 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Pages\Auth\Register;
 use App\Filament\Widgets\GettingStartedWidget;
 use App\Filament\Widgets\MyWorklistWidget;
 use App\Filament\Widgets\PatientSearchWidget;
 use App\Filament\Widgets\TodayOncallWidget;
 use App\Filament\Widgets\UpcomingMdtWidget;
+use App\Http\Middleware\SecurityHeaders;
 use App\Models\Clinic;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -25,6 +25,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Stephenjude\FilamentTwoFactorAuthentication\TwoFactorAuthenticationPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -35,8 +36,17 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->registration(Register::class)
             ->passwordReset()
+
+            // Every account must use an authenticator app. There is no public
+            // sign-up: clinics are created with `php artisan pccekau:create-clinic`
+            // and further users are added by that clinic's admin.
+            ->plugin(
+                TwoFactorAuthenticationPlugin::make()
+                    ->enableTwoFactorAuthentication()
+                    ->addTwoFactorMenuItem(label: 'Two-factor authentication')
+                    ->forceTwoFactorSetup(condition: (bool) config('auth.two_factor_enforced'))
+            )
 
             // Multi-tenancy: each clinic is an isolated workspace
             ->tenant(Clinic::class, slugAttribute: 'slug')
@@ -103,6 +113,7 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                SecurityHeaders::class,
             ])
             ->authMiddleware([
                 Authenticate::class,
