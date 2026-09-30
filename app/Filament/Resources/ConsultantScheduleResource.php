@@ -2,13 +2,13 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\CoverageRole;
+use App\Filament\Forms\DailyAssignmentsForm;
 use App\Filament\Resources\ConsultantScheduleResource\Pages;
 use App\Models\ConsultantSchedule;
 use App\Models\Staff;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -40,19 +40,9 @@ class ConsultantScheduleResource extends Resource
                     ->required(),
             ]),
 
-            Section::make('Consultant Assignments')->schema([
-                Grid::make(3)->schema([
-                    Select::make('service_staff_id')->label('Service')
-                        ->options(fn () => Staff::active()->consultants()->orderBy('name')->pluck('name', 'id'))
-                        ->searchable()->nullable(),
-                    Select::make('cath_staff_id')->label('Cath')
-                        ->options(fn () => Staff::active()->consultants()->orderBy('name')->pluck('name', 'id'))
-                        ->searchable()->nullable(),
-                    Select::make('ep_staff_id')->label('EP')
-                        ->options(fn () => Staff::active()->consultants()->orderBy('name')->pluck('name', 'id'))
-                        ->searchable()->nullable(),
-                ]),
-            ]),
+            Section::make('Daily Consultant Assignments')
+                ->description('Pick a doctor for each day, or use "Whole week" to fill all 7 days at once.')
+                ->schema(DailyAssignmentsForm::schema(CoverageRole::forConsultants(), fn () => Staff::active()->consultants()->orderBy('name')->pluck('name', 'id')->all())),
 
             Section::make()->schema([
                 Textarea::make('notes')->rows(2)->columnSpanFull(),
@@ -63,18 +53,22 @@ class ConsultantScheduleResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn ($query) => $query->with('assignments.staff'))
             ->columns([
                 TextColumn::make('week_start')
                     ->label('Week Start')
                     ->date()
                     ->sortable(),
 
-                TextColumn::make('serviceStaff.name')->label('Service'),
-                TextColumn::make('cathStaff.name')->label('Cath'),
-                TextColumn::make('epStaff.name')->label('EP'),
+                TextColumn::make('doctors')
+                    ->label('Doctors this week')
+                    ->state(fn ($record) => $record->assignments->pluck('staff.name')->filter()->unique()->sort()->values()->all())
+                    ->badge()
+                    ->placeholder('—'),
             ])
             ->actions([
-                ViewAction::make(),
+                ViewAction::make()
+                    ->mutateRecordDataUsing(fn (array $data, $record) => [...$data, 'assignments' => $record->assignmentFormState()]),
                 EditAction::make(),
             ])
             ->bulkActions([

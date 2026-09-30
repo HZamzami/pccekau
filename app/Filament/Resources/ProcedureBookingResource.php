@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\ProcedureCategory;
 use App\Enums\ProcedureStatus;
 use App\Filament\Resources\ProcedureBookingResource\Pages;
 use App\Models\Patient;
@@ -75,7 +76,17 @@ class ProcedureBookingResource extends Resource
                         ->preload(),
                 ]),
 
-                Grid::make(2)->schema([
+                Grid::make(3)->schema([
+                    Select::make('category')
+                        ->options(ProcedureCategory::class)
+                        ->required()
+                        ->live()
+                        ->afterStateUpdated(function ($state, callable $set) {
+                            if ($category = ProcedureCategory::tryFrom((string) $state)) {
+                                $set('slot_type', $category->defaultSlotType());
+                            }
+                        }),
+
                     TextInput::make('procedure')
                         ->maxLength(255),
 
@@ -122,6 +133,10 @@ class ProcedureBookingResource extends Resource
                 TextColumn::make('slot_number')
                     ->label('Slot #'),
 
+                TextColumn::make('category')
+                    ->badge()
+                    ->placeholder('—'),
+
                 TextColumn::make('patient.name')
                     ->label('Patient')
                     ->searchable()
@@ -142,6 +157,9 @@ class ProcedureBookingResource extends Resource
             ->filters([
                 SelectFilter::make('slot_type')
                     ->options(ProcedureBooking::$slotTypeLabels),
+
+                SelectFilter::make('category')
+                    ->options(ProcedureCategory::class),
 
                 SelectFilter::make('procedure_status')
                     ->label('Status')
@@ -175,7 +193,7 @@ class ProcedureBookingResource extends Resource
             ])
             ->defaultSort('booking_date', 'desc')
             ->emptyStateHeading('No procedure bookings yet')
-            ->emptyStateDescription('Book cath lab, inpatient cath, or MRI/CT slots here instead of a spreadsheet.');
+            ->emptyStateDescription('Book cath lab, MRI/CT, OR, or echo slots here instead of a spreadsheet.');
     }
 
     public static function getRelations(): array

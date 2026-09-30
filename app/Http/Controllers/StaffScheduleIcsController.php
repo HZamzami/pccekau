@@ -19,8 +19,8 @@ class StaffScheduleIcsController extends Controller
         $end = Carbon::now()->startOfWeek(Carbon::SUNDAY)->addWeeks(12);
 
         $events = [
-            ...$this->oncallEvents($staff, $start, $end),
-            ...$this->consultantEvents($staff, $start, $end),
+            ...$this->assignmentEvents(OncallSchedule::class, $staff, $start, $end),
+            ...$this->assignmentEvents(ConsultantSchedule::class, $staff, $start, $end),
         ];
 
         return response($this->buildIcs($staff, $events))
@@ -28,89 +28,33 @@ class StaffScheduleIcsController extends Controller
             ->header('Content-Disposition', 'inline; filename="'.$staff->name.'-schedule.ics"');
     }
 
-    /** @return array<array{date: Carbon, endDate: ?Carbon, summary: string}> */
-    private function oncallEvents(Staff $staff, Carbon $start, Carbon $end): array
+    /**
+     * @param  class-string<OncallSchedule|ConsultantSchedule>  $scheduleClass
+     * @return array<array{date: Carbon, endDate: ?Carbon, summary: string}>
+     */
+    private function assignmentEvents(string $scheduleClass, Staff $staff, Carbon $start, Carbon $end): array
     {
-        $weeks = OncallSchedule::forClinic($staff->clinic_id)
+        $weeks = $scheduleClass::forClinic($staff->clinic_id)
             ->whereBetween('week_start', [$start->toDateString(), $end->toDateString()])
+            ->with(['assignments' => fn ($query) => $query->withoutGlobalScope('clinic')->where('staff_id', $staff->id)])
             ->get();
-
-        $weeklyRoles = [
-            'clinic_staff_id' => 'Clinic',
-            'inpatient_staff_id' => 'Inpatient',
-            'consultation_staff_id' => 'Consultation',
-            'cath_staff_id' => 'Cath',
-        ];
-
-        $dailyOncall = [
-            'oncall_sunday_id' => 0,
-            'oncall_monday_id' => 1,
-            'oncall_tuesday_id' => 2,
-            'oncall_wednesday_id' => 3,
-            'oncall_thursday_id' => 4,
-            'oncall_friday_id' => 5,
-            'oncall_saturday_id' => 6,
-        ];
 
         $events = [];
 
         foreach ($weeks as $week) {
-            foreach ($weeklyRoles as $column => $label) {
-                if ((int) $week->$column === $staff->id) {
-                    $events[] = [
-                        'date' => $week->week_start->copy(),
-                        'endDate' => $week->week_start->copy()->addDays(7),
-                        'summary' => "{$label} Coverage",
-                    ];
-                }
-            }
-
-            foreach ($dailyOncall as $column => $dayOffset) {
-                if ((int) $week->$column === $staff->id) {
-                    $day = $week->week_start->copy()->addDays($dayOffset);
-                    $events[] = [
-                        'date' => $day,
-                        'endDate' => $day->copy()->addDay(),
-                        'summary' => 'On-Call',
-                    ];
-                }
+            foreach ($week->assignments as $assignment) {
+                $day = $week->week_start->copy()->addDays($assignment->day);
+                $events[] = [
+                    'date' => $day,
+                    'endDate' => $day->copy()->addDay(),
+                    'summary' => $assignment->role->calendarSummary(),
+                ];
             }
         }
 
         return $events;
     }
 
-    /** @return array<array{date: Carbon, endDate: ?Carbon, summary: string}> */
-    private function consultantEvents(Staff $staff, Carbon $start, Carbon $end): array
-    {
-        $weeks = ConsultantSchedule::forClinic($staff->clinic_id)
-            ->whereBetween('week_start', [$start->toDateString(), $end->toDateString()])
-            ->get();
-
-        $roles = [
-            'service_staff_id' => 'Service Consultant',
-            'cath_staff_id' => 'Cath Consultant',
-            'ep_staff_id' => 'EP Consultant',
-        ];
-
-        $events = [];
-
-        foreach ($weeks as $week) {
-            foreach ($roles as $column => $label) {
-                if ((int) $week->$column === $staff->id) {
-                    $events[] = [
-                        'date' => $week->week_start->copy(),
-                        'endDate' => $week->week_start->copy()->addDays(7),
-                        'summary' => $label,
-                    ];
-                }
-            }
-        }
-
-        return $events;
-    }
-
-    /** @param array<array{date: Carbon, endDate: ?Carbon, summary: string}> $events */
     private function buildIcs(Staff $staff, array $events): string
     {
         $lines = [

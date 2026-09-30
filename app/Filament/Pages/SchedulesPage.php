@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\CoverageRole;
 use App\Filament\Resources\ConsultantScheduleResource;
 use App\Filament\Resources\OncallScheduleResource;
 use App\Models\ConsultantSchedule;
@@ -39,6 +40,11 @@ class SchedulesPage extends Page implements HasTable
 
     public ?string $gridWeekStart = null;
 
+    /** @var array<string> role values to show; empty means all */
+    public array $roleFilter = [];
+
+    public ?string $staffFilter = null;
+
     public function mount(): void
     {
         $this->gridWeekStart = Carbon::now()->startOfWeek(Carbon::SUNDAY)->toDateString();
@@ -47,6 +53,7 @@ class SchedulesPage extends Page implements HasTable
     public function setTab(string $tab): void
     {
         $this->activeTab = $tab;
+        $this->reset(['roleFilter', 'staffFilter']);
         $this->resetTable();
     }
 
@@ -65,6 +72,47 @@ class SchedulesPage extends Page implements HasTable
         $this->gridWeekStart = Carbon::now()->startOfWeek(Carbon::SUNDAY)->toDateString();
     }
 
+    public function toggleRole(string $role): void
+    {
+        $this->roleFilter = in_array($role, $this->roleFilter, true)
+            ? array_values(array_diff($this->roleFilter, [$role]))
+            : [...$this->roleFilter, $role];
+    }
+
+    public function clearGridFilters(): void
+    {
+        $this->reset(['roleFilter', 'staffFilter']);
+    }
+
+    /** @return array<CoverageRole> */
+    public function getTabRoles(): array
+    {
+        return $this->activeTab === 'consultants' ? CoverageRole::forConsultants() : CoverageRole::forCoverage();
+    }
+
+    /** @return array<CoverageRole> */
+    public function getVisibleRoles(): array
+    {
+        $roles = $this->getTabRoles();
+
+        return $this->roleFilter
+            ? array_values(array_filter($roles, fn (CoverageRole $role) => in_array($role->value, $this->roleFilter, true)))
+            : $roles;
+    }
+
+    /** @return Collection<int, string> */
+    public function getStaffOptions(): Collection
+    {
+        $query = Staff::active()->orderBy('name');
+
+        return ($this->activeTab === 'consultants' ? $query->consultants() : $query)->pluck('name', 'id');
+    }
+
+    public function getCurrentConsultants(): ?ConsultantSchedule
+    {
+        return ConsultantSchedule::forWeek($this->gridWeekStart ?? Carbon::now()->startOfWeek(Carbon::SUNDAY));
+    }
+
     public function table(Table $table): Table
     {
         return match ($this->activeTab) {
@@ -77,22 +125,23 @@ class SchedulesPage extends Page implements HasTable
     protected function oncallTable(Table $table): Table
     {
         return $table
-            ->query(OncallSchedule::query()->orderByDesc('week_start'))
+            ->query(OncallSchedule::query()->with('assignments.staff')->orderByDesc('week_start'))
             ->columns([
                 TextColumn::make('week_start')
                     ->label('Week Start')
                     ->date('d M Y')
                     ->sortable()
-                    ->color(fn (OncallSchedule $r) => $r->week_start->isSameWeek(now()) ? 'primary' : null),
+                    ->color(fn (OncallSchedule $r) => $r->isCurrentWeek() ? 'primary' : null),
 
-                TextColumn::make('clinicStaff.name')->label('Clinic'),
-                TextColumn::make('inpatientStaff.name')->label('Inpatient'),
-                TextColumn::make('consultationStaff.name')->label('Consultation'),
-                TextColumn::make('cathStaff.name')->label('Cath'),
+                TextColumn::make('doctors')
+                    ->label('Doctors this week')
+                    ->state(fn (OncallSchedule $r) => $r->assignments->pluck('staff.name')->filter()->unique()->sort()->values()->all())
+                    ->badge()
+                    ->placeholder('—'),
 
                 TextColumn::make('today_oncall')
                     ->label("Today's On-Call")
-                    ->state(fn (OncallSchedule $r) => $r->week_start->isSameWeek(now()) ? $r->today_oncall : '—')
+                    ->state(fn (OncallSchedule $r) => $r->today_oncall ?? '—')
                     ->badge()
                     ->color('warning'),
             ])
@@ -105,17 +154,19 @@ class SchedulesPage extends Page implements HasTable
     protected function consultantTable(Table $table): Table
     {
         return $table
-            ->query(ConsultantSchedule::query()->orderByDesc('week_start'))
+            ->query(ConsultantSchedule::query()->with('assignments.staff')->orderByDesc('week_start'))
             ->columns([
                 TextColumn::make('week_start')
                     ->label('Week Start')
                     ->date('d M Y')
                     ->sortable()
-                    ->color(fn (ConsultantSchedule $r) => $r->week_start->isSameWeek(now()) ? 'primary' : null),
+                    ->color(fn (ConsultantSchedule $r) => $r->isCurrentWeek() ? 'primary' : null),
 
-                TextColumn::make('serviceStaff.name')->label('Service'),
-                TextColumn::make('cathStaff.name')->label('Cath'),
-                TextColumn::make('epStaff.name')->label('EP'),
+                TextColumn::make('doctors')
+                    ->label('Doctors this week')
+                    ->state(fn (ConsultantSchedule $r) => $r->assignments->pluck('staff.name')->filter()->unique()->sort()->values()->all())
+                    ->badge()
+                    ->placeholder('—'),
             ])
             ->actions([EditAction::make()
                 ->url(fn (ConsultantSchedule $r) => ConsultantScheduleResource::getUrl('edit', ['record' => $r]))])

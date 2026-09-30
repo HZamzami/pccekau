@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ProcedureCategory;
 use App\Enums\ProcedureStatus;
 use App\Models\Concerns\BelongsToClinic;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -20,6 +21,7 @@ class ProcedureBooking extends Model
         'booking_date',
         'slot_type',
         'slot_number',
+        'category',
         'staff_id',
         'procedure',
         'diagnosis',
@@ -33,12 +35,15 @@ class ProcedureBooking extends Model
     protected $casts = [
         'booking_date' => 'date',
         'procedure_status' => ProcedureStatus::class,
+        'category' => ProcedureCategory::class,
     ];
 
     public static array $slotTypeLabels = [
         'cath_day_care' => 'Day Care Cath',
         'cath_inpatient' => 'Inpatient Cath',
         'mri_ct' => 'MRI / CT',
+        'or' => 'Operating Room',
+        'echo' => 'Echo',
     ];
 
     public function patient(): BelongsTo
