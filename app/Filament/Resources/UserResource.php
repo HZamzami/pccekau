@@ -16,6 +16,7 @@ use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Validation\Rules\Password;
 
 class UserResource extends Resource
 {
@@ -53,6 +54,7 @@ class UserResource extends Resource
                         ->password()
                         ->revealable()
                         ->required(fn (string $operation) => $operation === 'create')
+                        ->rule(Password::default())
                         ->dehydrated(fn (?string $state) => filled($state))
                         ->helperText(fn (string $operation) => $operation === 'edit' ? 'Leave blank to keep the current password.' : null)
                         ->maxLength(255),
@@ -75,11 +77,11 @@ class UserResource extends Resource
                 TextColumn::make('role')
                     ->badge()
                     ->color(fn (UserRole $state) => match ($state) {
-                        UserRole::Admin     => 'danger',
-                        UserRole::Doctor    => 'info',
-                        UserRole::Nurse     => 'success',
+                        UserRole::Admin => 'danger',
+                        UserRole::Doctor => 'info',
+                        UserRole::Nurse => 'success',
                         UserRole::FrontDesk => 'warning',
-                        UserRole::Viewer    => 'gray',
+                        UserRole::Viewer => 'gray',
                     }),
 
                 TextColumn::make('staff.name')
@@ -105,9 +107,9 @@ class UserResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => Pages\ListUsers::route('/'),
+            'index' => Pages\ListUsers::route('/'),
             'create' => Pages\CreateUser::route('/create'),
-            'edit'   => Pages\EditUser::route('/{record}/edit'),
+            'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
     }
 }

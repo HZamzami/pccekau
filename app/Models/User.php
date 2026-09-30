@@ -17,18 +17,20 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
+use Spatie\LaravelPasskeys\Models\Concerns\HasPasskeys;
+use Stephenjude\FilamentTwoFactorAuthentication\TwoFactorAuthenticatable;
 
-// clinic_id is intentionally NOT fillable: it is assigned explicitly at
-// registration and by Filament's tenant association, never mass-assigned.
+// clinic_id is intentionally NOT fillable: it is assigned explicitly when a
+// clinic is created and by Filament's tenant association, never mass-assigned.
 #[Fillable(['name', 'email', 'password', 'role'])]
-#[Hidden(['password', 'remember_token'])]
+#[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
 // Email verification is intentionally not required: users are created by
-// their clinic admin with a known password, and registration must work on
-// hosts with no mail server configured.
-class User extends Authenticatable implements FilamentUser, HasDefaultTenant, HasTenants
+// their clinic admin with a known password, and setup must work on hosts
+// with no mail server configured.
+class User extends Authenticatable implements FilamentUser, HasDefaultTenant, HasPasskeys, HasTenants
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, TwoFactorAuthenticatable;
 
     public function canAccessPanel(Panel $panel): bool
     {
