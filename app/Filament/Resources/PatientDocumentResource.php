@@ -29,7 +29,7 @@ class PatientDocumentResource extends Resource
 
     protected static ?string $navigationGroup = 'Clinical';
 
-    protected static ?int $navigationSort = 9;
+    protected static ?int $navigationSort = 12;
 
     public static function form(Form $form): Form
     {

@@ -5,8 +5,8 @@
         <div class="flex gap-2 flex-wrap">
             @foreach ([
                 'oncall'      => 'On-Call',
-                'fellows'     => 'Fellows Rotation',
                 'consultants' => 'Consultants',
+                'fellows'     => 'Fellows Rotation',
             ] as $key => $label)
                 <button
                     wire:click="setTab('{{ $key }}')"

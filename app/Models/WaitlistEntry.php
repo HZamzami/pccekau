@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\InterventionType;
 use App\Enums\ProcedureCategory;
 use App\Enums\WaitlistPriority;
 use App\Enums\WaitlistStatus;
@@ -21,6 +22,7 @@ class WaitlistEntry extends Model
         'patient_id',
         'staff_id',
         'category',
+        'intervention_type',
         'procedure',
         'diagnosis',
         'priority',
@@ -33,6 +35,7 @@ class WaitlistEntry extends Model
 
     protected $casts = [
         'category' => ProcedureCategory::class,
+        'intervention_type' => InterventionType::class,
         'priority' => WaitlistPriority::class,
         'status' => WaitlistStatus::class,
     ];

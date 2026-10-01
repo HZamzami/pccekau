@@ -4,6 +4,7 @@ namespace App\Filament\Resources\ImagingReportResource\Pages;
 
 use App\Enums\ReportStatus;
 use App\Filament\Resources\ImagingReportResource;
+use App\Filament\Resources\WaitlistEntryResource;
 use App\Models\ImagingReport;
 use Filament\Actions;
 use Filament\Resources\Components\Tab;
@@ -18,6 +19,7 @@ class ListImagingReports extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            WaitlistEntryResource::addAction('imaging'),
             Actions\CreateAction::make(),
         ];
     }

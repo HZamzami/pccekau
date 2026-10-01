@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\InterventionType;
 use App\Enums\ProcedureCategory;
 use App\Enums\ProcedureStatus;
 use App\Enums\UserRole;
@@ -48,6 +49,7 @@ class WriteConflictsTest extends TestCase
             'slot_type' => 'cath_day_care',
             'slot_number' => 1,
             'category' => ProcedureCategory::Cath,
+            'intervention_type' => InterventionType::DiagnosticCath,
             'procedure_status' => ProcedureStatus::Confirmed,
             ...$attributes,
         ]);
@@ -59,6 +61,7 @@ class WriteConflictsTest extends TestCase
             'patient_id' => Patient::factory()->create()->id,
             'booking_date' => $this->date,
             'category' => ProcedureCategory::Cath->value,
+            'intervention_type' => InterventionType::DiagnosticCath->value,
             'slot_type' => 'cath_day_care',
             'slot_number' => 1,
             'procedure_status' => ProcedureStatus::Ordered->value,
