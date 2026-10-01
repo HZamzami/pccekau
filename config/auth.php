@@ -112,19 +112,6 @@ return [
     |
     */
 
-    /*
-    |--------------------------------------------------------------------------
-    | Two-Factor Authentication
-    |--------------------------------------------------------------------------
-    |
-    | When enforced, every user must set up an authenticator app before they
-    | can use the panel or open patient PDFs and documents. Only the test
-    | suite turns this off.
-    |
-    */
-
-    'two_factor_enforced' => (bool) env('TWO_FACTOR_ENFORCED', true),
-
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
 ];
