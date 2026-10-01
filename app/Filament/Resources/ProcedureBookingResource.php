@@ -4,16 +4,20 @@ namespace App\Filament\Resources;
 
 use App\Enums\ProcedureCategory;
 use App\Enums\ProcedureStatus;
+use App\Enums\WaitlistPriority;
+use App\Filament\Forms\ProcedureOrderFields;
 use App\Filament\Resources\ProcedureBookingResource\Pages;
-use App\Models\Patient;
 use App\Models\ProcedureBooking;
+use App\Rules\FreeProcedureSlot;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
@@ -40,61 +44,68 @@ class ProcedureBookingResource extends Resource
 
     public static function form(Form $form): Form
     {
+        $scheduling = fn (Get $get) => $get('mode') !== 'waitlist';
+        $hasSlots = fn (Get $get) => ProcedureOrderFields::category($get)?->slotTypes() !== [];
+
         return $form->schema([
             Section::make()->schema([
-                Grid::make(2)->schema([
-                    Select::make('patient_id')->default(fn () => request()->integer('patient_id') ?: null)
-                        ->label('Patient')
-                        ->relationship('patient', 'name')
-                        ->searchable(['name', 'mrn'])
-                        ->preload()
-                        ->nullable()
-                        ->getOptionLabelFromRecordUsing(fn (Patient $record) => "{$record->mrn} — {$record->name}"),
+                ToggleButtons::make('mode')
+                    ->label('What do you want to do?')
+                    ->options(['schedule' => 'Schedule now', 'waitlist' => 'Add to wait-list'])
+                    ->icons(['schedule' => 'heroicon-o-calendar-days', 'waitlist' => 'heroicon-o-queue-list'])
+                    ->default('schedule')
+                    ->inline()
+                    ->live()
+                    ->visibleOn('create'),
 
-                    DatePicker::make('booking_date')
-                        ->label('Booking date')
-                        ->required(),
+                Grid::make(2)->schema([
+                    ProcedureOrderFields::patient()
+                        ->required(fn (Get $get) => ! $scheduling($get)),
+
+                    ProcedureOrderFields::consultant(),
                 ]),
 
                 Grid::make(3)->schema([
-                    Select::make('slot_type')
-                        ->options(ProcedureBooking::$slotTypeLabels)
+                    ProcedureOrderFields::categorySelect(),
+                    ProcedureOrderFields::interventionType()
+                        ->required($scheduling),
+                    ProcedureOrderFields::procedure(),
+                ]),
+
+                Grid::make(4)->schema([
+                    DatePicker::make('booking_date')
+                        ->label('Date')
                         ->required()
-                        ->live(),
+                        ->visible($scheduling),
+
+                    Select::make('slot_type')
+                        ->label('Slot')
+                        ->options(fn (Get $get) => array_intersect_key(
+                            ProcedureBooking::$slotTypeLabels,
+                            array_flip(ProcedureOrderFields::category($get)?->slotTypes() ?? array_keys(ProcedureBooking::$slotTypeLabels)),
+                        ))
+                        ->live()
+                        ->visible(fn (Get $get) => $scheduling($get) && $hasSlots($get)),
 
                     TextInput::make('slot_number')
                         ->label('Slot #')
+                        ->helperText('Optional')
                         ->numeric()
-                        ->minValue(1)
-                        ->default(1)
-                        ->required(),
-
-                    Select::make('staff_id')
-                        ->label('Interventionist')
-                        ->relationship('staff', 'name', fn ($query) => $query->active())
-                        ->searchable()
-                        ->preload(),
-                ]),
-
-                Grid::make(3)->schema([
-                    Select::make('category')
-                        ->options(ProcedureCategory::class)
-                        ->required()
-                        ->live()
-                        ->afterStateUpdated(function ($state, callable $set) {
-                            if ($category = ProcedureCategory::tryFrom((string) $state)) {
-                                $set('slot_type', $category->defaultSlotType());
-                            }
-                        }),
-
-                    TextInput::make('procedure')
-                        ->maxLength(255),
+                        ->rule(fn (Get $get, ?ProcedureBooking $record) => new FreeProcedureSlot($get('booking_date'), $get('slot_type'), $record?->getKey()))
+                        ->visible(fn (Get $get) => $scheduling($get) && $hasSlots($get)),
 
                     Select::make('procedure_status')
-                        ->label('Procedure Status')
+                        ->label('Status')
                         ->options(ProcedureStatus::class)
                         ->default(ProcedureStatus::Ordered)
-                        ->required(),
+                        ->required()
+                        ->visible($scheduling),
+
+                    Select::make('priority')
+                        ->options(WaitlistPriority::class)
+                        ->default(WaitlistPriority::Routine)
+                        ->required()
+                        ->visible(fn (Get $get) => ! $scheduling($get)),
                 ]),
 
                 Grid::make(2)->schema([
@@ -102,12 +113,11 @@ class ProcedureBookingResource extends Resource
                         ->tel(),
 
                     TextInput::make('booked_by')
-                        ->label('Booked by'),
+                        ->label('Booked by')
+                        ->visible($scheduling),
                 ]),
 
-                Textarea::make('diagnosis')
-                    ->rows(2)
-                    ->columnSpanFull(),
+                ProcedureOrderFields::diagnosis(),
 
                 Textarea::make('notes')
                     ->rows(3)
@@ -126,12 +136,14 @@ class ProcedureBookingResource extends Resource
                     ->sortable(),
 
                 TextColumn::make('slot_type')
-                    ->label('Slot Type')
+                    ->label('Slot')
                     ->badge()
-                    ->formatStateUsing(fn ($state) => ProcedureBooking::$slotTypeLabels[$state] ?? $state),
+                    ->formatStateUsing(fn ($state) => ProcedureBooking::$slotTypeLabels[$state] ?? $state)
+                    ->placeholder('No slot'),
 
                 TextColumn::make('slot_number')
-                    ->label('Slot #'),
+                    ->label('Slot #')
+                    ->placeholder('—'),
 
                 TextColumn::make('category')
                     ->badge()
@@ -147,7 +159,7 @@ class ProcedureBookingResource extends Resource
                     ->placeholder('—'),
 
                 TextColumn::make('staff.name')
-                    ->label('Interventionist')
+                    ->label('Consultant')
                     ->placeholder('—'),
 
                 TextColumn::make('procedure_status')
@@ -159,14 +171,14 @@ class ProcedureBookingResource extends Resource
                     ->options(ProcedureBooking::$slotTypeLabels),
 
                 SelectFilter::make('category')
-                    ->options(ProcedureCategory::class),
+                    ->options(ProcedureCategory::options()),
 
                 SelectFilter::make('procedure_status')
                     ->label('Status')
                     ->options(ProcedureStatus::class),
 
                 SelectFilter::make('staff_id')
-                    ->label('Interventionist')
+                    ->label('Consultant')
                     ->relationship('staff', 'name'),
 
                 Filter::make('booking_date')
@@ -193,7 +205,7 @@ class ProcedureBookingResource extends Resource
             ])
             ->defaultSort('booking_date', 'desc')
             ->emptyStateHeading('No procedure bookings yet')
-            ->emptyStateDescription('Book cath lab, MRI/CT, OR, or echo slots here instead of a spreadsheet.');
+            ->emptyStateDescription('Order any procedure here: cath, surgery, imaging, EP tests or case discussions. Schedule it now or add it to the wait-list.');
     }
 
     public static function getRelations(): array

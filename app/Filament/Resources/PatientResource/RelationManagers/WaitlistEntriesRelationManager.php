@@ -42,7 +42,7 @@ class WaitlistEntriesRelationManager extends RelationManager
                     ->placeholder('—'),
 
                 TextColumn::make('staff.name')
-                    ->label('Interventionist')
+                    ->label('Consultant')
                     ->placeholder('Unassigned'),
 
                 TextColumn::make('priority')
@@ -68,6 +68,8 @@ class WaitlistEntriesRelationManager extends RelationManager
                 CreateAction::make()->url(fn () => WaitlistEntryResource::getUrl('create', ['patient_id' => $this->getOwnerRecord()->getKey()]))->openUrlInNewTab(),
             ])
             ->actions([
+                WaitlistEntryResource::scheduleAction(),
+                WaitlistEntryResource::removeAction(),
                 EditAction::make()->url(fn ($record) => WaitlistEntryResource::getUrl('edit', ['record' => $record]))->openUrlInNewTab(),
             ])
             ->defaultSort('created_at', 'desc');

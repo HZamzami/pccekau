@@ -30,7 +30,7 @@ class SchedulesPage extends Page implements HasTable
 
     protected static ?string $navigationGroup = 'Schedules';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 0;
 
     protected static ?string $title = 'Schedules';
 

@@ -7,6 +7,8 @@ use App\Enums\ProcedureStatus;
 use App\Enums\ReportStatus;
 use App\Models\Concerns\BelongsToClinic;
 use App\Models\Concerns\HasReportWorkflow;
+use App\Observers\ChartProcedureObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,6 +17,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
+#[ObservedBy(ChartProcedureObserver::class)]
 class ImagingReport extends Model
 {
     use BelongsToClinic, HasFactory, HasReportWorkflow, LogsActivity, SoftDeletes;
