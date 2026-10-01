@@ -13,7 +13,6 @@ use App\Filament\Resources\PatientResource\RelationManagers\EpStudiesRelationMan
 use App\Filament\Resources\PatientResource\RelationManagers\ImagingReportsRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\InterventionsRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\MdtDiscussionsRelationManager;
-use App\Filament\Resources\PatientResource\RelationManagers\ProcedureBookingsRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\WaitlistEntriesRelationManager;
 use App\Models\Patient;
 use Filament\Facades\Filament;
@@ -359,7 +358,6 @@ class PatientResource extends Resource
             ImagingReportsRelationManager::class,
             EpStudiesRelationManager::class,
             InterventionsRelationManager::class,
-            ProcedureBookingsRelationManager::class,
             WaitlistEntriesRelationManager::class,
             ClinicVisitsRelationManager::class,
             AdmissionsRelationManager::class,

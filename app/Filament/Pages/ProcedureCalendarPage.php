@@ -19,7 +19,7 @@ class ProcedureCalendarPage extends Page
 
     protected static ?string $navigationGroup = 'Clinical';
 
-    protected static ?int $navigationSort = 9;
+    protected static ?int $navigationSort = 11;
 
     protected static ?string $title = 'Procedure Calendar';
 
@@ -53,7 +53,7 @@ class ProcedureCalendarPage extends Page
         $this->weekStart = Carbon::now()->startOfWeek(Carbon::SUNDAY)->toDateString();
     }
 
-    /** @return array<string, array{slot_type: string, slot_number: int, label: string}> */
+    /** @return array<string, array{slot_type: ?string, slot_number: ?int, label: string}> */
     public static function columns(): array
     {
         $columns = [];
@@ -68,6 +68,10 @@ class ProcedureCalendarPage extends Page
                 ];
             }
         }
+
+        // Anything booked without a slot: EP tests, case discussions, or a
+        // booking whose slot # was left empty.
+        $columns['no_slot'] = ['slot_type' => null, 'slot_number' => null, 'label' => 'No slot'];
 
         return $columns;
     }
@@ -86,13 +90,14 @@ class ProcedureCalendarPage extends Page
             return static::columns();
         }
 
-        return array_filter(static::columns(), fn (array $column) => in_array($column['slot_type'], $category->slotTypes(), true));
+        return array_filter(static::columns(), fn (array $column) => $column['slot_type'] === null
+            || in_array($column['slot_type'], $category->slotTypes(), true));
     }
 
     /** @return array<string, string> */
     public function getCategoryOptions(): array
     {
-        return collect(ProcedureCategory::cases())->mapWithKeys(fn (ProcedureCategory $c) => [$c->value => $c->getLabel()])->all();
+        return ProcedureCategory::options();
     }
 
     /** @return array<string, string> */
@@ -107,7 +112,7 @@ class ProcedureCalendarPage extends Page
         return Staff::active()->orderBy('name')->pluck('name', 'id');
     }
 
-    /** @return Collection<int, array{date: Carbon, label: string, cells: array<string, ?ProcedureBooking>}> */
+    /** @return Collection<int, array{date: Carbon, label: string, cells: Collection<string, Collection<int, ProcedureBooking>>}> */
     public function getGrid(): Collection
     {
         $start = Carbon::parse($this->weekStart);
@@ -126,13 +131,13 @@ class ProcedureCalendarPage extends Page
         return collect(range(0, 6))->map(function (int $i) use ($start, $bookings, $columns) {
             $date = $start->copy()->addDays($i);
 
-            $cells = collect($columns)->mapWithKeys(function (array $column, string $key) use ($date, $bookings) {
-                $booking = $bookings->first(fn (ProcedureBooking $b) => $b->booking_date->isSameDay($date)
-                    && $b->slot_type === $column['slot_type']
-                    && $b->slot_number === $column['slot_number']);
+            $sameDay = $bookings->filter(fn (ProcedureBooking $b) => $b->booking_date->isSameDay($date));
 
-                return [$key => $booking];
-            });
+            $cells = collect($columns)->mapWithKeys(fn (array $column, string $key) => [
+                $key => $key === 'no_slot'
+                    ? $sameDay->filter(fn (ProcedureBooking $b) => ! $b->slot_type || ! $b->slot_number)->values()
+                    : $sameDay->filter(fn (ProcedureBooking $b) => $b->slot_type === $column['slot_type'] && $b->slot_number === $column['slot_number'])->values(),
+            ]);
 
             return [
                 'date' => $date,

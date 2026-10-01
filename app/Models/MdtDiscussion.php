@@ -3,15 +3,17 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToClinic;
+use App\Observers\ChartProcedureObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Staff;
-use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
+#[ObservedBy(ChartProcedureObserver::class)]
 class MdtDiscussion extends Model
 {
     use BelongsToClinic, HasFactory, LogsActivity, SoftDeletes;
@@ -36,7 +38,7 @@ class MdtDiscussion extends Model
 
     protected $casts = [
         'discussion_date' => 'date',
-        'discussed'       => 'boolean',
+        'discussed' => 'boolean',
     ];
 
     protected static function booted(): void
