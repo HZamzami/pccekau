@@ -46,6 +46,16 @@ class ProcedureBooking extends Model
         'echo' => 'Echo',
     ];
 
+    // Concurrent slots per day, mirroring the original booking sheet. The
+    // calendar draws one column per slot, so bookings can't exceed these.
+    public static array $slotCapacity = [
+        'cath_day_care' => 2,
+        'cath_inpatient' => 1,
+        'mri_ct' => 1,
+        'or' => 1,
+        'echo' => 1,
+    ];
+
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);

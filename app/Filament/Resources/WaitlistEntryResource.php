@@ -10,6 +10,7 @@ use App\Filament\Resources\WaitlistEntryResource\Pages;
 use App\Models\Patient;
 use App\Models\ProcedureBooking;
 use App\Models\WaitlistEntry;
+use App\Rules\FreeProcedureSlot;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
@@ -17,6 +18,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkActionGroup;
@@ -26,6 +29,8 @@ use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\DB;
 
 class WaitlistEntryResource extends Resource
 {
@@ -159,27 +164,34 @@ class WaitlistEntryResource extends Resource
 
                         TextInput::make('slot_number')
                             ->numeric()
-                            ->minValue(1)
                             ->default(1)
-                            ->required(),
+                            ->required()
+                            ->rule(fn (Get $get) => new FreeProcedureSlot($get('booking_date'), $get('slot_type'))),
                     ])
-                    ->action(function (WaitlistEntry $record, array $data) {
-                        $booking = ProcedureBooking::create([
-                            'patient_id' => $record->patient_id,
-                            'booking_date' => $data['booking_date'],
-                            'slot_type' => $data['slot_type'],
-                            'slot_number' => $data['slot_number'],
-                            'category' => $record->category,
-                            'staff_id' => $record->staff_id,
-                            'procedure' => $record->procedure,
-                            'diagnosis' => $record->diagnosis,
-                            'mobile' => $record->mobile,
-                            'procedure_status' => ProcedureStatus::Confirmed,
-                            'waitlist_entry_id' => $record->id,
-                            'notes' => $record->notes,
-                        ]);
+                    ->action(function (WaitlistEntry $record, array $data, Action $action) {
+                        try {
+                            DB::transaction(function () use ($record, $data) {
+                                $booking = ProcedureBooking::create([
+                                    'patient_id' => $record->patient_id,
+                                    'booking_date' => $data['booking_date'],
+                                    'slot_type' => $data['slot_type'],
+                                    'slot_number' => $data['slot_number'],
+                                    'category' => $record->category,
+                                    'staff_id' => $record->staff_id,
+                                    'procedure' => $record->procedure,
+                                    'diagnosis' => $record->diagnosis,
+                                    'mobile' => $record->mobile,
+                                    'procedure_status' => ProcedureStatus::Confirmed,
+                                    'waitlist_entry_id' => $record->id,
+                                    'notes' => $record->notes,
+                                ]);
 
-                        $record->update(['status' => WaitlistStatus::Scheduled, 'booking_id' => $booking->id]);
+                                $record->update(['status' => WaitlistStatus::Scheduled, 'booking_id' => $booking->id]);
+                            });
+                        } catch (UniqueConstraintViolationException) {
+                            Notification::make()->danger()->title('That slot was just booked by someone else')->body('Pick another slot or day.')->send();
+                            $action->halt();
+                        }
                     }),
 
                 Action::make('remove')

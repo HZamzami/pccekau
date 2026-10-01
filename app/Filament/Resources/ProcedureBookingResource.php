@@ -7,6 +7,7 @@ use App\Enums\ProcedureStatus;
 use App\Filament\Resources\ProcedureBookingResource\Pages;
 use App\Models\Patient;
 use App\Models\ProcedureBooking;
+use App\Rules\FreeProcedureSlot;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
@@ -14,6 +15,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
@@ -65,9 +67,9 @@ class ProcedureBookingResource extends Resource
                     TextInput::make('slot_number')
                         ->label('Slot #')
                         ->numeric()
-                        ->minValue(1)
                         ->default(1)
-                        ->required(),
+                        ->required()
+                        ->rule(fn (Get $get, ?ProcedureBooking $record) => new FreeProcedureSlot($get('booking_date'), $get('slot_type'), $record?->getKey())),
 
                     Select::make('staff_id')
                         ->label('Interventionist')
