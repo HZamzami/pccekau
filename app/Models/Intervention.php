@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
-use App\Models\Concerns\BelongsToClinic;
 use App\Enums\InterventionType;
 use App\Enums\ProcedureStatus;
+use App\Models\Concerns\BelongsToClinic;
+use App\Observers\ChartProcedureObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
+#[ObservedBy(ChartProcedureObserver::class)]
 class Intervention extends Model
 {
     use BelongsToClinic, HasFactory, LogsActivity, SoftDeletes;

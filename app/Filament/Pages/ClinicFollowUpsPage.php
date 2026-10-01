@@ -96,7 +96,7 @@ class ClinicFollowUpsPage extends Page implements HasTable
                 TextColumn::make('days_overdue')
                     ->label('Days Overdue')
                     ->state(fn (ClinicVisit $record): string => $record->isOverdue()
-                        ? $record->next_follow_up_date->diffInDays(today()).'d'
+                        ? (int) $record->next_follow_up_date->diffInDays(today()).'d'
                         : '—'
                     )
                     ->color('danger')

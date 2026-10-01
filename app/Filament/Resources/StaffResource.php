@@ -32,7 +32,7 @@ class StaffResource extends Resource
 
     protected static ?string $navigationGroup = 'Schedules';
 
-    protected static ?int $navigationSort = 0;
+    protected static ?int $navigationSort = 1;
 
     protected static ?string $navigationLabel = 'Staff';
 
@@ -72,6 +72,8 @@ class StaffResource extends Resource
                     ->searchable()
                     ->preload()
                     ->nullable()
+                    ->unique(ignoreRecord: true)
+                    ->validationMessages(['unique' => 'This login is already linked to another staff member.'])
                     ->helperText('Optional — link this staff member to a panel login.')
                     ->visible(fn () => auth()->user()?->isAdmin() ?? false),
 

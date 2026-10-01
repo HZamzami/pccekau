@@ -9,8 +9,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class Admission extends Model
 {
@@ -35,7 +35,7 @@ class Admission extends Model
     ];
 
     protected $casts = [
-        'admitted_at'   => 'datetime',
+        'admitted_at' => 'datetime',
         'discharged_at' => 'datetime',
     ];
 
@@ -63,6 +63,21 @@ class Admission extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->whereNull('discharged_at');
+    }
+
+    /** Length of stay so far (or total once discharged): "2d 5h", "5h", or "<1h". */
+    public function stayLabel(): string
+    {
+        $hours = (int) $this->admitted_at->diffInHours($this->discharged_at ?? now());
+        $days = intdiv($hours, 24);
+        $hours %= 24;
+
+        return match (true) {
+            $days > 0 && $hours > 0 => "{$days}d {$hours}h",
+            $days > 0 => "{$days}d",
+            $hours > 0 => "{$hours}h",
+            default => '<1h',
+        };
     }
 
     public function isActive(): bool

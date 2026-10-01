@@ -23,7 +23,7 @@
             </label>
 
             <label class="space-y-1">
-                <span class="block text-xs font-medium text-gray-500 dark:text-gray-400">Interventionist</span>
+                <span class="block text-xs font-medium text-gray-500 dark:text-gray-400">Consultant</span>
                 <x-filament::input.wrapper>
                     <x-filament::input.select wire:model.live="staffId">
                         <option value="">Everyone</option>
@@ -75,10 +75,10 @@
                                     <span class="text-xs text-gray-400 font-normal">{{ $day['date']->format('d M') }}</span>
                                 </td>
 
-                                @foreach ($day['cells'] as $booking)
+                                @foreach ($day['cells'] as $bookings)
                                     <td class="py-2.5 pr-4 align-top">
-                                        @if ($booking)
-                                            <a href="{{ $this->getBookingUrl($booking) }}" class="block hover:underline">
+                                        @forelse ($bookings as $booking)
+                                            <a href="{{ $this->getBookingUrl($booking) }}" @class(['block hover:underline', 'mt-3' => ! $loop->first])>
                                                 <span class="font-medium text-gray-900 dark:text-white">{{ $booking->patient?->name ?? 'Unassigned' }}</span>
                                                 @if ($booking->procedure)
                                                     <span class="block text-xs text-gray-500 dark:text-gray-400">{{ $booking->procedure }}</span>
@@ -92,14 +92,14 @@
                                                             {{ $booking->category->getLabel() }}
                                                         </x-filament::badge>
                                                     @endif
-                                                <x-filament::badge :color="$booking->procedure_status->getColor()" size="xs">
-                                                    {{ $booking->procedure_status->getLabel() }}
-                                                </x-filament::badge>
+                                                    <x-filament::badge :color="$booking->procedure_status->getColor()" size="xs">
+                                                        {{ $booking->procedure_status->getLabel() }}
+                                                    </x-filament::badge>
                                                 </div>
                                             </a>
-                                        @else
+                                        @empty
                                             <span class="text-gray-400">—</span>
-                                        @endif
+                                        @endforelse
                                     </td>
                                 @endforeach
                             </tr>

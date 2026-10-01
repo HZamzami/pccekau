@@ -193,8 +193,7 @@ class AdmissionResource extends Resource
 
                 TextColumn::make('stay')
                     ->label('Stay')
-                    ->state(fn (Admission $record) => $record->admitted_at
-                        ->diffInDays($record->discharged_at ?? now()).'d'),
+                    ->state(fn (Admission $record) => $record->stayLabel()),
             ])
             ->filters([
                 TernaryFilter::make('admitted')

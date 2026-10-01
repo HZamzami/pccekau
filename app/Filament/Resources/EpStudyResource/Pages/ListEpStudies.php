@@ -4,6 +4,7 @@ namespace App\Filament\Resources\EpStudyResource\Pages;
 
 use App\Enums\ReportStatus;
 use App\Filament\Resources\EpStudyResource;
+use App\Filament\Resources\WaitlistEntryResource;
 use App\Models\EpStudy;
 use Filament\Actions;
 use Filament\Resources\Components\Tab;
@@ -18,6 +19,7 @@ class ListEpStudies extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            WaitlistEntryResource::addAction('ep'),
             Actions\CreateAction::make(),
         ];
     }
