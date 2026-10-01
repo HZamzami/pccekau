@@ -7,6 +7,7 @@ use App\Filament\Forms\DailyAssignmentsForm;
 use App\Filament\Resources\ConsultantScheduleResource\Pages;
 use App\Models\ConsultantSchedule;
 use App\Models\Staff;
+use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Textarea;
@@ -37,7 +38,27 @@ class ConsultantScheduleResource extends Resource
             Section::make('Week')->schema([
                 DatePicker::make('week_start')
                     ->label('Week Start (Sunday)')
-                    ->required(),
+                    ->required()
+                    ->rule(fn (?ConsultantSchedule $record) => function (string $attribute, $value, $fail) use ($record) {
+                        if (! $value) {
+                            return;
+                        }
+
+                        if (! Carbon::parse($value)->isSunday()) {
+                            $fail('Weeks start on Sunday. Pick the Sunday of that week.');
+
+                            return;
+                        }
+
+                        $exists = ConsultantSchedule::query()
+                            ->whereDate('week_start', Carbon::parse($value))
+                            ->when($record, fn ($query) => $query->whereKeyNot($record->getKey()))
+                            ->exists();
+
+                        if ($exists) {
+                            $fail('This week already has a schedule. Edit that one instead.');
+                        }
+                    }),
             ]),
 
             Section::make('Daily Consultant Assignments')

@@ -35,7 +35,8 @@ class StaffScheduleIcsController extends Controller
     private function assignmentEvents(string $scheduleClass, Staff $staff, Carbon $start, Carbon $end): array
     {
         $weeks = $scheduleClass::forClinic($staff->clinic_id)
-            ->whereBetween('week_start', [$start->toDateString(), $end->toDateString()])
+            ->whereDate('week_start', '>=', $start)
+            ->whereDate('week_start', '<=', $end)
             ->with(['assignments' => fn ($query) => $query->withoutGlobalScope('clinic')->where('staff_id', $staff->id)])
             ->get();
 

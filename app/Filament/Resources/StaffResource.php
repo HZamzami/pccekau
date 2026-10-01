@@ -72,6 +72,8 @@ class StaffResource extends Resource
                     ->searchable()
                     ->preload()
                     ->nullable()
+                    ->unique(ignoreRecord: true)
+                    ->validationMessages(['unique' => 'This login is already linked to another staff member.'])
                     ->helperText('Optional — link this staff member to a panel login.')
                     ->visible(fn () => auth()->user()?->isAdmin() ?? false),
 
