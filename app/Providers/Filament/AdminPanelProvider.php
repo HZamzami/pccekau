@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\Auth\Register;
 use App\Filament\Widgets\GettingStartedWidget;
 use App\Filament\Widgets\MyWorklistWidget;
 use App\Filament\Widgets\PatientSearchWidget;
@@ -36,16 +37,15 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->registration(Register::class)
             ->passwordReset()
 
-            // Every account must use an authenticator app. There is no public
-            // sign-up: clinics are created with `php artisan pccekau:create-clinic`
-            // and further users are added by that clinic's admin.
+            // Two-factor login is opt-in: each user can turn it on from the
+            // user menu, and from then on is asked for a code at every login.
             ->plugin(
                 TwoFactorAuthenticationPlugin::make()
                     ->enableTwoFactorAuthentication()
                     ->addTwoFactorMenuItem(label: 'Two-factor authentication')
-                    ->forceTwoFactorSetup(condition: (bool) config('auth.two_factor_enforced'))
             )
 
             // Multi-tenancy: each clinic is an isolated workspace

@@ -30,15 +30,14 @@ class SecurityHardeningTest extends TestCase
         return $user;
     }
 
-    public function test_users_without_two_factor_are_sent_to_setup_when_enforced(): void
+    public function test_two_factor_is_opt_in(): void
     {
-        config(['auth.two_factor_enforced' => true]);
         $doctor = User::factory()->create(['role' => UserRole::Doctor]);
         $patient = Patient::factory()->create();
 
-        $this->actingAs($doctor)
-            ->get(route('patients.summary-pdf', $patient))
-            ->assertRedirect(route('filament.admin.two-factor.setup'));
+        $this->actingAs($doctor)->get(PatientResource::getUrl('index'))->assertOk();
+        $this->actingAs($doctor)->get(route('patients.summary-pdf', $patient))->assertOk();
+        $this->actingAs($doctor)->get(route('filament.admin.two-factor.setup'))->assertOk();
     }
 
     public function test_password_alone_cannot_open_patient_pdfs_when_two_factor_is_on(): void

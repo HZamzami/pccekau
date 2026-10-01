@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Filament\Pages\Auth\Register;
 use App\Filament\Resources\PatientResource;
 use App\Filament\Resources\PatientResource\Pages\CreatePatient;
 use App\Filament\Resources\UserResource\Pages\ListUsers;
@@ -12,7 +13,6 @@ use App\Models\Patient;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Route;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -68,9 +68,61 @@ class MultiTenancyTest extends TestCase
         $this->assertDatabaseMissing('clinics', ['name' => 'Weak Clinic']);
     }
 
-    public function test_public_registration_is_disabled(): void
+    public function test_registration_creates_a_clinic_with_its_admin(): void
     {
-        $this->assertFalse(Route::has('filament.admin.auth.register'));
+        Livewire::test(Register::class)
+            ->fillForm([
+                'name' => 'Dr. New Founder',
+                'clinic_name' => 'Riyadh Heart Center',
+                'email' => 'founder@example.com',
+                'password' => 'super-secret-1',
+                'passwordConfirmation' => 'super-secret-1',
+            ])
+            ->call('register')
+            ->assertHasNoFormErrors();
+
+        $clinic = Clinic::where('slug', 'riyadh-heart-center')->first();
+        $this->assertNotNull($clinic);
+
+        $user = User::where('email', 'founder@example.com')->first();
+        $this->assertTrue($user->isAdmin());
+        $this->assertTrue($user->clinic->is($clinic));
+        $this->assertSame($user->id, $clinic->created_by);
+    }
+
+    public function test_registration_resolves_slug_collisions(): void
+    {
+        Clinic::factory()->create(['slug' => 'heart-center']);
+
+        Livewire::test(Register::class)
+            ->fillForm([
+                'name' => 'Second Founder',
+                'clinic_name' => 'Heart Center',
+                'email' => 'second@example.com',
+                'password' => 'super-secret-1',
+                'passwordConfirmation' => 'super-secret-1',
+            ])
+            ->call('register')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame(
+            'heart-center-2',
+            User::where('email', 'second@example.com')->first()->clinic->slug,
+        );
+    }
+
+    public function test_registration_rejects_weak_passwords(): void
+    {
+        Livewire::test(Register::class)
+            ->fillForm([
+                'name' => 'Weak Founder',
+                'clinic_name' => 'Weak Clinic',
+                'email' => 'weak@example.com',
+                'password' => 'short1',
+                'passwordConfirmation' => 'short1',
+            ])
+            ->call('register')
+            ->assertHasFormErrors(['password']);
     }
 
     public function test_cross_clinic_patient_pages_and_pdfs_are_denied(): void

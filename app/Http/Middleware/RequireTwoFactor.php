@@ -7,8 +7,8 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 // The 2FA plugin only guards Filament panel routes. Patient PDFs and document
-// downloads live outside the panel, so they need the same two checks here or
-// a password alone would be enough to fetch them.
+// downloads live outside the panel, so users who turned on two-factor login
+// get the same code check here; otherwise a password alone would open them.
 class RequireTwoFactor
 {
     public function handle(Request $request, Closure $next): Response
@@ -21,10 +21,6 @@ class RequireTwoFactor
 
         if ($user->hasEnabledTwoFactorAuthentication() && ! $user->isTwoFactorChallengePassed()) {
             return redirect()->guest(route('filament.admin.two-factor.challenge'));
-        }
-
-        if (config('auth.two_factor_enforced') && ! $user->hasEnabledTwoFactorAuthentication()) {
-            return redirect()->route('filament.admin.two-factor.setup');
         }
 
         return $next($request);
