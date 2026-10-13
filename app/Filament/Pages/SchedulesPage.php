@@ -26,7 +26,7 @@ class SchedulesPage extends Page implements HasTable
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar';
 
-    protected static ?string $navigationLabel = 'Schedules';
+    protected static ?string $navigationLabel = 'Master Schedule';
 
     protected static ?string $navigationGroup = 'Schedules';
 

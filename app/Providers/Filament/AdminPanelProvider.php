@@ -80,8 +80,12 @@ class AdminPanelProvider extends PanelProvider
             ->navigationGroups([
                 NavigationGroup::make('Patients')
                     ->icon('heroicon-o-users'),
-                NavigationGroup::make('Clinical')
+                NavigationGroup::make('Clinical Care')
                     ->icon('heroicon-o-heart'),
+                NavigationGroup::make('Booking')
+                    ->icon('heroicon-o-calendar-days'),
+                NavigationGroup::make('Reports & Documents')
+                    ->icon('heroicon-o-document-text'),
                 NavigationGroup::make('Schedules')
                     ->icon('heroicon-o-calendar'),
                 NavigationGroup::make('Admin')

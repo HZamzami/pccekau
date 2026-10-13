@@ -5,6 +5,7 @@ namespace App\Filament\Resources\ProcedureBookingResource\Pages;
 use App\Filament\Resources\ProcedureBookingResource;
 use App\Filament\Resources\WaitlistEntryResource;
 use App\Models\WaitlistEntry;
+use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -14,6 +15,19 @@ use Illuminate\Validation\ValidationException;
 class CreateProcedureBooking extends CreateRecord
 {
     protected static string $resource = ProcedureBookingResource::class;
+
+    protected static ?string $title = 'Create Booking';
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Actions\Action::make('allBookings')
+                ->label('All bookings')
+                ->icon('heroicon-o-list-bullet')
+                ->color('gray')
+                ->url(ProcedureBookingResource::getUrl('index')),
+        ];
+    }
 
     // One form orders anything: "Schedule now" books it on the calendar,
     // "Add to wait-list" files a wait-list entry to be scheduled later.

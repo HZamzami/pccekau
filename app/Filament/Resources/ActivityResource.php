@@ -22,7 +22,7 @@ class ActivityResource extends Resource
 
     protected static ?string $navigationLabel = 'Activity Log';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 2;
 
     // Spatie's Activity model has no clinic() relationship, so Filament's
     // automatic tenant scoping can't apply — scope by column instead.

@@ -36,11 +36,18 @@ class ProcedureBookingResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
 
-    protected static ?string $navigationGroup = 'Clinical';
+    protected static ?string $navigationGroup = 'Booking';
 
-    protected static ?string $navigationLabel = 'Procedure Bookings';
+    protected static ?string $navigationLabel = 'Central Booking';
 
-    protected static ?int $navigationSort = 10;
+    protected static ?int $navigationSort = 1;
+
+    // Central Booking opens straight on the booking form; the list of
+    // bookings is one click away from there. Read-only users get the list.
+    public static function getNavigationUrl(): string
+    {
+        return static::canCreate() ? static::getUrl('create') : static::getUrl('index');
+    }
 
     public static function form(Form $form): Form
     {

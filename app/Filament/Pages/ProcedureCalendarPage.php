@@ -17,9 +17,9 @@ class ProcedureCalendarPage extends Page
 
     protected static ?string $navigationLabel = 'Procedure Calendar';
 
-    protected static ?string $navigationGroup = 'Clinical';
+    protected static ?string $navigationGroup = 'Booking';
 
-    protected static ?int $navigationSort = 11;
+    protected static ?int $navigationSort = 3;
 
     protected static ?string $title = 'Procedure Calendar';
 

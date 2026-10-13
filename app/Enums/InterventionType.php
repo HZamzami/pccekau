@@ -21,6 +21,13 @@ enum InterventionType: string implements HasColor, HasLabel
     case CathIntervention = 'cath_intervention';
     case EpProcedure = 'ep_procedure';
 
+    /** Filtered views of the interventions list: category key => page title */
+    public const CATEGORIES = [
+        'surgery' => 'Surgery',
+        'cath' => 'Cath',
+        'ep' => 'Invasive EP',
+    ];
+
     public function getLabel(): string
     {
         return match ($this) {
@@ -51,6 +58,29 @@ enum InterventionType: string implements HasColor, HasLabel
             self::TransvenousPacing => 'primary',
             self::Other => 'gray',
         };
+    }
+
+    /** Key into CATEGORIES; null for Other, which only shows under "All procedures". */
+    public function category(): ?string
+    {
+        return match ($this) {
+            self::Surgery => 'surgery',
+            self::DiagnosticCath,
+            self::InterventionalCathDevice,
+            self::InterventionalCathBalloon,
+            self::CathIntervention => 'cath',
+            self::EpStudy,
+            self::Ablation,
+            self::TransvenousPacing,
+            self::EpProcedure => 'ep',
+            self::Other => null,
+        };
+    }
+
+    /** @return array<self> */
+    public static function ofCategory(string $category): array
+    {
+        return array_values(array_filter(self::cases(), fn (self $type) => $type->category() === $category));
     }
 
     public function isLegacy(): bool

@@ -13,11 +13,9 @@ use App\Filament\Pages\SchedulesPage;
 use App\Filament\Resources\ConsultantScheduleResource;
 use App\Filament\Resources\EpStudyResource\Pages\ListEpStudies;
 use App\Filament\Resources\ImagingReportResource\Pages\ListImagingReports;
-use App\Filament\Resources\InterventionResource;
 use App\Filament\Resources\InterventionResource\Pages\ListInterventions;
 use App\Filament\Resources\MdtDiscussionResource\Pages\ListMdtDiscussions;
 use App\Filament\Resources\OncallScheduleResource;
-use App\Filament\Resources\PatientDocumentResource;
 use App\Filament\Resources\PatientResource\Pages\ViewPatient;
 use App\Filament\Resources\PatientResource\RelationManagers\WaitlistEntriesRelationManager;
 use App\Filament\Resources\ProcedureBookingResource;
@@ -198,13 +196,11 @@ class ProcedureOrderingTest extends TestCase
     public function test_sidebar_and_tab_order(): void
     {
         $this->assertSame(
-            [8, 9, 10, 11, 12],
+            [1, 2, 3],
             [
-                InterventionResource::getNavigationSort(),
-                WaitlistEntryResource::getNavigationSort(),
                 ProcedureBookingResource::getNavigationSort(),
+                WaitlistEntryResource::getNavigationSort(),
                 ProcedureCalendarPage::getNavigationSort(),
-                PatientDocumentResource::getNavigationSort(),
             ],
         );
 

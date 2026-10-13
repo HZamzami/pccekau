@@ -29,6 +29,7 @@ use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 
@@ -38,11 +39,23 @@ class WaitlistEntryResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-queue-list';
 
-    protected static ?string $navigationGroup = 'Clinical';
+    protected static ?string $navigationGroup = 'Booking';
 
     protected static ?string $navigationLabel = 'Wait-list';
 
-    protected static ?int $navigationSort = 9;
+    protected static ?int $navigationSort = 2;
+
+    public static function getNavigationBadge(): ?string
+    {
+        $count = WaitlistEntry::where('status', WaitlistStatus::Waiting)->count();
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeTooltip(): ?string
+    {
+        return 'Waiting';
+    }
 
     public static function form(Form $form): Form
     {
@@ -175,7 +188,10 @@ class WaitlistEntryResource extends Resource
 
     public static function table(Table $table): Table
     {
+        // Only patients still waiting: scheduled ones are on the calendar,
+        // removed ones are done with.
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->where('status', WaitlistStatus::Waiting))
             ->columns([
                 TextColumn::make('patient.mrn')
                     ->label('MRN')
@@ -207,9 +223,6 @@ class WaitlistEntryResource extends Resource
                     ->label('Days Waiting')
                     ->state(fn (WaitlistEntry $record) => $record->days_waiting)
                     ->sortable(query: fn ($query, string $direction) => $query->orderBy('created_at', $direction === 'asc' ? 'desc' : 'asc')),
-
-                TextColumn::make('status')
-                    ->badge(),
             ])
             ->filters([
                 SelectFilter::make('staff_id')
@@ -221,9 +234,6 @@ class WaitlistEntryResource extends Resource
 
                 SelectFilter::make('priority')
                     ->options(WaitlistPriority::class),
-
-                SelectFilter::make('status')
-                    ->options(WaitlistStatus::class),
             ])
             ->actions([
                 ViewAction::make(),

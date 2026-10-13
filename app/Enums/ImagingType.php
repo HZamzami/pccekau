@@ -14,6 +14,15 @@ enum ImagingType: string implements HasLabel
     case Echo = 'echo';
     case EchoTee = 'echo_tee';
     case Echo3d = 'echo_3d';
+    case FetalEcho = 'fetal_echo';
+
+    /** Sidebar sub-headings of Imaging Reports: modality key => label */
+    public const MODALITIES = [
+        'echo' => 'Echo',
+        'fetal_echo' => 'Fetal Echo',
+        'mri' => 'MRI',
+        'ct' => 'CT',
+    ];
 
     public function getLabel(): string
     {
@@ -24,7 +33,26 @@ enum ImagingType: string implements HasLabel
             self::Echo => 'Echo (TTE)',
             self::EchoTee => 'Echo (TEE)',
             self::Echo3d => '3D Echo',
+            self::FetalEcho => 'Fetal Echo',
         };
+    }
+
+    /** Key into MODALITIES; null for legacy types, which only show under "All". */
+    public function modality(): ?string
+    {
+        return match ($this) {
+            self::Echo, self::EchoTee, self::Echo3d => 'echo',
+            self::FetalEcho => 'fetal_echo',
+            self::Mri => 'mri',
+            self::Ct => 'ct',
+            self::Cath => null,
+        };
+    }
+
+    /** @return array<self> */
+    public static function ofModality(string $modality): array
+    {
+        return array_values(array_filter(self::cases(), fn (self $type) => $type->modality() === $modality));
     }
 
     /** @return array<string, string> value => label */

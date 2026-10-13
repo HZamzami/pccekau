@@ -17,6 +17,7 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Form;
+use Filament\Navigation\NavigationItem;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkActionGroup;
@@ -33,15 +34,25 @@ class EpStudyResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-bolt';
 
-    protected static ?string $navigationGroup = 'Clinical';
+    protected static ?string $navigationGroup = 'Reports & Documents';
 
-    protected static ?int $navigationSort = 7;
+    protected static ?int $navigationSort = 3;
 
     protected static ?string $navigationLabel = 'Electrophysiology';
 
     protected static ?string $modelLabel = 'EP study';
 
     protected static ?string $pluralModelLabel = 'EP studies';
+
+    // Invasive EP lives in Interventions but belongs here in the sidebar
+    public static function getNavigationItems(): array
+    {
+        return array_map(
+            fn (NavigationItem $item) => $item->isActiveWhen(fn () => request()->routeIs(static::getRouteBaseName().'.*')
+                || InterventionResource::currentCategory() === 'ep'),
+            parent::getNavigationItems(),
+        );
+    }
 
     public static function getNavigationBadge(): ?string
     {

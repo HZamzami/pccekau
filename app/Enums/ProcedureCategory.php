@@ -23,6 +23,7 @@ enum ProcedureCategory: string implements HasColor, HasLabel
     case Echo = 'echo';
     case Tee = 'tee';
     case Echo3d = 'echo_3d';
+    case FetalEcho = 'fetal_echo';
     case CaseDiscussion = 'case_discussion';
     case Other = 'other';
 
@@ -47,6 +48,7 @@ enum ProcedureCategory: string implements HasColor, HasLabel
             self::Echo => 'Echo (TTE)',
             self::Tee => 'TEE',
             self::Echo3d => '3D Echo',
+            self::FetalEcho => 'Fetal Echo',
             self::CaseDiscussion => 'Case discussion',
             self::Other => 'Other',
         };
@@ -59,7 +61,7 @@ enum ProcedureCategory: string implements HasColor, HasLabel
             self::Cath => 'warning',
             self::Ep, self::Ecg, self::Holter, self::StressEcg => 'success',
             self::Ct, self::Mri => 'info',
-            self::Echo, self::Tee, self::Echo3d => 'primary',
+            self::Echo, self::Tee, self::Echo3d, self::FetalEcho => 'primary',
             self::CaseDiscussion, self::Other => 'gray',
         };
     }
@@ -69,7 +71,7 @@ enum ProcedureCategory: string implements HasColor, HasLabel
     {
         return match ($this) {
             self::Surgery, self::Cath, self::Ep => 'interventions',
-            self::Mri, self::Ct, self::Echo, self::Tee, self::Echo3d => 'imaging',
+            self::Mri, self::Ct, self::Echo, self::Tee, self::Echo3d, self::FetalEcho => 'imaging',
             self::Ecg, self::Holter, self::StressEcg => 'ep',
             self::CaseDiscussion => 'case_discussion',
             self::Other => null,
@@ -92,7 +94,7 @@ enum ProcedureCategory: string implements HasColor, HasLabel
             self::Surgery => ['or'],
             self::Cath, self::Ep => ['cath_day_care', 'cath_inpatient'],
             self::Ct, self::Mri => ['mri_ct'],
-            self::Echo, self::Tee, self::Echo3d => ['echo'],
+            self::Echo, self::Tee, self::Echo3d, self::FetalEcho => ['echo'],
             self::Ecg, self::Holter, self::StressEcg, self::CaseDiscussion => [],
             self::Other => array_keys(ProcedureBooking::$slotTypeLabels),
         };
@@ -157,6 +159,7 @@ enum ProcedureCategory: string implements HasColor, HasLabel
             self::Echo => ImagingType::Echo,
             self::Tee => ImagingType::EchoTee,
             self::Echo3d => ImagingType::Echo3d,
+            self::FetalEcho => ImagingType::FetalEcho,
             default => null,
         };
     }

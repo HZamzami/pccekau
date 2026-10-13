@@ -4,6 +4,7 @@ namespace App\Filament\Resources\EpStudyResource\Pages;
 
 use App\Enums\ReportStatus;
 use App\Filament\Resources\EpStudyResource;
+use App\Filament\Resources\InterventionResource;
 use App\Filament\Resources\WaitlistEntryResource;
 use App\Models\EpStudy;
 use Filament\Actions;
@@ -19,6 +20,12 @@ class ListEpStudies extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('invasiveEp')
+                ->label('Invasive EP procedures')
+                ->tooltip('EP studies, ablations and pacing implants')
+                ->link()
+                ->url(InterventionResource::getUrl('index', ['category' => 'ep']))
+                ->visible(fn () => InterventionResource::canViewAny()),
             WaitlistEntryResource::addAction('ep'),
             Actions\CreateAction::make(),
         ];

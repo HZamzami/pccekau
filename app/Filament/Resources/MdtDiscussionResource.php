@@ -37,7 +37,7 @@ class MdtDiscussionResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-chat-bubble-left-right';
 
-    protected static ?string $navigationGroup = 'Clinical';
+    protected static ?string $navigationGroup = 'Clinical Care';
 
     protected static ?int $navigationSort = 5;
 
