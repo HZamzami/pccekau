@@ -28,7 +28,7 @@ class ClinicVisitResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
 
-    protected static ?string $navigationGroup = 'Clinical';
+    protected static ?string $navigationGroup = 'Clinical Care';
 
     protected static ?int $navigationSort = 1;
 

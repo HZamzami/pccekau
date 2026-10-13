@@ -53,6 +53,8 @@ class PatientResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
+    protected static ?string $navigationLabel = 'Patient List';
+
     public const PRIMARY_PHYSICIANS = [
         'Dr. Osman Al-Radi',
         'Dr. Ahmad Azhar',

@@ -25,7 +25,7 @@ class ClinicFollowUpsPage extends Page implements HasTable
 
     protected static ?string $navigationLabel = 'Clinic Follow-Ups';
 
-    protected static ?string $navigationGroup = 'Clinical';
+    protected static ?string $navigationGroup = 'Clinical Care';
 
     protected static ?int $navigationSort = 2;
 

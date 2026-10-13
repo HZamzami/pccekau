@@ -27,7 +27,7 @@ class HandoverBoardPage extends Page implements HasTable
 
     protected static ?string $navigationLabel = 'Handover Board';
 
-    protected static ?string $navigationGroup = 'Clinical';
+    protected static ?string $navigationGroup = 'Clinical Care';
 
     protected static ?int $navigationSort = 4;
 

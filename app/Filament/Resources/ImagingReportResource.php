@@ -17,6 +17,7 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Form;
+use Filament\Navigation\NavigationItem;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkActionGroup;
@@ -33,9 +34,44 @@ class ImagingReportResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-photo';
 
-    protected static ?string $navigationGroup = 'Clinical';
+    protected static ?string $navigationGroup = 'Reports & Documents';
 
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 4;
+
+    // Each modality gets a sub-item: the same list, filtered. They unfold
+    // under Imaging Reports while any imaging page is open.
+    public static function getNavigationItems(): array
+    {
+        $parent = parent::getNavigationItems()[0]
+            ->isActiveWhen(fn () => request()->routeIs(static::getRouteBaseName().'.*') && static::currentModality() === null);
+
+        $children = collect(ImagingType::MODALITIES)
+            ->map(fn (string $label, string $modality) => NavigationItem::make($label)
+                ->group(static::getNavigationGroup())
+                ->parentItem(static::getNavigationLabel())
+                ->isActiveWhen(fn () => static::currentModality() === $modality)
+                ->url(static::getUrl('index', ['modality' => $modality])))
+            ->values()
+            ->all();
+
+        return [$parent, ...$children];
+    }
+
+    /** Modality the current page is showing, or null outside this resource or on the unfiltered list. */
+    public static function currentModality(): ?string
+    {
+        if (! request()->routeIs(static::getRouteBaseName().'.*')) {
+            return null;
+        }
+
+        if (request()->routeIs(static::getRouteBaseName().'.edit')) {
+            return ImagingReport::find(request()->route('record'))?->type?->modality();
+        }
+
+        $modality = request()->query('modality');
+
+        return is_string($modality) && array_key_exists($modality, ImagingType::MODALITIES) ? $modality : null;
+    }
 
     public static function getNavigationBadge(): ?string
     {
@@ -67,6 +103,12 @@ class ImagingReportResource extends Resource
 
                         Select::make('type')
                             ->options(ImagingType::selectableLabels())
+                            // Opened from Fetal Echo, MRI or CT, the type is already known
+                            ->default(function () {
+                                $types = ImagingType::ofModality((string) request()->query('modality'));
+
+                                return count($types) === 1 ? $types[0]->value : null;
+                            })
                             ->required(),
                     ]),
 

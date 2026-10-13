@@ -27,9 +27,9 @@ class PatientDocumentResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 
-    protected static ?string $navigationGroup = 'Clinical';
+    protected static ?string $navigationGroup = 'Reports & Documents';
 
-    protected static ?int $navigationSort = 12;
+    protected static ?int $navigationSort = 5;
 
     public static function form(Form $form): Form
     {

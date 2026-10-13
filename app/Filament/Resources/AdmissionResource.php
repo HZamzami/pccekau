@@ -32,7 +32,7 @@ class AdmissionResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
 
-    protected static ?string $navigationGroup = 'Clinical';
+    protected static ?string $navigationGroup = 'Clinical Care';
 
     protected static ?int $navigationSort = 3;
 
