@@ -90,7 +90,7 @@ class MyWorklistWidget extends Widget
 
         return ProcedureBooking::where('staff_id', $staff->id)
             ->whereDate('booking_date', '>=', today())
-            ->whereIn('procedure_status', [ProcedureStatus::Ordered, ProcedureStatus::Confirmed])
+            ->whereIn('procedure_status', [ProcedureStatus::Requested, ProcedureStatus::Scheduled])
             ->count();
     }
 

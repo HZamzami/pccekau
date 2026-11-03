@@ -50,7 +50,7 @@ class WriteConflictsTest extends TestCase
             'slot_number' => 1,
             'category' => ProcedureCategory::Cath,
             'intervention_type' => InterventionType::DiagnosticCath,
-            'procedure_status' => ProcedureStatus::Confirmed,
+            'procedure_status' => ProcedureStatus::Scheduled,
             ...$attributes,
         ]);
     }
@@ -64,7 +64,7 @@ class WriteConflictsTest extends TestCase
             'intervention_type' => InterventionType::DiagnosticCath->value,
             'slot_type' => 'cath_day_care',
             'slot_number' => 1,
-            'procedure_status' => ProcedureStatus::Ordered->value,
+            'procedure_status' => ProcedureStatus::Requested->value,
             ...$overrides,
         ];
     }

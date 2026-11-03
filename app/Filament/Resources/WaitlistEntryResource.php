@@ -8,10 +8,12 @@ use App\Enums\WaitlistPriority;
 use App\Enums\WaitlistStatus;
 use App\Filament\Forms\ProcedureOrderFields;
 use App\Filament\Resources\WaitlistEntryResource\Pages;
+use App\Models\PatientDocument;
 use App\Models\ProcedureBooking;
 use App\Models\WaitlistEntry;
 use App\Rules\FreeProcedureSlot;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
@@ -141,7 +143,7 @@ class WaitlistEntryResource extends Resource
                             'procedure' => $record->procedure,
                             'diagnosis' => $record->diagnosis,
                             'mobile' => $record->mobile,
-                            'procedure_status' => ProcedureStatus::Confirmed,
+                            'procedure_status' => ProcedureStatus::Scheduled,
                             'waitlist_entry_id' => $record->id,
                             'notes' => $record->notes,
                         ]);
@@ -173,6 +175,40 @@ class WaitlistEntryResource extends Resource
                 'status' => WaitlistStatus::Removed,
                 'removed_reason' => $data['removed_reason'],
             ]));
+    }
+
+    public static function surgeonNoteAction(): Action
+    {
+        return Action::make('surgeonNote')
+            ->label('Surgeon Note')
+            ->icon('heroicon-o-document-text')
+            ->color('gray')
+            ->form([
+                TextInput::make('label')
+                    ->label('Label')
+                    ->default('Surgeon discussion note')
+                    ->required()
+                    ->maxLength(255),
+
+                FileUpload::make('files')
+                    ->multiple()
+                    ->required()
+                    ->disk(config('filesystems.patient_documents'))
+                    ->visibility('private')
+                    ->directory('patient-documents')
+                    ->acceptedFileTypes(['application/pdf', 'image/*'])
+                    ->maxSize(10240),
+            ])
+            ->action(function (WaitlistEntry $record, array $data) {
+                PatientDocument::create([
+                    'patient_id' => $record->patient_id,
+                    'label' => $data['label'],
+                    'category' => 'surgeon_discussion_note',
+                    'files' => $data['files'],
+                ]);
+
+                Notification::make()->success()->title('Surgeon note uploaded')->send();
+            });
     }
 
     /** "Add to wait-list" button for the list pages, pre-set to that page's kind of procedure. */
@@ -240,6 +276,7 @@ class WaitlistEntryResource extends Resource
                 EditAction::make(),
 
                 static::scheduleAction(),
+                static::surgeonNoteAction(),
                 static::removeAction(),
             ])
             ->bulkActions([

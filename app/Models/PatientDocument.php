@@ -26,13 +26,14 @@ class PatientDocument extends Model
     ];
 
     public static array $categoryLabels = [
-        'referral'          => 'Referral',
-        'consent'           => 'Consent',
-        'lab'               => 'Lab Result',
-        'external_report'   => 'External Report',
-        'operative_note'    => 'Operative Note',
-        'discharge_summary' => 'Discharge Summary',
-        'other'             => 'Other',
+        'referral'                  => 'Referral',
+        'consent'                   => 'Consent',
+        'lab'                       => 'Lab Result',
+        'external_report'           => 'External Report',
+        'operative_note'            => 'Operative Note',
+        'discharge_summary'         => 'Discharge Summary',
+        'surgeon_discussion_note'   => 'Surgeon Discussion Note',
+        'other'                     => 'Other',
     ];
 
     public function patient(): BelongsTo

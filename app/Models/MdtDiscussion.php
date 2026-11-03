@@ -33,12 +33,14 @@ class MdtDiscussion extends Model
         'specialist_fellow_id',
         'discussion_results',
         'discussed',
+        'discussed_at',
         'contact_number',
     ];
 
     protected $casts = [
         'discussion_date' => 'date',
         'discussed' => 'boolean',
+        'discussed_at' => 'date',
     ];
 
     protected static function booted(): void

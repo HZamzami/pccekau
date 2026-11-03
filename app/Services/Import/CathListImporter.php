@@ -80,7 +80,7 @@ class CathListImporter
             'date' => $this->parseFlexibleDate($this->cell($row, $header, 'Date if avaliable') ?? $this->cell($row, $header, 'Date if available')),
             'type' => $this->inferInterventionType($procedure),
             'name' => $procedure ?: 'Unspecified procedure',
-            'procedure_status' => ProcedureStatus::Ordered,
+            'procedure_status' => ProcedureStatus::Requested,
             'notes' => implode("\n", $notesParts) ?: null,
         ]);
 

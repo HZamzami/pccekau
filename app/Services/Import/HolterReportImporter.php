@@ -73,7 +73,7 @@ class HolterReportImporter
                 'type' => EpStudyType::Holter,
                 'date' => $date,
                 'report' => $holterReport,
-                'procedure_status' => ProcedureStatus::Done,
+                'procedure_status' => ProcedureStatus::Completed,
             ]);
             $childSummary[] = "Holter report — {$dateLabel}";
         }
@@ -83,7 +83,7 @@ class HolterReportImporter
                 'type' => EpStudyType::StressEcg,
                 'date' => $date,
                 'report' => $stressReport,
-                'procedure_status' => ProcedureStatus::Done,
+                'procedure_status' => ProcedureStatus::Completed,
             ]);
             $childSummary[] = "Stress ECG report — {$dateLabel}";
         }

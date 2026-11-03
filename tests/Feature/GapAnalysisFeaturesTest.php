@@ -46,7 +46,7 @@ class GapAnalysisFeaturesTest extends TestCase
             'slot_type' => 'cath_day_care',
             'slot_number' => 1,
             'procedure' => 'Diagnostic cath',
-            'procedure_status' => ProcedureStatus::Ordered,
+            'procedure_status' => ProcedureStatus::Requested,
         ]);
 
         $this->actingAs($doctor)
@@ -87,7 +87,7 @@ class GapAnalysisFeaturesTest extends TestCase
             'slot_type' => 'cath_day_care',
             'slot_number' => 1,
             'procedure' => $entry->procedure,
-            'procedure_status' => ProcedureStatus::Confirmed,
+            'procedure_status' => ProcedureStatus::Scheduled,
             'waitlist_entry_id' => $entry->id,
         ]);
         $entry->update(['status' => WaitlistStatus::Scheduled, 'booking_id' => $booking->id]);

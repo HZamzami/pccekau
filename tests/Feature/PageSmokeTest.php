@@ -68,7 +68,7 @@ class PageSmokeTest extends TestCase
             'slot_number' => 1,
             'category' => ProcedureCategory::Mri,
             'staff_id' => $consultant->id,
-            'procedure_status' => ProcedureStatus::Confirmed,
+            'procedure_status' => ProcedureStatus::Scheduled,
         ]);
 
         $this->records = [
@@ -188,7 +188,7 @@ class PageSmokeTest extends TestCase
             $calendar->set('category', $category->value)->assertSuccessful();
         }
 
-        $calendar->set('status', ProcedureStatus::Done->value)
+        $calendar->set('status', ProcedureStatus::Completed->value)
             ->set('staffId', (string) $this->records[Staff::class]->id)
             ->call('clearFilters')
             ->call('nextWeek')

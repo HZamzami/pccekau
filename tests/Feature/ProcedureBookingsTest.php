@@ -37,7 +37,7 @@ class ProcedureBookingsTest extends TestCase
             'slot_number' => 1,
             'category' => ProcedureCategory::Cath,
             'procedure' => 'Diagnostic cath',
-            'procedure_status' => ProcedureStatus::Confirmed,
+            'procedure_status' => ProcedureStatus::Scheduled,
             ...$attributes,
         ]);
     }
@@ -59,7 +59,7 @@ class ProcedureBookingsTest extends TestCase
                 'slot_number' => 1,
                 'staff_id' => $staff->id,
                 'procedure' => 'PDA device closure',
-                'procedure_status' => ProcedureStatus::Ordered->value,
+                'procedure_status' => ProcedureStatus::Requested->value,
             ])
             ->call('create')
             ->assertHasNoFormErrors();
@@ -67,7 +67,7 @@ class ProcedureBookingsTest extends TestCase
         $intervention = $patient->interventions()->sole();
         $this->assertSame(InterventionType::InterventionalCathDevice, $intervention->type);
         $this->assertSame('PDA device closure', $intervention->name);
-        $this->assertSame(ProcedureStatus::Ordered, $intervention->procedure_status);
+        $this->assertSame(ProcedureStatus::Requested, $intervention->procedure_status);
         $this->assertSame(now()->addWeek()->toDateString(), $intervention->date->toDateString());
         $this->assertSame($staff->id, $intervention->operator_id);
         $this->assertSame(0, $patient->imagingReports()->count());
@@ -93,7 +93,7 @@ class ProcedureBookingsTest extends TestCase
                 'category' => 'ep',
                 'slot_type' => 'cath_day_care',
                 'slot_number' => 1,
-                'procedure_status' => ProcedureStatus::Ordered->value,
+                'procedure_status' => ProcedureStatus::Requested->value,
             ])
             ->call('create')
             ->assertHasFormErrors(['intervention_type']);
@@ -129,8 +129,8 @@ class ProcedureBookingsTest extends TestCase
         $booking->update(['procedure_status' => ProcedureStatus::Postponed]);
         $this->assertSame(ProcedureStatus::Postponed, $intervention->fresh()->procedure_status);
 
-        $intervention->fresh()->update(['procedure_status' => ProcedureStatus::Done, 'date' => now()->subDay()]);
-        $this->assertSame(ProcedureStatus::Done, $booking->fresh()->procedure_status);
+        $intervention->fresh()->update(['procedure_status' => ProcedureStatus::Completed, 'date' => now()->subDay()]);
+        $this->assertSame(ProcedureStatus::Completed, $booking->fresh()->procedure_status);
         // The chart's own date edit must survive the status echo back to the booking.
         $this->assertSame(now()->subDay()->toDateString(), $intervention->fresh()->date->toDateString());
     }
@@ -150,12 +150,12 @@ class ProcedureBookingsTest extends TestCase
     {
         $patient = Patient::factory()->create();
         $pending = $this->booking($patient);
-        $done = $this->booking($patient, ['slot_number' => 2, 'procedure_status' => ProcedureStatus::Done]);
+        $done = $this->booking($patient, ['slot_number' => 2, 'procedure_status' => ProcedureStatus::Completed]);
 
         $pending->delete();
         $done->delete();
 
-        $this->assertSame(ProcedureStatus::Done, $patient->interventions()->sole()->procedure_status);
+        $this->assertSame(ProcedureStatus::Completed, $patient->interventions()->sole()->procedure_status);
     }
 
     public function test_scheduling_a_waitlisted_cath_puts_it_on_the_interventions_tab(): void
@@ -176,7 +176,7 @@ class ProcedureBookingsTest extends TestCase
 
         $intervention = $patient->interventions()->sole();
         $this->assertSame(InterventionType::InterventionalCathBalloon, $intervention->type);
-        $this->assertSame(ProcedureStatus::Confirmed, $intervention->procedure_status);
+        $this->assertSame(ProcedureStatus::Scheduled, $intervention->procedure_status);
     }
 
     public function test_bookings_cascade_with_patient_soft_delete(): void

@@ -4,11 +4,9 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\MdtDiscussionResource\Pages;
 use App\Filament\Resources\PatientResource;
-use App\Models\ImagingReport;
 use App\Models\MdtDiscussion;
 use App\Models\Patient;
 use App\Models\Staff;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
@@ -18,8 +16,6 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
-use Filament\Forms\Get;
-use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkActionGroup;
@@ -77,26 +73,12 @@ class MdtDiscussionResource extends Resource
                         ->searchable(['name', 'mrn'])
                         ->preload()
                         ->required()
-                        ->live()
-                        ->afterStateUpdated(fn (Set $set) => $set('imagingReports', []))
                         ->getOptionLabelFromRecordUsing(fn (Patient $record) => "{$record->mrn} — {$record->name}"),
 
                     DatePicker::make('discussion_date')
+                        ->label('Date Added')
                         ->required(),
                 ]),
-
-                Select::make('imagingReports')
-                    ->label('Reports presented')
-                    ->multiple()
-                    ->relationship(
-                        'imagingReports',
-                        'id',
-                        modifyQueryUsing: fn (Builder $query, Get $get) => $query->where('patient_id', $get('patient_id')),
-                    )
-                    ->getOptionLabelFromRecordUsing(fn (ImagingReport $record) => "{$record->type->getLabel()} — {$record->date->format('d M Y')} ({$record->status->getLabel()})")
-                    ->visible(fn (Get $get) => filled($get('patient_id')))
-                    ->preload()
-                    ->columnSpanFull(),
 
                 Grid::make(3)->schema([
                     TextInput::make('age_snapshot')
@@ -169,6 +151,9 @@ class MdtDiscussionResource extends Resource
                     ->label('Discussed')
                     ->helperText('Mark once the case has been presented and discussed.')
                     ->default(false),
+
+                DatePicker::make('discussed_at')
+                    ->label('Discussion Date'),
 
                 Textarea::make('discussion_results')
                     ->label('Discussion Results')

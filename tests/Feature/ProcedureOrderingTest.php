@@ -58,7 +58,7 @@ class ProcedureOrderingTest extends TestCase
             ->fillForm([
                 'patient_id' => $this->patient->id,
                 'booking_date' => now()->addWeek()->toDateString(),
-                'procedure_status' => ProcedureStatus::Ordered->value,
+                'procedure_status' => ProcedureStatus::Requested->value,
                 ...$form,
             ])
             ->call('create');
@@ -79,8 +79,8 @@ class ProcedureOrderingTest extends TestCase
         $this->assertNull($booking->slot_type);
         $this->assertSame(EpStudyType::Holter, $this->patient->epStudies()->sole()->type);
 
-        $this->patient->epStudies()->sole()->update(['procedure_status' => ProcedureStatus::Done]);
-        $this->assertSame(ProcedureStatus::Done, $booking->fresh()->procedure_status);
+        $this->patient->epStudies()->sole()->update(['procedure_status' => ProcedureStatus::Completed]);
+        $this->assertSame(ProcedureStatus::Completed, $booking->fresh()->procedure_status);
     }
 
     public function test_case_discussion_goes_to_case_discussions_and_needs_a_reason(): void
@@ -100,7 +100,7 @@ class ProcedureOrderingTest extends TestCase
         $this->assertFalse((bool) $discussion->discussed);
 
         $discussion->update(['discussed' => true]);
-        $this->assertSame(ProcedureStatus::Done, ProcedureBooking::sole()->procedure_status);
+        $this->assertSame(ProcedureStatus::Completed, ProcedureBooking::sole()->procedure_status);
     }
 
     public function test_slot_number_is_optional_and_unslotted_bookings_show_in_the_no_slot_column(): void

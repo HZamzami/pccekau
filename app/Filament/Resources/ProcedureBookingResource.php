@@ -5,9 +5,11 @@ namespace App\Filament\Resources;
 use App\Enums\ProcedureCategory;
 use App\Enums\ProcedureStatus;
 use App\Enums\WaitlistPriority;
+use App\Enums\WaitlistStatus;
 use App\Filament\Forms\ProcedureOrderFields;
 use App\Filament\Resources\ProcedureBookingResource\Pages;
 use App\Models\ProcedureBooking;
+use App\Models\WaitlistEntry;
 use App\Rules\FreeProcedureSlot;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
@@ -19,6 +21,7 @@ use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Resources\Resource;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
@@ -104,7 +107,7 @@ class ProcedureBookingResource extends Resource
                     Select::make('procedure_status')
                         ->label('Status')
                         ->options(ProcedureStatus::class)
-                        ->default(ProcedureStatus::Ordered)
+                        ->default(ProcedureStatus::Requested)
                         ->required()
                         ->visible($scheduling),
 
@@ -204,6 +207,7 @@ class ProcedureBookingResource extends Resource
             ->actions([
                 ViewAction::make(),
                 EditAction::make(),
+                static::returnToWaitlistAction(),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
@@ -213,6 +217,38 @@ class ProcedureBookingResource extends Resource
             ->defaultSort('booking_date', 'desc')
             ->emptyStateHeading('No procedure bookings yet')
             ->emptyStateDescription('Order any procedure here: cath, surgery, imaging, EP tests or case discussions. Schedule it now or add it to the wait-list.');
+    }
+
+    public static function returnToWaitlistAction(): Action
+    {
+        return Action::make('returnToWaitlist')
+            ->label('Return to Wait-list')
+            ->icon('heroicon-o-arrow-uturn-left')
+            ->color('warning')
+            ->visible(fn (ProcedureBooking $record) => $record->procedure_status === ProcedureStatus::Postponed)
+            ->requiresConfirmation()
+            ->action(function (ProcedureBooking $record) {
+                if ($record->waitlist_entry_id) {
+                    WaitlistEntry::withTrashed()->find($record->waitlist_entry_id)?->restore();
+                    WaitlistEntry::where('id', $record->waitlist_entry_id)->update([
+                        'status' => WaitlistStatus::Waiting,
+                        'booking_id' => null,
+                    ]);
+                } else {
+                    WaitlistEntry::create([
+                        'patient_id' => $record->patient_id,
+                        'staff_id' => $record->staff_id,
+                        'category' => $record->category,
+                        'intervention_type' => $record->intervention_type,
+                        'procedure' => $record->procedure,
+                        'diagnosis' => $record->diagnosis,
+                        'notes' => $record->notes,
+                        'status' => WaitlistStatus::Waiting,
+                    ]);
+                }
+
+                $record->update(['procedure_status' => ProcedureStatus::Requested]);
+            });
     }
 
     public static function getRelations(): array

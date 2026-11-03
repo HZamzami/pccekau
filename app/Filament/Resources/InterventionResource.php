@@ -99,7 +99,7 @@ class InterventionResource extends Resource
                 Select::make('procedure_status')
                     ->label('Procedure Status')
                     ->options(ProcedureStatus::class)
-                    ->default(ProcedureStatus::Ordered)
+                    ->default(ProcedureStatus::Requested)
                     ->required(),
 
                 Select::make('type')

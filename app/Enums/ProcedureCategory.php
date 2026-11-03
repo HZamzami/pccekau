@@ -173,4 +173,15 @@ enum ProcedureCategory: string implements HasColor, HasLabel
             default => null,
         };
     }
+
+    /** Derive the booking category from an intervention type's clinical category string. */
+    public static function fromInterventionCategory(string $category): ?self
+    {
+        return match ($category) {
+            'surgery' => self::Surgery,
+            'cath'    => self::Cath,
+            'ep'      => self::Ep,
+            default   => null,
+        };
+    }
 }

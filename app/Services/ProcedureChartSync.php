@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ProcedureCategory;
 use App\Enums\ProcedureStatus;
 use App\Models\EpStudy;
 use App\Models\ImagingReport;
@@ -63,8 +64,9 @@ class ProcedureChartSync
     public static function fromChartRecord(Model $record): void
     {
         $statusColumn = $record instanceof MdtDiscussion ? 'discussed' : 'procedure_status';
+        $dateColumn = $record instanceof MdtDiscussion ? 'discussion_date' : 'date';
 
-        if (self::$syncing || ! $record->wasChanged($statusColumn)) {
+        if (self::$syncing || (! $record->wasChanged($statusColumn) && ! $record->wasChanged($dateColumn))) {
             return;
         }
 
@@ -73,12 +75,22 @@ class ProcedureChartSync
         self::$syncing = true;
 
         try {
-            ProcedureBooking::where($column, $record->getKey())->get()->each(function (ProcedureBooking $booking) use ($record) {
-                $status = $record instanceof MdtDiscussion
-                    ? ($record->discussed ? ProcedureStatus::Done : ($booking->procedure_status === ProcedureStatus::Done ? ProcedureStatus::Confirmed : $booking->procedure_status))
-                    : $record->procedure_status;
+            ProcedureBooking::where($column, $record->getKey())->get()->each(function (ProcedureBooking $booking) use ($record, $statusColumn, $dateColumn) {
+                $updates = [];
 
-                $booking->update(['procedure_status' => $status]);
+                if ($record->wasChanged($statusColumn)) {
+                    $updates['procedure_status'] = $record instanceof MdtDiscussion
+                        ? ($record->discussed ? ProcedureStatus::Completed : ($booking->procedure_status === ProcedureStatus::Completed ? ProcedureStatus::Scheduled : $booking->procedure_status))
+                        : $record->procedure_status;
+                }
+
+                if ($record->wasChanged($dateColumn)) {
+                    $updates['booking_date'] = $record->{$dateColumn};
+                }
+
+                if ($updates) {
+                    $booking->update($updates);
+                }
             });
         } finally {
             self::$syncing = false;
@@ -89,6 +101,76 @@ class ProcedureChartSync
     {
         foreach (array_keys(self::LINKS) as $column) {
             self::discard(self::linked($booking, $column));
+        }
+    }
+
+    /**
+     * When an Intervention (or other chart record) is created directly on the
+     * patient chart — not via the booking flow — there is no ProcedureBooking,
+     * so the procedure calendar can't see it. This creates a linked booking so
+     * it appears on the calendar like any other scheduled procedure.
+     */
+    public static function createBookingForChartRecord(Model $record): void
+    {
+        if (self::$syncing) {
+            return;
+        }
+
+        $column = array_search($record::class, self::LINKS, true);
+
+        if (! $column) {
+            return;
+        }
+
+        // Already has a linked booking — nothing to do.
+        if (ProcedureBooking::where($column, $record->getKey())->exists()) {
+            return;
+        }
+
+        $category = match ($record::class) {
+            Intervention::class => $record->type?->category()
+                ? ProcedureCategory::fromInterventionCategory($record->type->category())
+                : null,
+            ImagingReport::class => null,
+            EpStudy::class => null,
+            MdtDiscussion::class => ProcedureCategory::CaseDiscussion,
+            default => null,
+        };
+
+        if (! $category) {
+            return;
+        }
+
+        $date = $record instanceof MdtDiscussion ? $record->discussion_date : $record->date;
+
+        if (! $date) {
+            return;
+        }
+
+        self::$syncing = true;
+
+        try {
+            $booking = new ProcedureBooking([
+                'patient_id' => $record->patient_id,
+                'booking_date' => $date,
+                'category' => $category,
+                'procedure_status' => $record instanceof MdtDiscussion
+                    ? ($record->discussed ? ProcedureStatus::Completed : ProcedureStatus::Requested)
+                    : ($record->procedure_status ?? ProcedureStatus::Requested),
+            ]);
+
+            if ($record instanceof Intervention) {
+                $booking->intervention_type = $record->type;
+                $booking->staff_id = $record->operator_id;
+                $booking->procedure = $record->name;
+            }
+
+            $booking->save();
+
+            $booking->$column = $record->getKey();
+            $booking->saveQuietly();
+        } finally {
+            self::$syncing = false;
         }
     }
 
@@ -147,10 +229,16 @@ class ProcedureChartSync
     // details typed on the Case Discussions page aren't wiped by a booking edit.
     private static function fillMdtDiscussion(MdtDiscussion $record, ProcedureBooking $booking): void
     {
+        $beingMarkedDiscussed = $booking->procedure_status === ProcedureStatus::Completed && ! $record->discussed;
+
         $record->fill([
             'discussion_date' => $booking->booking_date,
-            'discussed' => $booking->procedure_status === ProcedureStatus::Done,
+            'discussed' => $booking->procedure_status === ProcedureStatus::Completed,
         ]);
+
+        if ($beingMarkedDiscussed && ! $record->discussed_at) {
+            $record->discussed_at = now()->toDateString();
+        }
 
         if ($booking->diagnosis || ! $record->exists) {
             $record->diagnosis = $booking->diagnosis ?? '';
@@ -171,7 +259,7 @@ class ProcedureChartSync
 
         $done = $record instanceof MdtDiscussion
             ? (bool) $record->discussed
-            : $record->procedure_status === ProcedureStatus::Done;
+            : $record->procedure_status === ProcedureStatus::Completed;
 
         if (! $done) {
             $record->delete();
