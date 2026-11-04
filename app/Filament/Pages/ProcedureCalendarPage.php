@@ -78,6 +78,28 @@ class ProcedureCalendarPage extends Page
         $this->reset(['categories', 'staffId', 'statuses']);
     }
 
+    public function removeFilterValue(string $filter, string $value = ''): void
+    {
+        match ($filter) {
+            'categories' => $this->categories = array_values(array_diff($this->categories, [$value])),
+            'statuses' => $this->statuses = array_values(array_diff($this->statuses, [$value])),
+            'staffId' => $this->staffId = null,
+        };
+    }
+
+    /** @return array<int, array{label: string, filter: string, value: string}> the removable tags shown while the Filters panel is closed */
+    public function getFilterTags(): array
+    {
+        $categories = $this->getCategoryOptions();
+        $statuses = $this->getStatusOptions();
+
+        return [
+            ...array_map(fn ($value) => ['label' => 'Category: '.($categories[$value] ?? $value), 'filter' => 'categories', 'value' => (string) $value], $this->categories),
+            ...array_map(fn ($value) => ['label' => 'Status: '.($statuses[$value] ?? $value), 'filter' => 'statuses', 'value' => (string) $value], $this->statuses),
+            ...($this->staffId ? [['label' => 'Consultant: '.($this->getStaffOptions()[$this->staffId] ?? ''), 'filter' => 'staffId', 'value' => '']] : []),
+        ];
+    }
+
     /** @return array<string, array{slot_type: ?string, label: string}> */
     public function getVisibleColumns(): array
     {

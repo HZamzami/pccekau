@@ -9,6 +9,7 @@ use App\Enums\WaitlistStatus;
 use App\Filament\Forms\ProcedureOrderFields;
 use App\Filament\Resources\ProcedureBookingResource\Pages;
 use App\Filament\Tables\Filters\ChipFilter;
+use App\Filament\Tables\Filters\DateRangeFilter;
 use App\Models\ProcedureBooking;
 use App\Models\WaitlistEntry;
 use App\Rules\FreeProcedureSlot;
@@ -33,7 +34,6 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Carbon;
 
 class ProcedureBookingResource extends Resource
 {
@@ -221,20 +221,7 @@ class ProcedureBookingResource extends Resource
                     ->searchable()
                     ->preload(),
 
-                Filter::make('booking_date')
-                    ->form([
-                        DatePicker::make('from'),
-                        DatePicker::make('until'),
-                    ])
-                    ->columns(2)
-                    ->columnSpan(2)
-                    ->query(fn (Builder $query, array $data) => $query
-                        ->when($data['from'], fn (Builder $query, $date) => $query->whereDate('booking_date', '>=', $date))
-                        ->when($data['until'], fn (Builder $query, $date) => $query->whereDate('booking_date', '<=', $date)))
-                    ->indicateUsing(fn (array $data) => array_filter([
-                        $data['from'] ? 'From '.Carbon::parse($data['from'])->format('d M Y') : null,
-                        $data['until'] ? 'Until '.Carbon::parse($data['until'])->format('d M Y') : null,
-                    ])),
+                DateRangeFilter::make('booking_date'),
             ])
             ->actions([
                 ViewAction::make(),

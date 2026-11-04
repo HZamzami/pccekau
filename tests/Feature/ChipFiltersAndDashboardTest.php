@@ -6,9 +6,11 @@ use App\Enums\ProcedureCategory;
 use App\Enums\ProcedureStatus;
 use App\Enums\UserRole;
 use App\Enums\WaitlistPriority;
+use App\Filament\Pages\ProcedureCalendarPage;
 use App\Filament\Resources\ProcedureBookingResource\Pages\ListProcedureBookings;
 use App\Filament\Resources\WaitlistEntryResource\Pages\CreateWaitlistEntry;
 use App\Filament\Resources\WaitlistEntryResource\Pages\ListWaitlistEntries;
+use App\Filament\Widgets\TodayOncallWidget;
 use App\Filament\Widgets\WeeklyCathWidget;
 use App\Filament\Widgets\WeeklySurgeriesWidget;
 use App\Models\Patient;
@@ -120,6 +122,42 @@ class ChipFiltersAndDashboardTest extends TestCase
             ->assertSeeTextInOrder(['Category', 'Surgery', 'Cath', 'EP (invasive)', 'MRI', 'CT', '3D Echo', 'ECG']);
     }
 
+    public function test_filters_open_from_a_toolbar_button_and_long_lists_tuck_away(): void
+    {
+        $this->actingAs($this->doctor)
+            ->get(ListProcedureBookings::getUrl())
+            ->assertOk()
+            ->assertSeeText('Filters')
+            // 14 categories: the main 6 show, the rest sit behind "+8 more".
+            ->assertSeeText('+8 more');
+    }
+
+    public function test_date_range_filter_narrows_bookings(): void
+    {
+        $thisWeek = $this->booking(ProcedureCategory::Cath);
+        $later = $this->booking(ProcedureCategory::Cath, ['booking_date' => now()->addMonths(2)]);
+
+        Livewire::actingAs($this->doctor)->test(ListProcedureBookings::class)
+            ->filterTable('booking_date', ['until' => now()->addWeek()->toDateString()])
+            ->assertCanSeeTableRecords([$thisWeek])
+            ->assertCanNotSeeTableRecords([$later]);
+    }
+
+    public function test_calendar_shows_removable_tags_for_active_filters(): void
+    {
+        $page = Livewire::actingAs($this->doctor)->test(ProcedureCalendarPage::class)
+            ->set('categories', ['surgery', 'cath'])
+            ->set('statuses', [ProcedureStatus::Scheduled->value])
+            ->assertSee(['Category: Surgery', 'Category: Cath', 'Status: Scheduled']);
+
+        $page->call('removeFilterValue', 'categories', 'cath')
+            ->assertSet('categories', ['surgery'])
+            ->assertDontSee('Category: Cath')
+            ->call('clearFilters')
+            ->assertSet('categories', [])
+            ->assertSet('statuses', []);
+    }
+
     public function test_dashboard_lists_this_weeks_surgeries_and_caths(): void
     {
         $surgery = $this->booking(ProcedureCategory::Surgery, ['procedure' => 'Glenn shunt']);
@@ -140,6 +178,6 @@ class ChipFiltersAndDashboardTest extends TestCase
         $this->actingAs($this->doctor)->get(Dashboard::getUrl())->assertOk()
             ->assertSeeLivewire(WeeklySurgeriesWidget::class)
             ->assertSeeLivewire(WeeklyCathWidget::class)
-            ->assertDontSee("Today's Coverage");
+            ->assertSeeLivewire(TodayOncallWidget::class);
     }
 }

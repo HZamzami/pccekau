@@ -6,6 +6,7 @@ use App\Enums\InterventionType;
 use App\Enums\ProcedureStatus;
 use App\Filament\Resources\InterventionResource\Pages;
 use App\Filament\Tables\Filters\ChipFilter;
+use App\Filament\Tables\Filters\DateRangeFilter;
 use App\Models\Intervention;
 use App\Models\Patient;
 use Filament\Forms\Components\Component;
@@ -26,7 +27,6 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Carbon;
 
 class InterventionResource extends Resource
 {
@@ -167,20 +167,7 @@ class InterventionResource extends Resource
                     ->searchable()
                     ->preload(),
 
-                Filter::make('date')
-                    ->form([
-                        DatePicker::make('from'),
-                        DatePicker::make('until'),
-                    ])
-                    ->columns(2)
-                    ->columnSpan(2)
-                    ->query(fn (Builder $query, array $data) => $query
-                        ->when($data['from'], fn (Builder $query, $date) => $query->whereDate('date', '>=', $date))
-                        ->when($data['until'], fn (Builder $query, $date) => $query->whereDate('date', '<=', $date)))
-                    ->indicateUsing(fn (array $data) => array_filter([
-                        $data['from'] ? 'From '.Carbon::parse($data['from'])->format('d M Y') : null,
-                        $data['until'] ? 'Until '.Carbon::parse($data['until'])->format('d M Y') : null,
-                    ])),
+                DateRangeFilter::make('date'),
             ])
             ->actions([
                 ViewAction::make(),

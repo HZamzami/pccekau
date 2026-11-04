@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use Filament\Support\Enums\MaxWidth;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\URL;
@@ -25,13 +27,19 @@ class AppServiceProvider extends ServiceProvider
     {
         Password::defaults(fn () => Password::min(12)->letters()->numbers());
 
-        // One filter design everywhere: an always-open bar above the table
-        // whose chips apply on click. The chips already show what's active,
-        // so Filament's separate indicator badges are hidden.
+        // One filter design everywhere: a Filters button in the table toolbar
+        // (with a count) opens a panel of one-click chip rows; while it's
+        // closed, removable tags under the toolbar show what's active.
         Table::configureUsing(fn (Table $table) => $table
-            ->filtersLayout(FiltersLayout::AboveContent)
-            ->filtersFormColumns(['md' => 2, 'xl' => 4])
-            ->hiddenFilterIndicators());
+            ->filtersLayout(FiltersLayout::Dropdown)
+            ->filtersFormWidth(MaxWidth::ThreeExtraLarge)
+            ->filtersFormColumns(1)
+            ->filtersTriggerAction(fn (Action $action) => $action
+                ->button()
+                ->outlined()
+                ->color('gray')
+                ->label('Filters')
+                ->icon('heroicon-m-adjustments-horizontal')));
 
         if ($this->app->isProduction()) {
             URL::forceHttps();

@@ -6,6 +6,7 @@ use App\Filament\Pages\Auth\Register;
 use App\Filament\Widgets\GettingStartedWidget;
 use App\Filament\Widgets\MyWorklistWidget;
 use App\Filament\Widgets\PatientSearchWidget;
+use App\Filament\Widgets\TodayOncallWidget;
 use App\Filament\Widgets\UpcomingMdtWidget;
 use App\Filament\Widgets\WeeklyCathWidget;
 use App\Filament\Widgets\WeeklySurgeriesWidget;
@@ -74,6 +75,7 @@ class AdminPanelProvider extends PanelProvider
                 GettingStartedWidget::class,
                 MyWorklistWidget::class,
                 PatientSearchWidget::class,
+                TodayOncallWidget::class,
                 WeeklySurgeriesWidget::class,
                 WeeklyCathWidget::class,
                 UpcomingMdtWidget::class,
