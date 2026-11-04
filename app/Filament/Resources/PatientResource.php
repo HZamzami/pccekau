@@ -306,6 +306,7 @@ class PatientResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('status')
+                    ->multiple()
                     ->options(PatientStatus::class),
 
                 SelectFilter::make('lesions')

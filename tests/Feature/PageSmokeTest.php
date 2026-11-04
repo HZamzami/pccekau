@@ -185,10 +185,12 @@ class PageSmokeTest extends TestCase
         $calendar = Livewire::test(ProcedureCalendarPage::class)->assertSuccessful();
 
         foreach (ProcedureCategory::cases() as $category) {
-            $calendar->set('category', $category->value)->assertSuccessful();
+            $calendar->set('categories', [$category->value])->assertSuccessful();
         }
 
-        $calendar->set('status', ProcedureStatus::Completed->value)
+        $calendar->set('categories', [ProcedureCategory::Surgery->value, ProcedureCategory::Cath->value])->assertSuccessful();
+
+        $calendar->set('statuses', [ProcedureStatus::Scheduled->value, ProcedureStatus::Postponed->value])
             ->set('staffId', (string) $this->records[Staff::class]->id)
             ->call('clearFilters')
             ->call('nextWeek')

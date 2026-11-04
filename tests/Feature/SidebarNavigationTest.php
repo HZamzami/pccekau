@@ -45,21 +45,30 @@ class SidebarNavigationTest extends TestCase
                 'Dashboard',
                 'Patients', 'Patient List',
                 'Clinical Care', 'Clinic Visits', 'Clinic Follow-Ups', 'Inpatients', 'Handover Board', 'Case Discussions',
-                'Booking', 'Central Booking', 'Wait-list', 'Procedure Calendar',
+                'Booking', 'Central Booking', 'All Bookings', 'Wait-list', 'Procedure Calendar',
                 'Reports & Documents', 'Surgery', 'Cath', 'Electrophysiology', 'Imaging Reports', 'Patient Documents',
                 'Schedules', 'Master Schedule', 'Staff', 'Weekly Coverage', 'Fellows Rotation', 'Consultant Schedule',
                 'Admin', 'Approval Requests', 'Users', 'Activity Log',
             ]);
     }
 
-    public function test_central_booking_opens_the_booking_form_for_writers_and_the_list_for_viewers(): void
+    public function test_booking_sidebar_has_central_booking_and_all_bookings(): void
     {
-        $this->actingAs(User::factory()->create(['role' => UserRole::Doctor]));
-        $this->assertSame(ProcedureBookingResource::getUrl('create'), ProcedureBookingResource::getNavigationUrl());
-        $this->get(ProcedureBookingResource::getUrl('create'))->assertOk()->assertSeeText('Create Booking');
+        $navUrls = fn () => collect(ProcedureBookingResource::getNavigationItems())
+            ->mapWithKeys(fn ($item) => [$item->getLabel() => $item->getUrl()])
+            ->all();
 
+        $this->actingAs(User::factory()->create(['role' => UserRole::Doctor]));
+        $this->assertSame([
+            'Central Booking' => ProcedureBookingResource::getUrl('create'),
+            'All Bookings' => ProcedureBookingResource::getUrl('index'),
+        ], $navUrls());
+        $this->get(ProcedureBookingResource::getUrl('create'))->assertOk()->assertSeeText('Create Booking');
+        $this->get(ProcedureBookingResource::getUrl('index'))->assertOk()->assertSeeText('All Bookings');
+
+        // Read-only users can't book, so they only get the list.
         $this->actingAs(User::factory()->create(['role' => UserRole::Viewer]));
-        $this->assertSame(ProcedureBookingResource::getUrl('index'), ProcedureBookingResource::getNavigationUrl());
+        $this->assertSame(['All Bookings' => ProcedureBookingResource::getUrl('index')], $navUrls());
     }
 
     public function test_surgery_and_cath_pages_list_only_their_procedures(): void

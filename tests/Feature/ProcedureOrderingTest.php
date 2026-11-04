@@ -112,12 +112,12 @@ class ProcedureOrderingTest extends TestCase
         $monday = Livewire::actingAs($this->doctor)->test(ProcedureCalendarPage::class)->instance()->getGrid()[1];
 
         $this->assertCount(2, $monday['cells']['no_slot']);
-        $this->assertCount(0, $monday['cells']['mri_ct_1']);
+        $this->assertCount(0, $monday['cells']['mri_ct']);
     }
 
     public function test_the_booking_form_can_add_to_the_waitlist_instead(): void
     {
-        $this->book(['mode' => 'waitlist', 'category' => 'cath', 'procedure' => 'PDA closure', 'priority' => 'urgent'])
+        $this->book(['mode' => 'waitlist', 'category' => 'cath', 'procedure' => 'PDA closure', 'priority' => 1])
             ->assertHasNoFormErrors()
             ->assertRedirect(WaitlistEntryResource::getUrl('index'));
 

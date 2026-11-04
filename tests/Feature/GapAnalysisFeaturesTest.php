@@ -69,7 +69,7 @@ class GapAnalysisFeaturesTest extends TestCase
             'patient_id' => $patient->id,
             'staff_id' => $staff->id,
             'procedure' => 'RFA',
-            'priority' => 'urgent',
+            'priority' => 1,
             'status' => WaitlistStatus::Waiting,
         ]);
 

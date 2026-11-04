@@ -133,12 +133,6 @@ class SchedulesPage extends Page implements HasTable
                     ->sortable()
                     ->color(fn (OncallSchedule $r) => $r->isCurrentWeek() ? 'primary' : null),
 
-                TextColumn::make('doctors')
-                    ->label('Doctors this week')
-                    ->state(fn (OncallSchedule $r) => $r->assignments->pluck('staff.name')->filter()->unique()->sort()->values()->all())
-                    ->badge()
-                    ->placeholder('—'),
-
                 TextColumn::make('today_oncall')
                     ->label("Today's On-Call")
                     ->state(fn (OncallSchedule $r) => $r->today_oncall ?? '—')
@@ -162,11 +156,6 @@ class SchedulesPage extends Page implements HasTable
                     ->sortable()
                     ->color(fn (ConsultantSchedule $r) => $r->isCurrentWeek() ? 'primary' : null),
 
-                TextColumn::make('doctors')
-                    ->label('Doctors this week')
-                    ->state(fn (ConsultantSchedule $r) => $r->assignments->pluck('staff.name')->filter()->unique()->sort()->values()->all())
-                    ->badge()
-                    ->placeholder('—'),
             ])
             ->actions([EditAction::make()
                 ->url(fn (ConsultantSchedule $r) => ConsultantScheduleResource::getUrl('edit', ['record' => $r]))])

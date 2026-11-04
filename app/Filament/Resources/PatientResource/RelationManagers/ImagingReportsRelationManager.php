@@ -106,6 +106,7 @@ class ImagingReportsRelationManager extends RelationManager
             ])
             ->filters([
                 SelectFilter::make('type')
+                    ->multiple()
                     ->options(ImagingType::labels()),
 
                 SelectFilter::make('status')

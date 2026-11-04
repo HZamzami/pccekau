@@ -95,10 +95,12 @@ class FellowsRotationResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('fellow_id')
+                    ->multiple()
                     ->label('Fellow')
                     ->options(fn () => Staff::active()->fellows()->orderBy('name')->pluck('name', 'id')),
 
                 SelectFilter::make('rotation')
+                    ->multiple()
                     ->options(FellowsRotation::$rotationLabels),
             ])
             ->actions([

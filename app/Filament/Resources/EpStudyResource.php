@@ -181,6 +181,7 @@ class EpStudyResource extends Resource
                     ->options(ReportStatus::class),
 
                 SelectFilter::make('procedure_status')
+                    ->multiple()
                     ->label('Procedure Status')
                     ->options(ProcedureStatus::class),
             ])

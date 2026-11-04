@@ -77,7 +77,7 @@ class WaitlistEntryResource extends Resource
                 Grid::make(2)->schema([
                     Select::make('priority')
                         ->options(WaitlistPriority::class)
-                        ->default(WaitlistPriority::Routine)
+                        ->default(WaitlistPriority::P3)
                         ->required(),
 
                     TextInput::make('mobile')
@@ -124,8 +124,9 @@ class WaitlistEntryResource extends Resource
 
                 TextInput::make('slot_number')
                     ->label('Slot #')
-                    ->helperText('Optional')
+                    ->helperText('Optional — each number can be used once per day')
                     ->numeric()
+                    ->maxValue(255)
                     ->rule(fn (Get $get) => new FreeProcedureSlot($get('booking_date'), $get('slot_type')))
                     ->visible(fn (WaitlistEntry $record) => $record->category?->slotTypes() !== []),
             ])
@@ -253,7 +254,8 @@ class WaitlistEntryResource extends Resource
                     ->placeholder('Unassigned'),
 
                 TextColumn::make('priority')
-                    ->badge(),
+                    ->badge()
+                    ->sortable(),
 
                 TextColumn::make('days_waiting')
                     ->label('Days Waiting')
@@ -261,15 +263,20 @@ class WaitlistEntryResource extends Resource
                     ->sortable(query: fn ($query, string $direction) => $query->orderBy('created_at', $direction === 'asc' ? 'desc' : 'asc')),
             ])
             ->filters([
-                SelectFilter::make('staff_id')
-                    ->label('Consultant')
-                    ->relationship('staff', 'name'),
+                SelectFilter::make('priority')
+                    ->multiple()
+                    ->options(WaitlistPriority::class),
 
                 SelectFilter::make('category')
+                    ->multiple()
                     ->options(ProcedureCategory::options()),
 
-                SelectFilter::make('priority')
-                    ->options(WaitlistPriority::class),
+                SelectFilter::make('staff_id')
+                    ->label('Consultant')
+                    ->multiple()
+                    ->relationship('staff', 'name')
+                    ->searchable()
+                    ->preload(),
             ])
             ->actions([
                 ViewAction::make(),
@@ -284,7 +291,8 @@ class WaitlistEntryResource extends Resource
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('created_at')
+            // Most urgent first, then longest waiting.
+            ->defaultSort(fn (Builder $query) => $query->orderBy('priority')->orderBy('created_at'))
             ->emptyStateHeading('No one on the wait-list')
             ->emptyStateDescription('Patients waiting for a procedure that isn\'t scheduled yet go here.');
     }

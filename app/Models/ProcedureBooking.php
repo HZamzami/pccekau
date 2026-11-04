@@ -48,19 +48,8 @@ class ProcedureBooking extends Model
         'cath_day_care' => 'Day Care Cath',
         'cath_inpatient' => 'Inpatient Cath',
         'mri_ct' => 'MRI / CT',
-        'or' => 'Operating Room',
+        'or' => 'Surgery',
         'echo' => 'Echo',
-    ];
-
-    // Concurrent slots per day. null means unlimited — any slot number is valid
-    // and only the uniqueness check applies (no two bookings may share the same
-    // slot number on the same day). Non-null values cap the slot number to [1, n].
-    public static array $slotCapacity = [
-        'cath_day_care' => 2,
-        'cath_inpatient' => 1,
-        'mri_ct' => 1,
-        'or' => null,
-        'echo' => 1,
     ];
 
     public function patient(): BelongsTo

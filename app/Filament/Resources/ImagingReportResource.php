@@ -216,12 +216,14 @@ class ImagingReportResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('type')
+                    ->multiple()
                     ->options(ImagingType::labels()),
 
                 SelectFilter::make('status')
                     ->options(ReportStatus::class),
 
                 SelectFilter::make('procedure_status')
+                    ->multiple()
                     ->label('Procedure Status')
                     ->options(ProcedureStatus::class),
             ])

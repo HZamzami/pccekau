@@ -117,6 +117,7 @@ class StaffResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('role')
+                    ->multiple()
                     ->options(Staff::$roleLabels),
 
                 TernaryFilter::make('is_active')

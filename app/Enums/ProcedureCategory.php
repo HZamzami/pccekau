@@ -34,10 +34,20 @@ enum ProcedureCategory: string implements HasColor, HasLabel
         'case_discussion' => 'Case Discussions',
     ];
 
+    /** Categories that get their own tab on the wait-list and All Bookings pages. */
+    public const TAB_CATEGORIES = [
+        self::Surgery,
+        self::Cath,
+        self::Ep,
+        self::Mri,
+        self::Ct,
+        self::Echo3d,
+    ];
+
     public function getLabel(): string
     {
         return match ($this) {
-            self::Surgery => 'Surgery (OR)',
+            self::Surgery => 'Surgery',
             self::Cath => 'Cath',
             self::Ep => 'EP (invasive)',
             self::Ecg => 'ECG',

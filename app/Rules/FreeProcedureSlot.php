@@ -21,18 +21,8 @@ class FreeProcedureSlot implements ValidationRule
             return;
         }
 
-        $capacity = ProcedureBooking::$slotCapacity[$this->slotType] ?? null;
-
         if ((int) $value < 1) {
             $fail('Slot number must be at least 1.');
-
-            return;
-        }
-
-        if ($capacity !== null && (int) $value > $capacity) {
-            $fail($capacity === 1
-                ? 'This slot type has only one slot per day.'
-                : "This slot type has slots 1 to {$capacity}.");
 
             return;
         }

@@ -129,13 +129,24 @@ class WriteConflictsTest extends TestCase
             ->assertHasFormErrors(['slot_number']);
     }
 
-    public function test_slot_numbers_beyond_the_calendar_are_rejected(): void
+    public function test_any_slot_number_can_be_used_once_per_day_per_slot_type(): void
     {
-        Livewire::actingAs($this->doctor)
+        $surgery = ['category' => 'surgery', 'intervention_type' => InterventionType::Surgery->value, 'slot_type' => 'or', 'slot_number' => 4];
+        $create = fn (array $overrides) => Livewire::actingAs($this->doctor)
             ->test(CreateProcedureBooking::class)
-            ->fillForm($this->bookingForm(['slot_type' => 'mri_ct', 'category' => 'mri', 'slot_number' => 2]))
-            ->call('create')
-            ->assertHasFormErrors(['slot_number']);
+            ->fillForm($this->bookingForm($overrides))
+            ->call('create');
+
+        $create($surgery)->assertHasNoFormErrors();
+        $create($surgery)->assertHasFormErrors(['slot_number']);
+
+        // The same number in another slot type, or on the next day, is free.
+        $create(['slot_number' => 4])->assertHasNoFormErrors();
+        $create([...$surgery, 'booking_date' => Carbon::parse($this->date)->addDay()->toDateString()])->assertHasNoFormErrors();
+
+        // No more per-type caps.
+        $create(['slot_type' => 'echo', 'category' => 'echo', 'intervention_type' => null, 'slot_number' => 9])->assertHasNoFormErrors();
+        $create(['slot_number' => 0])->assertHasFormErrors(['slot_number']);
     }
 
     public function test_scheduling_from_the_waitlist_into_a_taken_slot_is_a_form_error(): void

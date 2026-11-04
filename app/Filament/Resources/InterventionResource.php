@@ -175,13 +175,16 @@ class InterventionResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('procedure_status')
+                    ->multiple()
                     ->label('Procedure Status')
                     ->options(ProcedureStatus::class),
 
                 SelectFilter::make('type')
+                    ->multiple()
                     ->options(InterventionType::class),
 
                 SelectFilter::make('operator_id')
+                    ->multiple()
                     ->label('Operator')
                     ->relationship('operator', 'name', fn ($query) => $query->active())
                     ->searchable()

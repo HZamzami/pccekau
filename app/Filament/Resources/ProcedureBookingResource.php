@@ -20,6 +20,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
+use Filament\Navigation\NavigationItem;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkActionGroup;
@@ -45,11 +46,29 @@ class ProcedureBookingResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
-    // Central Booking opens straight on the booking form; the list of
-    // bookings is one click away from there. Read-only users get the list.
-    public static function getNavigationUrl(): string
+    // Two sidebar entries: Central Booking opens straight on the booking
+    // form, All Bookings on the list. Read-only users only get the list.
+    public static function getNavigationItems(): array
     {
-        return static::canCreate() ? static::getUrl('create') : static::getUrl('index');
+        $items = [];
+
+        if (static::canCreate()) {
+            $items[] = NavigationItem::make('Central Booking')
+                ->group(static::getNavigationGroup())
+                ->icon(static::getNavigationIcon())
+                ->isActiveWhen(fn () => request()->routeIs(static::getRouteBaseName().'.create'))
+                ->sort(static::getNavigationSort())
+                ->url(static::getUrl('create'));
+        }
+
+        $items[] = NavigationItem::make('All Bookings')
+            ->group(static::getNavigationGroup())
+            ->icon('heroicon-o-table-cells')
+            ->isActiveWhen(fn () => request()->routeIs(static::getRouteBaseName().'.index', static::getRouteBaseName().'.edit', static::getRouteBaseName().'.view'))
+            ->sort(static::getNavigationSort())
+            ->url(static::getUrl('index'));
+
+        return $items;
     }
 
     public static function form(Form $form): Form
@@ -99,8 +118,9 @@ class ProcedureBookingResource extends Resource
 
                     TextInput::make('slot_number')
                         ->label('Slot #')
-                        ->helperText('Optional')
+                        ->helperText('Optional — each number can be used once per day')
                         ->numeric()
+                        ->maxValue(255)
                         ->rule(fn (Get $get, ?ProcedureBooking $record) => new FreeProcedureSlot($get('booking_date'), $get('slot_type'), $record?->getKey()))
                         ->visible(fn (Get $get) => $scheduling($get) && $hasSlots($get)),
 
@@ -113,7 +133,7 @@ class ProcedureBookingResource extends Resource
 
                     Select::make('priority')
                         ->options(WaitlistPriority::class)
-                        ->default(WaitlistPriority::Routine)
+                        ->default(WaitlistPriority::P3)
                         ->required()
                         ->visible(fn (Get $get) => ! $scheduling($get)),
                 ]),
@@ -177,19 +197,31 @@ class ProcedureBookingResource extends Resource
                     ->badge(),
             ])
             ->filters([
-                SelectFilter::make('slot_type')
-                    ->options(ProcedureBooking::$slotTypeLabels),
-
-                SelectFilter::make('category')
-                    ->options(ProcedureCategory::options()),
-
+                // Scheduled and Postponed first: those are what each category tab is worked from.
                 SelectFilter::make('procedure_status')
                     ->label('Status')
-                    ->options(ProcedureStatus::class),
+                    ->multiple()
+                    ->options(collect([ProcedureStatus::Scheduled, ProcedureStatus::Postponed])
+                        ->merge(ProcedureStatus::cases())
+                        ->unique(fn (ProcedureStatus $status) => $status->value)
+                        ->mapWithKeys(fn (ProcedureStatus $status) => [$status->value => $status->getLabel()])
+                        ->all()),
+
+                SelectFilter::make('category')
+                    ->multiple()
+                    ->options(ProcedureCategory::options()),
+
+                SelectFilter::make('slot_type')
+                    ->label('Slot')
+                    ->multiple()
+                    ->options(ProcedureBooking::$slotTypeLabels),
 
                 SelectFilter::make('staff_id')
                     ->label('Consultant')
-                    ->relationship('staff', 'name'),
+                    ->multiple()
+                    ->relationship('staff', 'name')
+                    ->searchable()
+                    ->preload(),
 
                 Filter::make('booking_date')
                     ->form([

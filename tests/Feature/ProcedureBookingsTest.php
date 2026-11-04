@@ -229,11 +229,15 @@ class ProcedureBookingsTest extends TestCase
 
         $page = Livewire::actingAs($admin)
             ->test(ProcedureCalendarPage::class)
-            ->assertSee(['Mri Kid', 'Ct Kid', 'Cath Kid', 'Operating Room', 'Echo'])
-            ->set('category', 'mri')
+            ->assertSee(['Mri Kid', 'Ct Kid', 'Cath Kid', 'Surgery', 'Echo'])
+            ->set('categories', ['mri'])
             ->assertSee('Mri Kid')
             ->assertDontSee(['Ct Kid', 'Cath Kid']);
 
-        $this->assertSame(['mri_ct_1', 'no_slot'], array_keys($page->instance()->getVisibleColumns()));
+        $this->assertSame(['mri_ct', 'no_slot'], array_keys($page->instance()->getVisibleColumns()));
+
+        // Several categories at once show every one of their slot columns.
+        $page->set('categories', ['mri', 'cath'])->assertSee(['Mri Kid', 'Cath Kid']);
+        $this->assertSame(['cath_day_care', 'cath_inpatient', 'mri_ct', 'no_slot'], array_keys($page->instance()->getVisibleColumns()));
     }
 }

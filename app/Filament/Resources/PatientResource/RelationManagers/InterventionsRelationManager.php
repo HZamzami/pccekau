@@ -56,6 +56,7 @@ class InterventionsRelationManager extends RelationManager
             ])
             ->filters([
                 SelectFilter::make('type')
+                    ->multiple()
                     ->options(InterventionType::class),
             ])
             ->headerActions([

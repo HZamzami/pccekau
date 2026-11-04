@@ -9,46 +9,56 @@
             <x-filament::button wire:click="currentWeek" size="sm" color="gray">This Week</x-filament::button>
         </div>
 
-        <div class="flex flex-wrap items-end gap-3">
-            <label class="space-y-1">
-                <span class="block text-xs font-medium text-gray-500 dark:text-gray-400">Category</span>
-                <x-filament::input.wrapper>
-                    <x-filament::input.select wire:model.live="category">
-                        <option value="">All categories</option>
-                        @foreach ($this->getCategoryOptions() as $value => $label)
-                            <option value="{{ $value }}">{{ $label }}</option>
-                        @endforeach
-                    </x-filament::input.select>
-                </x-filament::input.wrapper>
-            </label>
+        <div class="space-y-3">
+            <div class="space-y-1">
+                <span class="block text-xs font-medium text-gray-500 dark:text-gray-400">Category <span class="font-normal">(pick any number)</span></span>
+                <div class="flex flex-wrap gap-2">
+                    @foreach ($this->getCategoryOptions() as $value => $label)
+                        <label @class([
+                            'cursor-pointer select-none rounded-full border px-3 py-1 text-xs font-medium transition',
+                            'border-primary-600 bg-primary-600 text-white' => in_array($value, $categories, true),
+                            'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-white/20 dark:text-gray-200 dark:hover:bg-white/5' => ! in_array($value, $categories, true),
+                        ])>
+                            <input type="checkbox" class="sr-only" value="{{ $value }}" wire:model.live="categories">
+                            {{ $label }}
+                        </label>
+                    @endforeach
+                </div>
+            </div>
 
-            <label class="space-y-1">
-                <span class="block text-xs font-medium text-gray-500 dark:text-gray-400">Consultant</span>
-                <x-filament::input.wrapper>
-                    <x-filament::input.select wire:model.live="staffId">
-                        <option value="">Everyone</option>
-                        @foreach ($this->getStaffOptions() as $id => $name)
-                            <option value="{{ $id }}">{{ $name }}</option>
-                        @endforeach
-                    </x-filament::input.select>
-                </x-filament::input.wrapper>
-            </label>
+            <div class="space-y-1">
+                <span class="block text-xs font-medium text-gray-500 dark:text-gray-400">Status <span class="font-normal">(pick any number)</span></span>
+                <div class="flex flex-wrap gap-2">
+                    @foreach ($this->getStatusOptions() as $value => $label)
+                        <label @class([
+                            'cursor-pointer select-none rounded-full border px-3 py-1 text-xs font-medium transition',
+                            'border-primary-600 bg-primary-600 text-white' => in_array($value, $statuses, true),
+                            'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-white/20 dark:text-gray-200 dark:hover:bg-white/5' => ! in_array($value, $statuses, true),
+                        ])>
+                            <input type="checkbox" class="sr-only" value="{{ $value }}" wire:model.live="statuses">
+                            {{ $label }}
+                        </label>
+                    @endforeach
+                </div>
+            </div>
 
-            <label class="space-y-1">
-                <span class="block text-xs font-medium text-gray-500 dark:text-gray-400">Status</span>
-                <x-filament::input.wrapper>
-                    <x-filament::input.select wire:model.live="status">
-                        <option value="">Any status</option>
-                        @foreach ($this->getStatusOptions() as $value => $label)
-                            <option value="{{ $value }}">{{ $label }}</option>
-                        @endforeach
-                    </x-filament::input.select>
-                </x-filament::input.wrapper>
-            </label>
+            <div class="flex flex-wrap items-end gap-3">
+                <label class="space-y-1">
+                    <span class="block text-xs font-medium text-gray-500 dark:text-gray-400">Consultant</span>
+                    <x-filament::input.wrapper>
+                        <x-filament::input.select wire:model.live="staffId">
+                            <option value="">Everyone</option>
+                            @foreach ($this->getStaffOptions() as $id => $name)
+                                <option value="{{ $id }}">{{ $name }}</option>
+                            @endforeach
+                        </x-filament::input.select>
+                    </x-filament::input.wrapper>
+                </label>
 
-            @if ($category || $staffId || $status)
-                <x-filament::button wire:click="clearFilters" size="sm" color="gray" outlined>Clear filters</x-filament::button>
-            @endif
+                @if ($categories || $staffId || $statuses)
+                    <x-filament::button wire:click="clearFilters" size="sm" color="gray" outlined>Clear filters</x-filament::button>
+                @endif
+            </div>
         </div>
 
         <x-filament::section heading="Procedure Bookings">
@@ -79,6 +89,9 @@
                                     <td class="py-2.5 pr-4 align-top">
                                         @forelse ($bookings as $booking)
                                             <a href="{{ $this->getBookingUrl($booking) }}" @class(['block hover:underline', 'mt-3' => ! $loop->first])>
+                                                @if ($booking->slot_number)
+                                                    <span class="text-xs font-semibold text-gray-500 dark:text-gray-400">#{{ $booking->slot_number }}</span>
+                                                @endif
                                                 <span class="font-medium text-gray-900 dark:text-white">{{ $booking->patient?->name ?? 'Unassigned' }}</span>
                                                 @if ($booking->procedure)
                                                     <span class="block text-xs text-gray-500 dark:text-gray-400">{{ $booking->procedure }}</span>

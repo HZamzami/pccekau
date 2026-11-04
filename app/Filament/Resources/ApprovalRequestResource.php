@@ -124,6 +124,7 @@ class ApprovalRequestResource extends Resource
                     ->options(ApprovalStatus::class),
 
                 SelectFilter::make('procedure')
+                    ->multiple()
                     ->options(ApprovalProcedure::class),
             ])
             ->actions([

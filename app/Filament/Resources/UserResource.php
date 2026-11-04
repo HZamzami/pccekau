@@ -95,6 +95,7 @@ class UserResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('role')
+                    ->multiple()
                     ->options(UserRole::class),
             ])
             ->actions([

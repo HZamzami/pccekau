@@ -108,6 +108,7 @@ class PatientDocumentResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('category')
+                    ->multiple()
                     ->options(PatientDocument::$categoryLabels),
             ])
             ->actions([

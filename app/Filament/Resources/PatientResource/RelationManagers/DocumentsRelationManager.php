@@ -84,6 +84,7 @@ class DocumentsRelationManager extends RelationManager
             ])
             ->filters([
                 SelectFilter::make('category')
+                    ->multiple()
                     ->options(PatientDocument::$categoryLabels),
             ])
             ->headerActions([

@@ -25,11 +25,13 @@ class ProcedureCalendarPage extends Page
 
     protected static string $view = 'filament.pages.procedure-calendar-page';
 
-    public ?string $category = null;
+    /** @var array<string> */
+    public array $categories = [];
 
     public ?string $staffId = null;
 
-    public ?string $status = null;
+    /** @var array<string> */
+    public array $statuses = [];
 
     public ?string $weekStart = null;
 
@@ -53,45 +55,42 @@ class ProcedureCalendarPage extends Page
         $this->weekStart = Carbon::now()->startOfWeek(Carbon::SUNDAY)->toDateString();
     }
 
-    /** @return array<string, array{slot_type: ?string, slot_number: ?int, label: string}> */
+    /** @return array<string, array{slot_type: ?string, label: string}> */
     public static function columns(): array
     {
+        // One column per slot type; slot numbers are free, so each cell lists
+        // that day's bookings in slot-number order.
         $columns = [];
 
-        foreach (ProcedureBooking::$slotCapacity as $type => $capacity) {
-            foreach (range(1, $capacity) as $number) {
-                $label = ProcedureBooking::$slotTypeLabels[$type];
-                $columns["{$type}_{$number}"] = [
-                    'slot_type' => $type,
-                    'slot_number' => $number,
-                    'label' => $capacity > 1 ? "{$label} — Case {$number}" : $label,
-                ];
-            }
+        foreach (ProcedureBooking::$slotTypeLabels as $type => $label) {
+            $columns[$type] = ['slot_type' => $type, 'label' => $label];
         }
 
         // Anything booked without a slot: EP tests, case discussions, or a
         // booking whose slot # was left empty.
-        $columns['no_slot'] = ['slot_type' => null, 'slot_number' => null, 'label' => 'No slot'];
+        $columns['no_slot'] = ['slot_type' => null, 'label' => 'No slot'];
 
         return $columns;
     }
 
     public function clearFilters(): void
     {
-        $this->reset(['category', 'staffId', 'status']);
+        $this->reset(['categories', 'staffId', 'statuses']);
     }
 
-    /** @return array<string, array{slot_type: string, slot_number: int, label: string}> */
+    /** @return array<string, array{slot_type: ?string, label: string}> */
     public function getVisibleColumns(): array
     {
-        $category = ProcedureCategory::tryFrom((string) $this->category);
+        $categories = array_filter(array_map(fn ($value) => ProcedureCategory::tryFrom((string) $value), $this->categories));
 
-        if (! $category) {
+        if ($categories === []) {
             return static::columns();
         }
 
+        $slotTypes = collect($categories)->flatMap(fn (ProcedureCategory $category) => $category->slotTypes())->all();
+
         return array_filter(static::columns(), fn (array $column) => $column['slot_type'] === null
-            || in_array($column['slot_type'], $category->slotTypes(), true));
+            || in_array($column['slot_type'], $slotTypes, true));
     }
 
     /** @return array<string, string> */
@@ -121,9 +120,10 @@ class ProcedureCalendarPage extends Page
         $bookings = ProcedureBooking::with(['patient', 'staff'])
             ->whereDate('booking_date', '>=', $start)
             ->whereDate('booking_date', '<=', $end)
-            ->when($this->category, fn ($query, $category) => $query->where('category', $category))
+            ->when($this->categories, fn ($query, $categories) => $query->whereIn('category', $categories))
             ->when($this->staffId, fn ($query, $staffId) => $query->where('staff_id', $staffId))
-            ->when($this->status, fn ($query, $status) => $query->where('procedure_status', $status))
+            ->when($this->statuses, fn ($query, $statuses) => $query->whereIn('procedure_status', $statuses))
+            ->orderBy('slot_number')
             ->get();
 
         $columns = $this->getVisibleColumns();
@@ -136,7 +136,7 @@ class ProcedureCalendarPage extends Page
             $cells = collect($columns)->mapWithKeys(fn (array $column, string $key) => [
                 $key => $key === 'no_slot'
                     ? $sameDay->filter(fn (ProcedureBooking $b) => ! $b->slot_type || ! $b->slot_number)->values()
-                    : $sameDay->filter(fn (ProcedureBooking $b) => $b->slot_type === $column['slot_type'] && $b->slot_number === $column['slot_number'])->values(),
+                    : $sameDay->filter(fn (ProcedureBooking $b) => $b->slot_type === $column['slot_type'] && $b->slot_number)->values(),
             ]);
 
             return [

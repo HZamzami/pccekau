@@ -80,12 +80,6 @@ class ConsultantScheduleResource extends Resource
                     ->label('Week Start')
                     ->date()
                     ->sortable(),
-
-                TextColumn::make('doctors')
-                    ->label('Doctors this week')
-                    ->state(fn ($record) => $record->assignments->pluck('staff.name')->filter()->unique()->sort()->values()->all())
-                    ->badge()
-                    ->placeholder('—'),
             ])
             ->actions([
                 ViewAction::make()
