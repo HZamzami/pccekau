@@ -16,7 +16,7 @@ class CreateProcedureBooking extends CreateRecord
 {
     protected static string $resource = ProcedureBookingResource::class;
 
-    protected static ?string $title = 'Create Booking';
+    protected static ?string $title = 'Book a Procedure';
 
     protected function getHeaderActions(): array
     {

@@ -1,7 +1,5 @@
 <x-filament-panels::page>
     <div class="space-y-4">
-        @php $tags = $this->getFilterTags() @endphp
-
         <div class="pc-filter-toolbar">
             <x-filament::button wire:click="previousWeek" size="sm" color="gray" outlined>← Prev</x-filament::button>
             <span class="text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -9,59 +7,48 @@
             </span>
             <x-filament::button wire:click="nextWeek" size="sm" color="gray" outlined>Next →</x-filament::button>
             <x-filament::button wire:click="currentWeek" size="sm" color="gray">This Week</x-filament::button>
-
-            <x-filament::dropdown placement="bottom-end" width="3xl" class="ms-auto">
-                <x-slot name="trigger">
-                    <x-filament::button color="gray" outlined size="sm" icon="heroicon-m-adjustments-horizontal" :badge="count($tags) ?: null">
-                        Filters
-                    </x-filament::button>
-                </x-slot>
-
-                <div class="pc-filter-panel">
-                    <div class="pc-filter-panel-header">
-                        <h4 class="text-gray-950 dark:text-white">Filters</h4>
-
-                        <x-filament::link tag="button" wire:click="clearFilters" color="danger" size="sm">Clear all</x-filament::link>
-                    </div>
-
-                    <x-chip-group label="Category" :options="$this->getCategoryOptions()" :selected="$categories" state-path="categories" />
-
-                    <x-chip-group label="Status" :options="$this->getStatusOptions()" :selected="$statuses" state-path="statuses" />
-
-                    <div class="pc-filter-row pc-filter-row-center">
-                        <span class="pc-filter-label">Consultant</span>
-
-                        <x-filament::input.wrapper class="pc-select">
-                            <x-filament::input.select wire:model.live="staffId">
-                                <option value="">Everyone</option>
-                                @foreach ($this->getStaffOptions() as $id => $name)
-                                    <option value="{{ $id }}">{{ $name }}</option>
-                                @endforeach
-                            </x-filament::input.select>
-                        </x-filament::input.wrapper>
-                    </div>
-                </div>
-            </x-filament::dropdown>
         </div>
 
-        @if ($tags)
-            {{-- Same tags as the tables show while their Filters panel is closed --}}
-            <div class="fi-ta-filter-indicators flex items-start justify-between gap-x-3 rounded-xl bg-gray-50 px-3 py-1.5 dark:bg-white/5">
-                <div class="flex flex-wrap gap-1.5">
-                    @foreach ($tags as $tag)
-                        <x-filament::badge color="gray">
-                            {{ $tag['label'] }}
+        {{-- Same bar as the tables: categories as quick chips, the rest as pills --}}
+        @php
+            $statusOptions = $this->getStatusOptions();
+            $staffOptions = $this->getStaffOptions();
+        @endphp
 
-                            <x-slot name="deleteButton" label="Remove filter" wire:click="removeFilterValue('{{ $tag['filter'] }}', '{{ $tag['value'] }}')"></x-slot>
-                        </x-filament::badge>
-                    @endforeach
-                </div>
-
-                <x-filament::icon-button color="gray" icon="heroicon-m-x-mark" size="sm" tooltip="Remove all filters" wire:click="clearFilters" />
+        <div class="pc-bar">
+            <div class="pc-quick">
+                <x-chip-group bare label="Category" :options="$this->getCategoryOptions()" :selected="$categories" state-path="categories" />
             </div>
-        @endif
 
-        <x-filament::section heading="Procedure Bookings">
+            <x-filter-pill
+                label="Status"
+                :summary="\App\Filament\Support\FilterSummary::labels(array_map(fn ($value) => $statusOptions[$value] ?? $value, $statuses))"
+                clear="$set('statuses', [])"
+            >
+                <x-chip-group bare label="Status" :options="$statusOptions" :selected="$statuses" state-path="statuses" :visible="100" />
+            </x-filter-pill>
+
+            <x-filter-pill
+                label="Consultant"
+                :summary="$staffId ? ($staffOptions[$staffId] ?? null) : null"
+                clear="$set('staffId', null)"
+            >
+                <x-filament::input.wrapper>
+                    <x-filament::input.select wire:model.live="staffId">
+                        <option value="">Everyone</option>
+                        @foreach ($staffOptions as $id => $name)
+                            <option value="{{ $id }}">{{ $name }}</option>
+                        @endforeach
+                    </x-filament::input.select>
+                </x-filament::input.wrapper>
+            </x-filter-pill>
+
+            @if ($categories || $staffId || $statuses)
+                <x-filament::link tag="button" wire:click="clearFilters" color="danger" size="sm" class="pc-clear">Clear all</x-filament::link>
+            @endif
+        </div>
+
+        <x-filament::section heading="Bookings">
             @php $grid = $this->getGrid() @endphp
             @php $today = now()->format('l') @endphp
 

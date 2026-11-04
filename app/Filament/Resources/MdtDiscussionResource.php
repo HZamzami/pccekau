@@ -179,6 +179,7 @@ class MdtDiscussionResource extends Resource
                     ->url(fn (MdtDiscussion $record) => PatientResource::getUrl('view', ['record' => $record->patient_id])),
 
                 TextColumn::make('discussion_date')
+                    ->label('Date Added')
                     ->date()
                     ->sortable(),
 
@@ -205,6 +206,12 @@ class MdtDiscussionResource extends Resource
                 IconColumn::make('discussed')
                     ->label('Discussed')
                     ->boolean(),
+
+                TextColumn::make('discussed_at')
+                    ->label('Discussion Date')
+                    ->date()
+                    ->sortable()
+                    ->placeholder('—'),
             ])
             ->filters([
                 TernaryFilter::make('discussed')

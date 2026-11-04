@@ -14,7 +14,7 @@ class ListProcedureBookings extends ListRecords
 
     public function getTitle(): string|Htmlable
     {
-        return 'All Bookings';
+        return 'Booking List';
     }
 
     protected function getHeaderActions(): array

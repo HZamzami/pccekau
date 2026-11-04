@@ -20,7 +20,7 @@ class DateRangeFilter extends Filter
 
         $this->form(fn () => [
             Fieldset::make($this->getLabel())
-                ->view('filament.forms.components.filter-row')
+                ->view('filament.forms.components.filter-row', ['filterName' => $this->getName()])
                 ->schema([
                     DatePicker::make('from')->hiddenLabel()->placeholder('From'),
                     DatePicker::make('until')->hiddenLabel()->placeholder('Until'),

@@ -2,9 +2,10 @@
 
 namespace App\Providers;
 
-use Filament\Support\Enums\MaxWidth;
-use Filament\Tables\Actions\Action;
+use App\Filament\Tables\Filters\ChipFilter;
+use Filament\Forms\Components\Select;
 use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
@@ -27,19 +28,19 @@ class AppServiceProvider extends ServiceProvider
     {
         Password::defaults(fn () => Password::min(12)->letters()->numbers());
 
-        // One filter design everywhere: a Filters button in the table toolbar
-        // (with a count) opens a panel of one-click chip rows; while it's
-        // closed, removable tags under the toolbar show what's active.
+        // One filter design everywhere: an always-visible bar above the table.
+        // The page's main filter sits in it as one-tap chips; every other
+        // filter is a pill that opens its editor in place and shows its value
+        // once set, so no separate "active filters" row is needed.
         Table::configureUsing(fn (Table $table) => $table
-            ->filtersLayout(FiltersLayout::Dropdown)
-            ->filtersFormWidth(MaxWidth::ThreeExtraLarge)
-            ->filtersFormColumns(1)
-            ->filtersTriggerAction(fn (Action $action) => $action
-                ->button()
-                ->outlined()
-                ->color('gray')
-                ->label('Filters')
-                ->icon('heroicon-m-adjustments-horizontal')));
+            ->filtersLayout(FiltersLayout::AboveContent)
+            ->hiddenFilterIndicators());
+
+        // Plain selects (Active, Trashed, Consultant…) become pills too.
+        SelectFilter::configureUsing(fn (SelectFilter $filter) => $filter instanceof ChipFilter ? null : $filter
+            ->modifyFormFieldUsing(fn (Select $field) => $field
+                ->hiddenLabel()
+                ->view('filament.forms.components.pill-select')));
 
         if ($this->app->isProduction()) {
             URL::forceHttps();

@@ -108,6 +108,7 @@ class PatientDocumentResource extends Resource
             ])
             ->filters([
                 ChipFilter::make('category')
+                    ->quick()
                     ->options(PatientDocument::$categoryLabels),
             ])
             ->actions([

@@ -6,11 +6,13 @@ use App\Enums\ProcedureCategory;
 use App\Enums\ProcedureStatus;
 use App\Enums\UserRole;
 use App\Enums\WaitlistPriority;
+use App\Enums\WaitlistStatus;
 use App\Filament\Pages\ProcedureCalendarPage;
 use App\Filament\Resources\ProcedureBookingResource\Pages\ListProcedureBookings;
 use App\Filament\Resources\WaitlistEntryResource\Pages\CreateWaitlistEntry;
 use App\Filament\Resources\WaitlistEntryResource\Pages\ListWaitlistEntries;
 use App\Filament\Widgets\TodayOncallWidget;
+use App\Filament\Widgets\UrgentWaitlistWidget;
 use App\Filament\Widgets\WeeklyCathWidget;
 use App\Filament\Widgets\WeeklySurgeriesWidget;
 use App\Models\Patient;
@@ -111,25 +113,23 @@ class ChipFiltersAndDashboardTest extends TestCase
             ->assertCanNotSeeTableRecords([$mri]);
     }
 
-    public function test_filters_render_as_chips_with_the_main_categories_first(): void
+    public function test_filter_bar_shows_quick_chips_then_pills(): void
     {
         $this->actingAs($this->doctor)
             ->get(ListProcedureBookings::getUrl())
             ->assertOk()
-            ->assertSee('pc-chip')
-            ->assertSee('.pc-chip:has(input:checked)', false)
-            ->assertSeeText('Clear all')
-            ->assertSeeTextInOrder(['Category', 'Surgery', 'Cath', 'EP (invasive)', 'MRI', 'CT', '3D Echo', 'ECG']);
+            ->assertSee(['pc-quick', 'pc-pill', '.pc-chip:has(input:checked)'], false)
+            // Category is pinned as chips, main six first; the rest are pills.
+            ->assertSeeTextInOrder(['Surgery', 'Cath', 'EP (invasive)', 'MRI', 'CT', '3D Echo', '+8 more', 'Status', 'Slot', 'Consultant', 'Date']);
     }
 
-    public function test_filters_open_from_a_toolbar_button_and_long_lists_tuck_away(): void
+    public function test_a_set_pill_shows_its_value(): void
     {
-        $this->actingAs($this->doctor)
-            ->get(ListProcedureBookings::getUrl())
-            ->assertOk()
-            ->assertSeeText('Filters')
-            // 14 categories: the main 6 show, the rest sit behind "+8 more".
-            ->assertSeeText('+8 more');
+        Livewire::actingAs($this->doctor)->test(ListProcedureBookings::class)
+            ->filterTable('procedure_status', [ProcedureStatus::Scheduled->value, ProcedureStatus::Postponed->value])
+            ->assertSee('Scheduled, Postponed')
+            ->filterTable('booking_date', ['from' => '2026-11-01', 'until' => '2026-11-07'])
+            ->assertSee('01 Nov – 07 Nov');
     }
 
     public function test_date_range_filter_narrows_bookings(): void
@@ -143,16 +143,13 @@ class ChipFiltersAndDashboardTest extends TestCase
             ->assertCanNotSeeTableRecords([$later]);
     }
 
-    public function test_calendar_shows_removable_tags_for_active_filters(): void
+    public function test_calendar_uses_the_same_bar(): void
     {
-        $page = Livewire::actingAs($this->doctor)->test(ProcedureCalendarPage::class)
+        Livewire::actingAs($this->doctor)->test(ProcedureCalendarPage::class)
+            ->assertSee(['pc-bar', 'pc-quick', 'pc-pill'], false)
             ->set('categories', ['surgery', 'cath'])
             ->set('statuses', [ProcedureStatus::Scheduled->value])
-            ->assertSee(['Category: Surgery', 'Category: Cath', 'Status: Scheduled']);
-
-        $page->call('removeFilterValue', 'categories', 'cath')
-            ->assertSet('categories', ['surgery'])
-            ->assertDontSee('Category: Cath')
+            ->assertSee('Clear all')
             ->call('clearFilters')
             ->assertSet('categories', [])
             ->assertSet('statuses', []);
@@ -178,6 +175,19 @@ class ChipFiltersAndDashboardTest extends TestCase
         $this->actingAs($this->doctor)->get(Dashboard::getUrl())->assertOk()
             ->assertSeeLivewire(WeeklySurgeriesWidget::class)
             ->assertSeeLivewire(WeeklyCathWidget::class)
+            ->assertSeeLivewire(UrgentWaitlistWidget::class)
             ->assertSeeLivewire(TodayOncallWidget::class);
+    }
+
+    public function test_urgent_waitlist_widget_puts_priority_1_first(): void
+    {
+        $routine = $this->entry(ProcedureCategory::Cath, 3, now()->subMonth());
+        $urgent = $this->entry(ProcedureCategory::Surgery, 1);
+        $scheduled = $this->entry(ProcedureCategory::Mri, 1);
+        $scheduled->update(['status' => WaitlistStatus::Scheduled]);
+
+        Livewire::actingAs($this->doctor)->test(UrgentWaitlistWidget::class)
+            ->assertCanSeeTableRecords([$urgent, $routine], inOrder: true)
+            ->assertCanNotSeeTableRecords([$scheduled]);
     }
 }

@@ -24,7 +24,7 @@ class ListEpStudies extends ListRecords
                 ->label('Invasive EP procedures')
                 ->tooltip('EP studies, ablations and pacing implants')
                 ->link()
-                ->url(InterventionResource::getUrl('index', ['tableFilters' => ['category' => ['values' => ['ep']]]]))
+                ->url(InterventionResource::getUrl('index', ['category' => 'ep']))
                 ->visible(fn () => InterventionResource::canViewAny()),
             WaitlistEntryResource::addAction('ep'),
             Actions\CreateAction::make(),

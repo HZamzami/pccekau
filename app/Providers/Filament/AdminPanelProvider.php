@@ -7,7 +7,7 @@ use App\Filament\Widgets\GettingStartedWidget;
 use App\Filament\Widgets\MyWorklistWidget;
 use App\Filament\Widgets\PatientSearchWidget;
 use App\Filament\Widgets\TodayOncallWidget;
-use App\Filament\Widgets\UpcomingMdtWidget;
+use App\Filament\Widgets\UrgentWaitlistWidget;
 use App\Filament\Widgets\WeeklyCathWidget;
 use App\Filament\Widgets\WeeklySurgeriesWidget;
 use App\Http\Middleware\SecurityHeaders;
@@ -78,7 +78,7 @@ class AdminPanelProvider extends PanelProvider
                 TodayOncallWidget::class,
                 WeeklySurgeriesWidget::class,
                 WeeklyCathWidget::class,
-                UpcomingMdtWidget::class,
+                UrgentWaitlistWidget::class,
             ])
 
             // Explicit navigation group order

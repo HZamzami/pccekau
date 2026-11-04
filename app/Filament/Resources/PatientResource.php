@@ -307,6 +307,7 @@ class PatientResource extends Resource
             ])
             ->filters([
                 ChipFilter::make('status')
+                    ->quick()
                     ->options(PatientStatus::class),
 
                 // 30 lesions is too many chips; a searchable list suits it better.

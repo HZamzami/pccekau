@@ -181,6 +181,7 @@ class ImagingReportResource extends Resource
             ])
             ->filters([
                 ChipFilter::make('modality')
+                    ->quick()
                     ->options(ImagingType::MODALITIES)
                     ->query(fn (Builder $query, array $data) => $query->when(
                         $data['values'] ?? null,

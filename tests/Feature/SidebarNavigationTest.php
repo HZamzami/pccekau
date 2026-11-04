@@ -45,8 +45,8 @@ class SidebarNavigationTest extends TestCase
                 'Dashboard',
                 'Patients', 'Patient List',
                 'Clinical Care', 'Clinic Visits', 'Clinic Follow-Ups', 'Inpatients', 'Handover Board', 'Case Discussions',
-                'Booking', 'Central Booking', 'All Bookings', 'Wait-list', 'Procedure Calendar',
-                'Reports & Documents', 'Procedures', 'Electrophysiology', 'Imaging Reports', 'Patient Documents',
+                'Booking', 'Book a Procedure', 'Booking List', 'Wait-list', 'Booking Calendar',
+                'Reports & Documents', 'Surgery', 'Cath', 'Electrophysiology', 'Imaging Reports', 'Patient Documents',
                 'Schedules', 'Master Schedule', 'Staff', 'Weekly Coverage', 'Fellows Rotation', 'Consultant Schedule',
                 'Admin', 'Approval Requests', 'Users', 'Activity Log',
             ]);
@@ -60,15 +60,15 @@ class SidebarNavigationTest extends TestCase
 
         $this->actingAs(User::factory()->create(['role' => UserRole::Doctor]));
         $this->assertSame([
-            'Central Booking' => ProcedureBookingResource::getUrl('create'),
-            'All Bookings' => ProcedureBookingResource::getUrl('index'),
+            'Book a Procedure' => ProcedureBookingResource::getUrl('create'),
+            'Booking List' => ProcedureBookingResource::getUrl('index'),
         ], $navUrls());
-        $this->get(ProcedureBookingResource::getUrl('create'))->assertOk()->assertSeeText('Create Booking');
-        $this->get(ProcedureBookingResource::getUrl('index'))->assertOk()->assertSeeText('All Bookings');
+        $this->get(ProcedureBookingResource::getUrl('create'))->assertOk()->assertSeeText('Book a Procedure');
+        $this->get(ProcedureBookingResource::getUrl('index'))->assertOk()->assertSeeText('Booking List');
 
         // Read-only users can't book, so they only get the list.
         $this->actingAs(User::factory()->create(['role' => UserRole::Viewer]));
-        $this->assertSame(['All Bookings' => ProcedureBookingResource::getUrl('index')], $navUrls());
+        $this->assertSame(['Booking List' => ProcedureBookingResource::getUrl('index')], $navUrls());
     }
 
     public function test_procedures_list_filters_by_category_chips(): void
@@ -87,8 +87,20 @@ class SidebarNavigationTest extends TestCase
             ->assertCanSeeTableRecords([$surgery, $cath])
             ->assertCanNotSeeTableRecords([$ablation]);
 
-        // The EP page's "Invasive EP procedures" link opens the list pre-filtered.
-        Livewire::withQueryParams(['tableFilters' => ['category' => ['values' => ['ep']]]])->actingAs($doctor)->test(ListInterventions::class)
+        // The Surgery and Cath sidebar pages (and Electrophysiology's Invasive EP
+        // link) are scoped lists titled by their category.
+        Livewire::withQueryParams(['category' => 'surgery'])->actingAs($doctor)->test(ListInterventions::class)
+            ->assertSee('Surgery')
+            ->assertCanSeeTableRecords([$surgery])
+            ->assertCanNotSeeTableRecords([$cath, $ablation]);
+
+        Livewire::withQueryParams(['category' => 'cath'])->actingAs($doctor)->test(ListInterventions::class)
+            ->assertCanSeeTableRecords([$cath])
+            ->assertCanNotSeeTableRecords([$surgery, $ablation])
+            ->filterTable('type', [InterventionType::DiagnosticCath->value])
+            ->assertCanSeeTableRecords([$cath]);
+
+        Livewire::withQueryParams(['category' => 'ep'])->actingAs($doctor)->test(ListInterventions::class)
             ->assertCanSeeTableRecords([$ablation])
             ->assertCanNotSeeTableRecords([$surgery, $cath]);
 
@@ -121,7 +133,8 @@ class SidebarNavigationTest extends TestCase
             ->get(ImagingReportResource::getUrl('index'))
             ->assertOk()
             ->assertSee('pc-chip')
-            ->assertSeeTextInOrder(['Modality', 'Echo', 'Fetal Echo', 'MRI', 'CT', 'Type']);
+            ->assertSee('pc-quick', false)
+            ->assertSeeTextInOrder(['Echo', 'Fetal Echo', 'MRI', 'CT', 'Type']);
     }
 
     public function test_fetal_echo_can_be_ordered(): void

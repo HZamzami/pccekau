@@ -13,6 +13,8 @@
     'statePath',
     'binding' => 'wire:model.live',
     'visible' => 6,
+    // Inline (quick filters, popovers): just the chips, no label column.
+    'bare' => false,
 ])
 
 @php
@@ -22,8 +24,10 @@
     $hiddenCount = 0;
 @endphp
 
-<div {{ $attributes->class(['pc-filter-row']) }} role="group" aria-label="{{ $label }}" x-data="{ more: false }">
-    <span class="pc-filter-label">{{ $label }}</span>
+<div {{ $attributes->class([$bare ? 'pc-chip-set' : 'pc-filter-row']) }} role="group" aria-label="{{ $label }}" x-data="{ more: false }">
+    @unless ($bare)
+        <span class="pc-filter-label">{{ $label }}</span>
+    @endunless
 
     <div class="pc-chips">
         @unless ($multiple)

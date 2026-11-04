@@ -43,18 +43,18 @@ class ProcedureBookingResource extends Resource
 
     protected static ?string $navigationGroup = 'Booking';
 
-    protected static ?string $navigationLabel = 'Central Booking';
+    protected static ?string $navigationLabel = 'Book a Procedure';
 
     protected static ?int $navigationSort = 1;
 
-    // Two sidebar entries: Central Booking opens straight on the booking
-    // form, All Bookings on the list. Read-only users only get the list.
+    // Two sidebar entries: Book a Procedure opens straight on the booking
+    // form, Booking List on the list. Read-only users only get the list.
     public static function getNavigationItems(): array
     {
         $items = [];
 
         if (static::canCreate()) {
-            $items[] = NavigationItem::make('Central Booking')
+            $items[] = NavigationItem::make('Book a Procedure')
                 ->group(static::getNavigationGroup())
                 ->icon(static::getNavigationIcon())
                 ->isActiveWhen(fn () => request()->routeIs(static::getRouteBaseName().'.create'))
@@ -62,7 +62,7 @@ class ProcedureBookingResource extends Resource
                 ->url(static::getUrl('create'));
         }
 
-        $items[] = NavigationItem::make('All Bookings')
+        $items[] = NavigationItem::make('Booking List')
             ->group(static::getNavigationGroup())
             ->icon('heroicon-o-table-cells')
             ->isActiveWhen(fn () => request()->routeIs(static::getRouteBaseName().'.index', static::getRouteBaseName().'.edit', static::getRouteBaseName().'.view'))
@@ -199,6 +199,7 @@ class ProcedureBookingResource extends Resource
             ])
             ->filters([
                 ChipFilter::make('category')
+                    ->quick()
                     ->options(ProcedureCategory::options()),
 
                 // Scheduled and Postponed first: those are what the list is mostly worked from.

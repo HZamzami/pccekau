@@ -17,6 +17,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Navigation\NavigationItem;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
@@ -36,10 +37,41 @@ class InterventionResource extends Resource
 
     protected static ?string $navigationGroup = 'Reports & Documents';
 
-    // Surgery, cath and invasive EP share one list; the Category chips split them.
-    protected static ?string $navigationLabel = 'Procedures';
+    // The sidebar shows Surgery and Cath as separate pages over this one list;
+    // Invasive EP is reached from Electrophysiology.
+    public static function getNavigationItems(): array
+    {
+        return [
+            static::categoryNavigationItem('surgery', 'heroicon-o-scissors', 1),
+            static::categoryNavigationItem('cath', 'heroicon-o-heart', 2),
+        ];
+    }
 
-    protected static ?int $navigationSort = 1;
+    protected static function categoryNavigationItem(string $category, string $icon, int $sort): NavigationItem
+    {
+        return NavigationItem::make(InterventionType::CATEGORIES[$category])
+            ->group(static::getNavigationGroup())
+            ->icon($icon)
+            ->isActiveWhen(fn () => static::currentCategory() === $category)
+            ->sort($sort)
+            ->url(static::getUrl('index', ['category' => $category]));
+    }
+
+    /** Category the current page is showing, or null outside this resource or on the unfiltered list. */
+    public static function currentCategory(): ?string
+    {
+        if (! request()->routeIs(static::getRouteBaseName().'.*')) {
+            return null;
+        }
+
+        if (request()->routeIs(static::getRouteBaseName().'.edit')) {
+            return Intervention::find(request()->route('record'))?->type?->category();
+        }
+
+        $category = request()->query('category');
+
+        return is_string($category) && array_key_exists($category, InterventionType::CATEGORIES) ? $category : null;
+    }
 
     public static function form(Form $form): Form
     {
@@ -143,7 +175,11 @@ class InterventionResource extends Resource
                     ->tooltip(fn (TextColumn $column): ?string => strlen((string) $column->getState()) > 40 ? $column->getState() : null),
             ])
             ->filters([
+                // The unscoped list (reached from Electrophysiology's link) splits by
+                // category; the Surgery and Cath pages already are one.
                 ChipFilter::make('category')
+                    ->quick()
+                    ->hidden(fn ($livewire) => filled($livewire->category ?? null))
                     ->options(InterventionType::CATEGORIES)
                     ->query(fn (Builder $query, array $data) => $query->when(
                         $data['values'] ?? null,
@@ -158,7 +194,10 @@ class InterventionResource extends Resource
                     ->options(ProcedureStatus::class),
 
                 ChipFilter::make('type')
-                    ->options(InterventionType::class),
+                    ->quick(fn ($livewire) => filled($livewire->category ?? null))
+                    ->options(fn ($livewire) => collect(filled($livewire->category ?? null) ? InterventionType::ofCategory($livewire->category) : InterventionType::cases())
+                        ->mapWithKeys(fn (InterventionType $type) => [$type->value => $type->getLabel()])
+                        ->all()),
 
                 SelectFilter::make('operator_id')
                     ->multiple()

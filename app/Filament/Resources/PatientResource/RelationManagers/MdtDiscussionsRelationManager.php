@@ -37,7 +37,7 @@ class MdtDiscussionsRelationManager extends RelationManager
         return $form->schema([
             Section::make()->schema([
                 Grid::make(2)->schema([
-                    DatePicker::make('discussion_date')->required(),
+                    DatePicker::make('discussion_date')->label('Date Added')->required(),
 
                     TextInput::make('age_snapshot')
                         ->label('Age at Discussion')
@@ -114,6 +114,7 @@ class MdtDiscussionsRelationManager extends RelationManager
             ->recordTitleAttribute('discussion_date')
             ->columns([
                 TextColumn::make('discussion_date')
+                    ->label('Date Added')
                     ->date()
                     ->sortable(),
 
@@ -138,6 +139,12 @@ class MdtDiscussionsRelationManager extends RelationManager
                 IconColumn::make('discussed')
                     ->label('Discussed')
                     ->boolean(),
+
+                TextColumn::make('discussed_at')
+                    ->label('Discussion Date')
+                    ->date()
+                    ->sortable()
+                    ->placeholder('—'),
             ])
             ->filters([
                 TernaryFilter::make('discussed')

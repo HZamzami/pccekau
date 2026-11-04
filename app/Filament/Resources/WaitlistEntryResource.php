@@ -264,11 +264,12 @@ class WaitlistEntryResource extends Resource
                     ->sortable(query: fn ($query, string $direction) => $query->orderBy('created_at', $direction === 'asc' ? 'desc' : 'asc')),
             ])
             ->filters([
+                ChipFilter::make('category')
+                    ->quick()
+                    ->options(ProcedureCategory::options()),
+
                 ChipFilter::make('priority')
                     ->options(WaitlistPriority::class),
-
-                ChipFilter::make('category')
-                    ->options(ProcedureCategory::options()),
 
                 SelectFilter::make('staff_id')
                     ->label('Consultant')
