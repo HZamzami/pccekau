@@ -21,8 +21,9 @@ return [
     |--------------------------------------------------------------------------
     |
     | The disk used to store and serve patient documents. Must be a private
-    | disk; set PATIENT_DOCUMENTS_DISK=s3 in production so files survive
-    | deployments.
+    | disk. On Laravel Cloud, set PATIENT_DOCUMENTS_DISK to the attached
+    | bucket's disk name, or leave it unset: App\Support\PatientDocumentsDisk
+    | then finds the attached bucket itself.
     |
     */
 

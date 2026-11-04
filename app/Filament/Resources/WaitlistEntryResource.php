@@ -13,6 +13,7 @@ use App\Models\PatientDocument;
 use App\Models\ProcedureBooking;
 use App\Models\WaitlistEntry;
 use App\Rules\FreeProcedureSlot;
+use App\Support\PatientDocumentsDisk;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
@@ -195,7 +196,7 @@ class WaitlistEntryResource extends Resource
                 FileUpload::make('files')
                     ->multiple()
                     ->required()
-                    ->disk(config('filesystems.patient_documents'))
+                    ->disk(PatientDocumentsDisk::name())
                     ->visibility('private')
                     ->directory('patient-documents')
                     ->acceptedFileTypes(['application/pdf', 'image/*'])

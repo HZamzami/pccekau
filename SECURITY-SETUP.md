@@ -38,7 +38,7 @@ Merge it into `main` when you're ready to deploy it.
    | `APP_ENV` | `production` | Enables HTTPS-only cookies and forced HTTPS links |
    | `APP_DEBUG` | `false` | Debug pages leak secrets and patient data on errors |
    | `APP_KEY` | a generated key (`php artisan key:generate --show`) | Encrypts sessions and 2FA secrets. **Never change it after launch**: every user's 2FA would break |
-   | `PATIENT_DOCUMENTS_DISK` | `s3` | Store uploaded documents in a **private** bucket, plus the `AWS_*` bucket settings |
+   | `PATIENT_DOCUMENTS_DISK` | the bucket's **disk name** in Laravel Cloud, or leave unset | Uploaded documents go to a **private** bucket. Attach the bucket in Cloud; if this is unset or wrong, the app uses the attached bucket automatically |
    | `SESSION_LIFETIME` | e.g. `60` | Minutes of inactivity before logout (default 120) |
 
 4. **Turn on database backups** in Laravel Cloud.

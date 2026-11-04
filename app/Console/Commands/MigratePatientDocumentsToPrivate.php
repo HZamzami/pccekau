@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\PatientDocument;
+use App\Support\PatientDocumentsDisk;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 
@@ -15,7 +16,7 @@ class MigratePatientDocumentsToPrivate extends Command
     public function handle(): int
     {
         $public = Storage::disk('public');
-        $local = Storage::disk(config('filesystems.patient_documents'));
+        $local = Storage::disk(PatientDocumentsDisk::name());
         $dryRun = $this->option('dry-run');
         $moved = 0;
         $skipped = 0;

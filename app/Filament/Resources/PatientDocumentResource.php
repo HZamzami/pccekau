@@ -6,6 +6,7 @@ use App\Filament\Resources\PatientDocumentResource\Pages;
 use App\Filament\Tables\Filters\ChipFilter;
 use App\Models\Patient;
 use App\Models\PatientDocument;
+use App\Support\PatientDocumentsDisk;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
@@ -65,7 +66,7 @@ class PatientDocumentResource extends Resource
                 FileUpload::make('files')
                     ->multiple()
                     ->required()
-                    ->disk(config('filesystems.patient_documents'))
+                    ->disk(PatientDocumentsDisk::name())
                     ->visibility('private')
                     ->directory('patient-documents')
                     ->acceptedFileTypes(['application/pdf', 'image/*'])
