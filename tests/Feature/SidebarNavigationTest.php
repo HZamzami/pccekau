@@ -46,7 +46,7 @@ class SidebarNavigationTest extends TestCase
                 'Patients', 'Patient List',
                 'Clinical Care', 'Clinic Visits', 'Clinic Follow-Ups', 'Inpatients', 'Handover Board', 'Case Discussions',
                 'Booking', 'Central Booking', 'All Bookings', 'Wait-list', 'Procedure Calendar',
-                'Reports & Documents', 'Surgery', 'Cath', 'Electrophysiology', 'Imaging Reports', 'Patient Documents',
+                'Reports & Documents', 'Procedures', 'Electrophysiology', 'Imaging Reports', 'Patient Documents',
                 'Schedules', 'Master Schedule', 'Staff', 'Weekly Coverage', 'Fellows Rotation', 'Consultant Schedule',
                 'Admin', 'Approval Requests', 'Users', 'Activity Log',
             ]);
@@ -71,29 +71,26 @@ class SidebarNavigationTest extends TestCase
         $this->assertSame(['All Bookings' => ProcedureBookingResource::getUrl('index')], $navUrls());
     }
 
-    public function test_surgery_and_cath_pages_list_only_their_procedures(): void
+    public function test_procedures_list_filters_by_category_chips(): void
     {
         $surgery = Intervention::factory()->for($this->patient)->create(['type' => InterventionType::Surgery]);
         $cath = Intervention::factory()->for($this->patient)->create(['type' => InterventionType::DiagnosticCath]);
         $ablation = Intervention::factory()->for($this->patient)->create(['type' => InterventionType::Ablation]);
         $doctor = User::factory()->create(['role' => UserRole::Doctor]);
 
-        Livewire::withQueryParams(['category' => 'surgery'])->actingAs($doctor)->test(ListInterventions::class)
-            ->assertSee('Surgery')
+        Livewire::actingAs($doctor)->test(ListInterventions::class)
+            ->assertCanSeeTableRecords([$surgery, $cath, $ablation])
+            ->filterTable('category', ['surgery'])
             ->assertCanSeeTableRecords([$surgery])
-            ->assertCanNotSeeTableRecords([$cath, $ablation]);
+            ->assertCanNotSeeTableRecords([$cath, $ablation])
+            ->filterTable('category', ['surgery', 'cath'])
+            ->assertCanSeeTableRecords([$surgery, $cath])
+            ->assertCanNotSeeTableRecords([$ablation]);
 
-        Livewire::withQueryParams(['category' => 'cath'])->actingAs($doctor)->test(ListInterventions::class)
-            ->assertCanSeeTableRecords([$cath])
-            ->assertCanNotSeeTableRecords([$surgery, $ablation]);
-
-        Livewire::withQueryParams(['category' => 'ep'])->actingAs($doctor)->test(ListInterventions::class)
+        // The EP page's "Invasive EP procedures" link opens the list pre-filtered.
+        Livewire::withQueryParams(['tableFilters' => ['category' => ['values' => ['ep']]]])->actingAs($doctor)->test(ListInterventions::class)
             ->assertCanSeeTableRecords([$ablation])
             ->assertCanNotSeeTableRecords([$surgery, $cath]);
-
-        Livewire::withQueryParams([])->actingAs($doctor)->test(ListInterventions::class)
-            ->assertSee('All procedures')
-            ->assertCanSeeTableRecords([$surgery, $cath, $ablation]);
 
         // Adding from the Surgery page pre-fills the type; Cath has several, so it doesn't guess
         Livewire::withQueryParams(['category' => 'surgery'])->actingAs($doctor)->test(CreateIntervention::class)
@@ -103,28 +100,28 @@ class SidebarNavigationTest extends TestCase
             ->assertFormSet(['type' => null]);
     }
 
-    public function test_imaging_modality_pages_filter_and_unfold_under_imaging_reports(): void
+    public function test_imaging_reports_filter_by_modality_chips(): void
     {
         $fetal = ImagingReport::factory()->for($this->patient)->create(['type' => ImagingType::FetalEcho]);
         $tee = ImagingReport::factory()->for($this->patient)->create(['type' => ImagingType::EchoTee]);
         $mri = ImagingReport::factory()->for($this->patient)->create(['type' => ImagingType::Mri]);
         $doctor = User::factory()->create(['role' => UserRole::Doctor]);
 
-        Livewire::withQueryParams(['modality' => 'fetal_echo'])->actingAs($doctor)->test(ListImagingReports::class)
+        Livewire::actingAs($doctor)->test(ListImagingReports::class)
             ->set('activeTab', 'all')
-            ->assertSee('Fetal Echo Reports')
+            ->filterTable('modality', ['fetal_echo'])
             ->assertCanSeeTableRecords([$fetal])
-            ->assertCanNotSeeTableRecords([$tee, $mri]);
+            ->assertCanNotSeeTableRecords([$tee, $mri])
+            ->filterTable('modality', ['echo', 'mri'])
+            ->assertCanSeeTableRecords([$tee, $mri])
+            ->assertCanNotSeeTableRecords([$fetal]);
 
-        Livewire::withQueryParams(['modality' => 'echo'])->actingAs($doctor)->test(ListImagingReports::class)
-            ->set('activeTab', 'all')
-            ->assertCanSeeTableRecords([$tee])
-            ->assertCanNotSeeTableRecords([$fetal, $mri]);
-
+        // The modalities are chips now, not sidebar sub-items.
         $this->actingAs($doctor)
-            ->get(ImagingReportResource::getUrl('index', ['modality' => 'fetal_echo']))
+            ->get(ImagingReportResource::getUrl('index'))
             ->assertOk()
-            ->assertSeeTextInOrder(['Imaging Reports', 'Echo', 'Fetal Echo', 'MRI', 'CT', 'Patient Documents']);
+            ->assertSee('pc-chip')
+            ->assertSeeTextInOrder(['Modality', 'Echo', 'Fetal Echo', 'MRI', 'CT', 'Type']);
     }
 
     public function test_fetal_echo_can_be_ordered(): void

@@ -7,7 +7,8 @@ use App\Filament\Widgets\GettingStartedWidget;
 use App\Filament\Widgets\MyWorklistWidget;
 use App\Filament\Widgets\PatientSearchWidget;
 use App\Filament\Widgets\UpcomingMdtWidget;
-use App\Filament\Widgets\WeeklySurgeriesCathWidget;
+use App\Filament\Widgets\WeeklyCathWidget;
+use App\Filament\Widgets\WeeklySurgeriesWidget;
 use App\Http\Middleware\SecurityHeaders;
 use App\Models\Clinic;
 use Filament\Http\Middleware\Authenticate;
@@ -20,6 +21,7 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\MaxWidth;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -72,7 +74,8 @@ class AdminPanelProvider extends PanelProvider
                 GettingStartedWidget::class,
                 MyWorklistWidget::class,
                 PatientSearchWidget::class,
-                WeeklySurgeriesCathWidget::class,
+                WeeklySurgeriesWidget::class,
+                WeeklyCathWidget::class,
                 UpcomingMdtWidget::class,
             ])
 
@@ -102,6 +105,9 @@ class AdminPanelProvider extends PanelProvider
 
             // SPA mode
             ->spa()
+
+            // Shared filter-bar styling (chips on every table and the calendar)
+            ->renderHook(PanelsRenderHook::STYLES_AFTER, fn () => view('filament.styles'))
 
             // The patient View page is the working chart — keep its
             // relation managers editable, not read-only.

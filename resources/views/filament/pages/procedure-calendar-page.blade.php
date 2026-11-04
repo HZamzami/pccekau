@@ -9,43 +9,16 @@
             <x-filament::button wire:click="currentWeek" size="sm" color="gray">This Week</x-filament::button>
         </div>
 
-        <div class="space-y-3">
-            <div class="space-y-1">
-                <span class="block text-xs font-medium text-gray-500 dark:text-gray-400">Category <span class="font-normal">(pick any number)</span></span>
-                <div class="flex flex-wrap gap-2">
-                    @foreach ($this->getCategoryOptions() as $value => $label)
-                        <label @class([
-                            'cursor-pointer select-none rounded-full border px-3 py-1 text-xs font-medium transition',
-                            'border-primary-600 bg-primary-600 text-white' => in_array($value, $categories, true),
-                            'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-white/20 dark:text-gray-200 dark:hover:bg-white/5' => ! in_array($value, $categories, true),
-                        ])>
-                            <input type="checkbox" class="sr-only" value="{{ $value }}" wire:model.live="categories">
-                            {{ $label }}
-                        </label>
-                    @endforeach
-                </div>
-            </div>
+        <div class="pc-filter-bar">
+            <x-chip-group label="Category" :options="$this->getCategoryOptions()" state-path="categories" />
 
-            <div class="space-y-1">
-                <span class="block text-xs font-medium text-gray-500 dark:text-gray-400">Status <span class="font-normal">(pick any number)</span></span>
-                <div class="flex flex-wrap gap-2">
-                    @foreach ($this->getStatusOptions() as $value => $label)
-                        <label @class([
-                            'cursor-pointer select-none rounded-full border px-3 py-1 text-xs font-medium transition',
-                            'border-primary-600 bg-primary-600 text-white' => in_array($value, $statuses, true),
-                            'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-white/20 dark:text-gray-200 dark:hover:bg-white/5' => ! in_array($value, $statuses, true),
-                        ])>
-                            <input type="checkbox" class="sr-only" value="{{ $value }}" wire:model.live="statuses">
-                            {{ $label }}
-                        </label>
-                    @endforeach
-                </div>
-            </div>
+            <x-chip-group label="Status" :options="$this->getStatusOptions()" state-path="statuses" />
 
-            <div class="flex flex-wrap items-end gap-3">
-                <label class="space-y-1">
-                    <span class="block text-xs font-medium text-gray-500 dark:text-gray-400">Consultant</span>
-                    <x-filament::input.wrapper>
+            <div class="pc-filter-row">
+                <span class="pc-filter-label">Consultant</span>
+
+                <div class="pc-filter-footer">
+                    <x-filament::input.wrapper class="pc-select">
                         <x-filament::input.select wire:model.live="staffId">
                             <option value="">Everyone</option>
                             @foreach ($this->getStaffOptions() as $id => $name)
@@ -53,11 +26,13 @@
                             @endforeach
                         </x-filament::input.select>
                     </x-filament::input.wrapper>
-                </label>
 
-                @if ($categories || $staffId || $statuses)
-                    <x-filament::button wire:click="clearFilters" size="sm" color="gray" outlined>Clear filters</x-filament::button>
-                @endif
+                    @if ($categories || $staffId || $statuses)
+                        <x-filament::link tag="button" wire:click="clearFilters" color="danger" size="sm" class="pc-clear">
+                            Clear all
+                        </x-filament::link>
+                    @endif
+                </div>
             </div>
         </div>
 

@@ -2,11 +2,12 @@
 
 namespace App\Filament\Resources\PatientResource\RelationManagers;
 
-use App\Filament\Resources\EpStudyResource;
 use App\Enums\EpStudyType;
 use App\Enums\ProcedureStatus;
 use App\Enums\ReportStatus;
 use App\Filament\Actions\ReportWorkflowActions;
+use App\Filament\Resources\EpStudyResource;
+use App\Filament\Tables\Filters\ChipFilter;
 use App\Models\EpStudy;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
@@ -22,7 +23,6 @@ use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class EpStudiesRelationManager extends RelationManager
@@ -102,10 +102,10 @@ class EpStudiesRelationManager extends RelationManager
                     ->tooltip(fn (TextColumn $column): ?string => strlen((string) $column->getState()) > 60 ? $column->getState() : null),
             ])
             ->filters([
-                SelectFilter::make('type')
+                ChipFilter::make('type')
                     ->options(EpStudyType::labels()),
 
-                SelectFilter::make('status')
+                ChipFilter::make('status')
                     ->options(ReportStatus::class),
             ])
             ->headerActions([

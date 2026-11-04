@@ -4,6 +4,7 @@ namespace App\Filament\Resources\PatientResource\RelationManagers;
 
 use App\Enums\InterventionType;
 use App\Filament\Resources\InterventionResource;
+use App\Filament\Tables\Filters\ChipFilter;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -14,7 +15,6 @@ use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class InterventionsRelationManager extends RelationManager
@@ -55,8 +55,7 @@ class InterventionsRelationManager extends RelationManager
                     ->placeholder('—'),
             ])
             ->filters([
-                SelectFilter::make('type')
-                    ->multiple()
+                ChipFilter::make('type')
                     ->options(InterventionType::class),
             ])
             ->headerActions([

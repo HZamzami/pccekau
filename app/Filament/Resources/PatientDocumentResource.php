@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PatientDocumentResource\Pages;
+use App\Filament\Tables\Filters\ChipFilter;
 use App\Models\Patient;
 use App\Models\PatientDocument;
 use Filament\Forms\Components\FileUpload;
@@ -18,7 +19,6 @@ use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class PatientDocumentResource extends Resource
@@ -107,8 +107,7 @@ class PatientDocumentResource extends Resource
                     ->sortable(),
             ])
             ->filters([
-                SelectFilter::make('category')
-                    ->multiple()
+                ChipFilter::make('category')
                     ->options(PatientDocument::$categoryLabels),
             ])
             ->actions([

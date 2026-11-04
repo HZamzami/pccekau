@@ -7,6 +7,7 @@ use App\Enums\ProcedureStatus;
 use App\Enums\ReportStatus;
 use App\Filament\Actions\ReportWorkflowActions;
 use App\Filament\Resources\ImagingReportResource\Pages;
+use App\Filament\Tables\Filters\ChipFilter;
 use App\Models\ImagingReport;
 use App\Models\Patient;
 use App\Models\Staff;
@@ -17,7 +18,6 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Form;
-use Filament\Navigation\NavigationItem;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkActionGroup;
@@ -25,8 +25,8 @@ use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class ImagingReportResource extends Resource
 {
@@ -37,41 +37,6 @@ class ImagingReportResource extends Resource
     protected static ?string $navigationGroup = 'Reports & Documents';
 
     protected static ?int $navigationSort = 4;
-
-    // Each modality gets a sub-item: the same list, filtered. They unfold
-    // under Imaging Reports while any imaging page is open.
-    public static function getNavigationItems(): array
-    {
-        $parent = parent::getNavigationItems()[0]
-            ->isActiveWhen(fn () => request()->routeIs(static::getRouteBaseName().'.*') && static::currentModality() === null);
-
-        $children = collect(ImagingType::MODALITIES)
-            ->map(fn (string $label, string $modality) => NavigationItem::make($label)
-                ->group(static::getNavigationGroup())
-                ->parentItem(static::getNavigationLabel())
-                ->isActiveWhen(fn () => static::currentModality() === $modality)
-                ->url(static::getUrl('index', ['modality' => $modality])))
-            ->values()
-            ->all();
-
-        return [$parent, ...$children];
-    }
-
-    /** Modality the current page is showing, or null outside this resource or on the unfiltered list. */
-    public static function currentModality(): ?string
-    {
-        if (! request()->routeIs(static::getRouteBaseName().'.*')) {
-            return null;
-        }
-
-        if (request()->routeIs(static::getRouteBaseName().'.edit')) {
-            return ImagingReport::find(request()->route('record'))?->type?->modality();
-        }
-
-        $modality = request()->query('modality');
-
-        return is_string($modality) && array_key_exists($modality, ImagingType::MODALITIES) ? $modality : null;
-    }
 
     public static function getNavigationBadge(): ?string
     {
@@ -215,15 +180,23 @@ class ImagingReportResource extends Resource
                     ->tooltip(fn (TextColumn $column): ?string => strlen((string) $column->getState()) > 50 ? $column->getState() : null),
             ])
             ->filters([
-                SelectFilter::make('type')
-                    ->multiple()
+                ChipFilter::make('modality')
+                    ->options(ImagingType::MODALITIES)
+                    ->query(fn (Builder $query, array $data) => $query->when(
+                        $data['values'] ?? null,
+                        fn (Builder $query, array $modalities) => $query->whereIn('type', collect($modalities)
+                            ->flatMap(fn (string $modality) => ImagingType::ofModality($modality))
+                            ->map(fn (ImagingType $type) => $type->value)
+                            ->all()),
+                    )),
+
+                ChipFilter::make('type')
                     ->options(ImagingType::labels()),
 
-                SelectFilter::make('status')
+                ChipFilter::make('status')
                     ->options(ReportStatus::class),
 
-                SelectFilter::make('procedure_status')
-                    ->multiple()
+                ChipFilter::make('procedure_status')
                     ->label('Procedure Status')
                     ->options(ProcedureStatus::class),
             ])

@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Enums\ApprovalProcedure;
 use App\Enums\ApprovalStatus;
 use App\Filament\Resources\ApprovalRequestResource\Pages;
+use App\Filament\Tables\Filters\ChipFilter;
 use App\Models\ApprovalRequest;
 use App\Models\Patient;
 use Filament\Forms\Components\DatePicker;
@@ -22,7 +23,6 @@ use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class ApprovalRequestResource extends Resource
@@ -120,11 +120,10 @@ class ApprovalRequestResource extends Resource
                     ->badge(),
             ])
             ->filters([
-                SelectFilter::make('status')
+                ChipFilter::make('status')
                     ->options(ApprovalStatus::class),
 
-                SelectFilter::make('procedure')
-                    ->multiple()
+                ChipFilter::make('procedure')
                     ->options(ApprovalProcedure::class),
             ])
             ->actions([

@@ -9,7 +9,8 @@ use App\Enums\WaitlistPriority;
 use App\Filament\Resources\ProcedureBookingResource\Pages\ListProcedureBookings;
 use App\Filament\Resources\WaitlistEntryResource\Pages\CreateWaitlistEntry;
 use App\Filament\Resources\WaitlistEntryResource\Pages\ListWaitlistEntries;
-use App\Filament\Widgets\WeeklySurgeriesCathWidget;
+use App\Filament\Widgets\WeeklyCathWidget;
+use App\Filament\Widgets\WeeklySurgeriesWidget;
 use App\Models\Patient;
 use App\Models\ProcedureBooking;
 use App\Models\User;
@@ -20,7 +21,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
 
-class CategoryTabsAndDashboardTest extends TestCase
+class ChipFiltersAndDashboardTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -66,18 +67,15 @@ class CategoryTabsAndDashboardTest extends TestCase
             ->assertFormSet(['priority' => WaitlistPriority::P3]);
     }
 
-    public function test_waitlist_tabs_show_one_category_each_most_urgent_first(): void
+    public function test_waitlist_category_chips_filter_and_most_urgent_comes_first(): void
     {
         $surgery = $this->entry(ProcedureCategory::Surgery);
         $cath = $this->entry(ProcedureCategory::Cath);
         $echo = $this->entry(ProcedureCategory::Echo);
 
-        $page = Livewire::actingAs($this->doctor)->test(ListWaitlistEntries::class);
-
-        $this->assertSame(['all', 'surgery', 'cath', 'ep', 'mri', 'ct', 'echo_3d'], array_keys($page->instance()->getTabs()));
-        $page->assertCanSeeTableRecords([$surgery, $cath, $echo]);
-
-        $page->set('activeTab', 'surgery')
+        Livewire::actingAs($this->doctor)->test(ListWaitlistEntries::class)
+            ->assertCanSeeTableRecords([$surgery, $cath, $echo])
+            ->filterTable('category', ['surgery'])
             ->assertCanSeeTableRecords([$surgery])
             ->assertCanNotSeeTableRecords([$cath, $echo]);
 
@@ -85,27 +83,25 @@ class CategoryTabsAndDashboardTest extends TestCase
         $newUrgent = $this->entry(ProcedureCategory::Cath, 1);
 
         Livewire::actingAs($this->doctor)->test(ListWaitlistEntries::class)
-            ->set('activeTab', 'cath')
+            ->filterTable('category', ['cath'])
             ->assertCanSeeTableRecords([$newUrgent, $oldRoutine, $cath], inOrder: true);
     }
 
-    public function test_booking_tabs_filter_by_category_and_status(): void
+    public function test_booking_chips_filter_by_category_and_status(): void
     {
         $surgery = $this->booking(ProcedureCategory::Surgery);
         $postponed = $this->booking(ProcedureCategory::Surgery, ['procedure_status' => ProcedureStatus::Postponed]);
         $completed = $this->booking(ProcedureCategory::Surgery, ['procedure_status' => ProcedureStatus::Completed]);
         $cath = $this->booking(ProcedureCategory::Cath);
+        $mri = $this->booking(ProcedureCategory::Mri);
 
         Livewire::actingAs($this->doctor)->test(ListProcedureBookings::class)
-            ->set('activeTab', 'surgery')
+            ->filterTable('category', ['surgery'])
             ->assertCanSeeTableRecords([$surgery, $postponed, $completed])
-            ->assertCanNotSeeTableRecords([$cath])
+            ->assertCanNotSeeTableRecords([$cath, $mri])
             ->filterTable('procedure_status', [ProcedureStatus::Scheduled->value, ProcedureStatus::Postponed->value])
             ->assertCanSeeTableRecords([$surgery, $postponed])
-            ->assertCanNotSeeTableRecords([$completed, $cath]);
-
-        // Several categories at once on the All tab.
-        $mri = $this->booking(ProcedureCategory::Mri);
+            ->assertCanNotSeeTableRecords([$completed, $cath, $mri]);
 
         Livewire::actingAs($this->doctor)->test(ListProcedureBookings::class)
             ->filterTable('category', ['surgery', 'cath'])
@@ -113,20 +109,37 @@ class CategoryTabsAndDashboardTest extends TestCase
             ->assertCanNotSeeTableRecords([$mri]);
     }
 
+    public function test_filters_render_as_chips_with_the_main_categories_first(): void
+    {
+        $this->actingAs($this->doctor)
+            ->get(ListProcedureBookings::getUrl())
+            ->assertOk()
+            ->assertSee('pc-chip')
+            ->assertSee('.pc-chip:has(input:checked)', false)
+            ->assertSeeText('Clear all')
+            ->assertSeeTextInOrder(['Category', 'Surgery', 'Cath', 'EP (invasive)', 'MRI', 'CT', '3D Echo', 'ECG']);
+    }
+
     public function test_dashboard_lists_this_weeks_surgeries_and_caths(): void
     {
         $surgery = $this->booking(ProcedureCategory::Surgery, ['procedure' => 'Glenn shunt']);
         $cath = $this->booking(ProcedureCategory::Cath, ['procedure' => 'PDA closure']);
-        $this->booking(ProcedureCategory::Surgery, ['procedure' => 'Cancelled op', 'procedure_status' => ProcedureStatus::Cancelled]);
-        $this->booking(ProcedureCategory::Surgery, ['procedure' => 'Next week op', 'booking_date' => now()->addWeeks(2)]);
-        $this->booking(ProcedureCategory::Mri, ['procedure' => 'Cardiac MRI']);
+        $cancelled = $this->booking(ProcedureCategory::Surgery, ['procedure' => 'Cancelled op', 'procedure_status' => ProcedureStatus::Cancelled]);
+        $nextWeek = $this->booking(ProcedureCategory::Surgery, ['procedure' => 'Next week op', 'booking_date' => now()->addWeeks(2)]);
 
-        Livewire::actingAs($this->doctor)->test(WeeklySurgeriesCathWidget::class)
-            ->assertSee(['Surgeries this week', 'Caths this week', 'Glenn shunt', 'PDA closure'])
-            ->assertDontSee(['Cancelled op', 'Next week op', 'Cardiac MRI']);
+        Livewire::actingAs($this->doctor)->test(WeeklySurgeriesWidget::class)
+            ->assertSee('Surgeries this week')
+            ->assertCanSeeTableRecords([$surgery])
+            ->assertCanNotSeeTableRecords([$cath, $cancelled, $nextWeek]);
+
+        Livewire::actingAs($this->doctor)->test(WeeklyCathWidget::class)
+            ->assertSee('Caths this week')
+            ->assertCanSeeTableRecords([$cath])
+            ->assertCanNotSeeTableRecords([$surgery]);
 
         $this->actingAs($this->doctor)->get(Dashboard::getUrl())->assertOk()
-            ->assertSeeLivewire(WeeklySurgeriesCathWidget::class)
+            ->assertSeeLivewire(WeeklySurgeriesWidget::class)
+            ->assertSeeLivewire(WeeklyCathWidget::class)
             ->assertDontSee("Today's Coverage");
     }
 }

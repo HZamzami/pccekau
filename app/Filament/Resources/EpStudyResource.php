@@ -7,6 +7,7 @@ use App\Enums\ProcedureStatus;
 use App\Enums\ReportStatus;
 use App\Filament\Actions\ReportWorkflowActions;
 use App\Filament\Resources\EpStudyResource\Pages;
+use App\Filament\Tables\Filters\ChipFilter;
 use App\Models\EpStudy;
 use App\Models\Patient;
 use App\Models\Staff;
@@ -17,7 +18,6 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Form;
-use Filament\Navigation\NavigationItem;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkActionGroup;
@@ -25,7 +25,6 @@ use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class EpStudyResource extends Resource
@@ -43,16 +42,6 @@ class EpStudyResource extends Resource
     protected static ?string $modelLabel = 'EP study';
 
     protected static ?string $pluralModelLabel = 'EP studies';
-
-    // Invasive EP lives in Interventions but belongs here in the sidebar
-    public static function getNavigationItems(): array
-    {
-        return array_map(
-            fn (NavigationItem $item) => $item->isActiveWhen(fn () => request()->routeIs(static::getRouteBaseName().'.*')
-                || InterventionResource::currentCategory() === 'ep'),
-            parent::getNavigationItems(),
-        );
-    }
 
     public static function getNavigationBadge(): ?string
     {
@@ -174,14 +163,13 @@ class EpStudyResource extends Resource
                     ->tooltip(fn (TextColumn $column): ?string => strlen((string) $column->getState()) > 50 ? $column->getState() : null),
             ])
             ->filters([
-                SelectFilter::make('type')
+                ChipFilter::make('type')
                     ->options(EpStudyType::labels()),
 
-                SelectFilter::make('status')
+                ChipFilter::make('status')
                     ->options(ReportStatus::class),
 
-                SelectFilter::make('procedure_status')
-                    ->multiple()
+                ChipFilter::make('procedure_status')
                     ->label('Procedure Status')
                     ->options(ProcedureStatus::class),
             ])

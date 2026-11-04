@@ -8,6 +8,7 @@ use App\Enums\WaitlistPriority;
 use App\Enums\WaitlistStatus;
 use App\Filament\Forms\ProcedureOrderFields;
 use App\Filament\Resources\ProcedureBookingResource\Pages;
+use App\Filament\Tables\Filters\ChipFilter;
 use App\Models\ProcedureBooking;
 use App\Models\WaitlistEntry;
 use App\Rules\FreeProcedureSlot;
@@ -197,23 +198,20 @@ class ProcedureBookingResource extends Resource
                     ->badge(),
             ])
             ->filters([
-                // Scheduled and Postponed first: those are what each category tab is worked from.
-                SelectFilter::make('procedure_status')
+                ChipFilter::make('category')
+                    ->options(ProcedureCategory::options()),
+
+                // Scheduled and Postponed first: those are what the list is mostly worked from.
+                ChipFilter::make('procedure_status')
                     ->label('Status')
-                    ->multiple()
                     ->options(collect([ProcedureStatus::Scheduled, ProcedureStatus::Postponed])
                         ->merge(ProcedureStatus::cases())
                         ->unique(fn (ProcedureStatus $status) => $status->value)
                         ->mapWithKeys(fn (ProcedureStatus $status) => [$status->value => $status->getLabel()])
                         ->all()),
 
-                SelectFilter::make('category')
-                    ->multiple()
-                    ->options(ProcedureCategory::options()),
-
-                SelectFilter::make('slot_type')
+                ChipFilter::make('slot_type')
                     ->label('Slot')
-                    ->multiple()
                     ->options(ProcedureBooking::$slotTypeLabels),
 
                 SelectFilter::make('staff_id')
@@ -228,6 +226,8 @@ class ProcedureBookingResource extends Resource
                         DatePicker::make('from'),
                         DatePicker::make('until'),
                     ])
+                    ->columns(2)
+                    ->columnSpan(2)
                     ->query(fn (Builder $query, array $data) => $query
                         ->when($data['from'], fn (Builder $query, $date) => $query->whereDate('booking_date', '>=', $date))
                         ->when($data['until'], fn (Builder $query, $date) => $query->whereDate('booking_date', '<=', $date)))

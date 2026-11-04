@@ -4,13 +4,13 @@ namespace App\Filament\Resources\PatientResource\RelationManagers;
 
 use App\Enums\WaitlistStatus;
 use App\Filament\Resources\WaitlistEntryResource;
+use App\Filament\Tables\Filters\ChipFilter;
 use App\Models\WaitlistEntry;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Actions\CreateAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class WaitlistEntriesRelationManager extends RelationManager
@@ -61,7 +61,7 @@ class WaitlistEntriesRelationManager extends RelationManager
                     ->placeholder('—'),
             ])
             ->filters([
-                SelectFilter::make('status')
+                ChipFilter::make('status')
                     ->options(WaitlistStatus::class),
             ])
             ->headerActions([

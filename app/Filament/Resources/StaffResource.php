@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\StaffResource\Pages;
+use App\Filament\Tables\Filters\ChipFilter;
 use App\Models\Staff;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Grid;
@@ -20,7 +21,6 @@ use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
@@ -116,8 +116,7 @@ class StaffResource extends Resource
                     ->boolean(),
             ])
             ->filters([
-                SelectFilter::make('role')
-                    ->multiple()
+                ChipFilter::make('role')
                     ->options(Staff::$roleLabels),
 
                 TernaryFilter::make('is_active')

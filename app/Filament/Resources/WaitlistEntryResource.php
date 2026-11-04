@@ -8,6 +8,7 @@ use App\Enums\WaitlistPriority;
 use App\Enums\WaitlistStatus;
 use App\Filament\Forms\ProcedureOrderFields;
 use App\Filament\Resources\WaitlistEntryResource\Pages;
+use App\Filament\Tables\Filters\ChipFilter;
 use App\Models\PatientDocument;
 use App\Models\ProcedureBooking;
 use App\Models\WaitlistEntry;
@@ -263,12 +264,10 @@ class WaitlistEntryResource extends Resource
                     ->sortable(query: fn ($query, string $direction) => $query->orderBy('created_at', $direction === 'asc' ? 'desc' : 'asc')),
             ])
             ->filters([
-                SelectFilter::make('priority')
-                    ->multiple()
+                ChipFilter::make('priority')
                     ->options(WaitlistPriority::class),
 
-                SelectFilter::make('category')
-                    ->multiple()
+                ChipFilter::make('category')
                     ->options(ProcedureCategory::options()),
 
                 SelectFilter::make('staff_id')

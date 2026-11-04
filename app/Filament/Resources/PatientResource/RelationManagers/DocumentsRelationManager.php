@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\PatientResource\RelationManagers;
 
 use App\Filament\Resources\PatientDocumentResource;
+use App\Filament\Tables\Filters\ChipFilter;
 use App\Models\PatientDocument;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
@@ -19,7 +20,6 @@ use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class DocumentsRelationManager extends RelationManager
@@ -83,8 +83,7 @@ class DocumentsRelationManager extends RelationManager
                     ->sortable(),
             ])
             ->filters([
-                SelectFilter::make('category')
-                    ->multiple()
+                ChipFilter::make('category')
                     ->options(PatientDocument::$categoryLabels),
             ])
             ->headerActions([

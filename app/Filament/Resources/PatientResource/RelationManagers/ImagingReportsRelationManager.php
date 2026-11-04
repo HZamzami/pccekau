@@ -6,6 +6,7 @@ use App\Enums\ImagingType;
 use App\Enums\ProcedureStatus;
 use App\Enums\ReportStatus;
 use App\Filament\Resources\ImagingReportResource;
+use App\Filament\Tables\Filters\ChipFilter;
 use App\Models\ImagingReport;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
@@ -22,7 +23,6 @@ use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class ImagingReportsRelationManager extends RelationManager
@@ -105,11 +105,10 @@ class ImagingReportsRelationManager extends RelationManager
                     ->tooltip(fn (TextColumn $column): ?string => strlen((string) $column->getState()) > 60 ? $column->getState() : null),
             ])
             ->filters([
-                SelectFilter::make('type')
-                    ->multiple()
+                ChipFilter::make('type')
                     ->options(ImagingType::labels()),
 
-                SelectFilter::make('status')
+                ChipFilter::make('status')
                     ->options(ReportStatus::class),
             ])
             ->headerActions([

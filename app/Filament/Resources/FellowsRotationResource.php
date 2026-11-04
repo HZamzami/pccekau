@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\FellowsRotationResource\Pages;
+use App\Filament\Tables\Filters\ChipFilter;
 use App\Models\FellowsRotation;
 use App\Models\Staff;
 use Filament\Forms\Components\DatePicker;
@@ -94,14 +95,14 @@ class FellowsRotationResource extends Resource
                     ->date(),
             ])
             ->filters([
+                ChipFilter::make('rotation')
+                    ->options(FellowsRotation::$rotationLabels),
+
                 SelectFilter::make('fellow_id')
                     ->multiple()
                     ->label('Fellow')
+                    ->searchable()
                     ->options(fn () => Staff::active()->fellows()->orderBy('name')->pluck('name', 'id')),
-
-                SelectFilter::make('rotation')
-                    ->multiple()
-                    ->options(FellowsRotation::$rotationLabels),
             ])
             ->actions([
                 ViewAction::make(),

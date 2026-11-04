@@ -5,6 +5,7 @@ namespace App\Filament\Resources\PatientResource\RelationManagers;
 use App\Enums\ApprovalProcedure;
 use App\Enums\ApprovalStatus;
 use App\Filament\Resources\ApprovalRequestResource;
+use App\Filament\Tables\Filters\ChipFilter;
 use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Actions\BulkActionGroup;
@@ -14,7 +15,6 @@ use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class ApprovalRequestsRelationManager extends RelationManager
@@ -56,11 +56,10 @@ class ApprovalRequestsRelationManager extends RelationManager
                     ->sortable(),
             ])
             ->filters([
-                SelectFilter::make('status')
+                ChipFilter::make('status')
                     ->options(ApprovalStatus::class),
 
-                SelectFilter::make('procedure')
-                    ->multiple()
+                ChipFilter::make('procedure')
                     ->options(ApprovalProcedure::class),
             ])
             ->headerActions([

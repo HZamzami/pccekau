@@ -14,6 +14,7 @@ use App\Filament\Resources\PatientResource\RelationManagers\ImagingReportsRelati
 use App\Filament\Resources\PatientResource\RelationManagers\InterventionsRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\MdtDiscussionsRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\WaitlistEntriesRelationManager;
+use App\Filament\Tables\Filters\ChipFilter;
 use App\Models\Patient;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
@@ -305,13 +306,14 @@ class PatientResource extends Resource
                     ->badge(),
             ])
             ->filters([
-                SelectFilter::make('status')
-                    ->multiple()
+                ChipFilter::make('status')
                     ->options(PatientStatus::class),
 
+                // 30 lesions is too many chips; a searchable list suits it better.
                 SelectFilter::make('lesions')
                     ->label('Lesion')
                     ->multiple()
+                    ->searchable()
                     ->options(CardiacLesion::labels())
                     // whereJsonContains works on pgsql jsonb and sqlite >= 3.39
                     ->query(fn (Builder $query, array $data) => filled($data['values'] ?? null)
@@ -322,7 +324,7 @@ class PatientResource extends Resource
                         })
                         : $query),
 
-                SelectFilter::make('gender')
+                ChipFilter::make('gender')
                     ->options(['male' => 'Male', 'female' => 'Female']),
 
                 TrashedFilter::make(),

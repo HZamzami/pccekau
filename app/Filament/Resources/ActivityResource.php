@@ -3,13 +3,13 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ActivityResource\Pages;
+use App\Filament\Tables\Filters\ChipFilter;
 use Filament\Facades\Filament;
 use Filament\Resources\Resource;
-use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Spatie\Activitylog\Models\Activity;
 
 class ActivityResource extends Resource
@@ -87,7 +87,7 @@ class ActivityResource extends Resource
                     ->limit(40),
             ])
             ->filters([
-                SelectFilter::make('event')
+                ChipFilter::make('event')
                     ->options([
                         'created' => 'Created',
                         'updated' => 'Updated',

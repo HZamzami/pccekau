@@ -34,8 +34,8 @@ enum ProcedureCategory: string implements HasColor, HasLabel
         'case_discussion' => 'Case Discussions',
     ];
 
-    /** Categories that get their own tab on the wait-list and All Bookings pages. */
-    public const TAB_CATEGORIES = [
+    /** The categories the team books most; listed first wherever categories are offered. */
+    public const PRIMARY = [
         self::Surgery,
         self::Cath,
         self::Ep,
@@ -93,6 +93,7 @@ enum ProcedureCategory: string implements HasColor, HasLabel
     {
         return collect(self::cases())
             ->filter(fn (self $c) => ! $group || $c->group() === $group)
+            ->sortBy(fn (self $c) => in_array($c, self::PRIMARY, true) ? array_search($c, self::PRIMARY, true) : count(self::PRIMARY))
             ->mapWithKeys(fn (self $c) => [$c->value => $c->getLabel()])
             ->all();
     }
