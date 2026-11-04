@@ -17,6 +17,9 @@ use Filament\Widgets\TableWidget;
 // dashboard shows one for surgeries and one for caths side by side.
 abstract class WeeklyBookingsWidget extends TableWidget
 {
+    // Same table, but the card fills the row so the two sit level.
+    protected static string $view = 'filament.widgets.weekly-bookings-widget';
+
     protected int|string|array $columnSpan = 1;
 
     abstract protected function category(): ProcedureCategory;
@@ -45,32 +48,26 @@ abstract class WeeklyBookingsWidget extends TableWidget
                     ->url(ProcedureBookingResource::getUrl('index', ['tableFilters' => ['category' => ['values' => [$this->category()->value]]]])),
             ])
             ->paginated(false)
+            // Three columns so it fits half the dashboard; the details sit underneath.
             ->columns([
                 TextColumn::make('booking_date')
                     ->label('Date')
-                    ->date('D d M'),
-
-                TextColumn::make('slot_number')
-                    ->label('Slot')
-                    ->formatStateUsing(fn ($state) => "#{$state}")
-                    ->placeholder('—'),
+                    ->date('D d M')
+                    ->description(fn (ProcedureBooking $record) => $record->slot_number ? "Slot #{$record->slot_number}" : null),
 
                 TextColumn::make('patient.name')
                     ->label('Patient')
                     ->placeholder('Unassigned')
+                    ->description(fn (ProcedureBooking $record) => collect([
+                        $record->procedure ?: $record->intervention_type?->getLabel(),
+                        $record->staff?->name,
+                    ])->filter()->implode(' · ') ?: null)
                     ->url(fn (ProcedureBooking $record) => $record->patient ? PatientResource::getUrl('view', ['record' => $record->patient_id]) : null),
-
-                TextColumn::make('procedure')
-                    ->state(fn (ProcedureBooking $record) => $record->procedure ?: $record->intervention_type?->getLabel())
-                    ->placeholder('—'),
-
-                TextColumn::make('staff.name')
-                    ->label('Consultant')
-                    ->placeholder('—'),
 
                 TextColumn::make('procedure_status')
                     ->label('Status')
-                    ->badge(),
+                    ->badge()
+                    ->alignEnd(),
             ])
             ->emptyStateHeading('Nothing booked this week')
             ->emptyStateIcon('heroicon-o-calendar');

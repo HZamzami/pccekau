@@ -208,6 +208,15 @@
     .dark .pc-bar { background: rgba(var(--gray-900), 1); outline-color: rgba(255, 255, 255, 0.1); }
     .pc-bar .pc-clear { margin-inline-start: auto; }
 
+    /* ---------- Dashboard: side-by-side weekly cards sit level ---------- */
+    .pc-weekly { display: flex; flex-direction: column; }
+    .pc-weekly > .fi-ta,
+    .pc-weekly .fi-ta-ctn { flex: 1 1 auto; display: flex; flex-direction: column; }
+    .pc-weekly .fi-ta-content { flex: 1 1 auto; }
+    .pc-weekly .fi-ta-empty-state { padding-block: 1.75rem; height: 100%; display: grid; align-content: center; }
+    .pc-weekly .fi-ta-empty-state-icon-ctn { margin-bottom: 0.5rem; padding: 0.5rem; }
+    .pc-weekly .fi-ta-empty-state-heading { font-size: 0.875rem; font-weight: 500; color: rgba(var(--gray-500), 1); }
+
     @media (prefers-reduced-motion: reduce) {
         .pc-chip, .pc-pill, .pc-pill-clear { transition: none; }
     }
