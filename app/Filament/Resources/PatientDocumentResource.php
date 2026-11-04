@@ -2,12 +2,11 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Forms\Components\DocumentUpload;
 use App\Filament\Resources\PatientDocumentResource\Pages;
 use App\Filament\Tables\Filters\ChipFilter;
 use App\Models\Patient;
 use App\Models\PatientDocument;
-use App\Support\PatientDocumentsDisk;
-use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
@@ -63,14 +62,8 @@ class PatientDocumentResource extends Resource
                         ->preload(),
                 ]),
 
-                FileUpload::make('files')
-                    ->multiple()
+                DocumentUpload::make('files')
                     ->required()
-                    ->disk(PatientDocumentsDisk::name())
-                    ->visibility('private')
-                    ->directory('patient-documents')
-                    ->acceptedFileTypes(['application/pdf', 'image/*'])
-                    ->maxSize(10240)
                     ->columnSpanFull(),
             ]),
         ]);

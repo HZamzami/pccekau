@@ -2,11 +2,10 @@
 
 namespace App\Filament\Resources\PatientResource\RelationManagers;
 
+use App\Filament\Forms\Components\DocumentUpload;
 use App\Filament\Resources\PatientDocumentResource;
 use App\Filament\Tables\Filters\ChipFilter;
 use App\Models\PatientDocument;
-use App\Support\PatientDocumentsDisk;
-use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
@@ -50,14 +49,8 @@ class DocumentsRelationManager extends RelationManager
                     ->searchable()
                     ->preload(),
 
-                FileUpload::make('files')
-                    ->multiple()
+                DocumentUpload::make('files')
                     ->required()
-                    ->disk(PatientDocumentsDisk::name())
-                    ->visibility('private')
-                    ->directory('patient-documents')
-                    ->acceptedFileTypes(['application/pdf', 'image/*'])
-                    ->maxSize(10240)
                     ->columnSpanFull(),
             ]),
         ]);

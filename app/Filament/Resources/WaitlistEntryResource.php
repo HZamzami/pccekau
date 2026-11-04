@@ -6,6 +6,7 @@ use App\Enums\ProcedureCategory;
 use App\Enums\ProcedureStatus;
 use App\Enums\WaitlistPriority;
 use App\Enums\WaitlistStatus;
+use App\Filament\Forms\Components\DocumentUpload;
 use App\Filament\Forms\ProcedureOrderFields;
 use App\Filament\Resources\WaitlistEntryResource\Pages;
 use App\Filament\Tables\Filters\ChipFilter;
@@ -13,9 +14,7 @@ use App\Models\PatientDocument;
 use App\Models\ProcedureBooking;
 use App\Models\WaitlistEntry;
 use App\Rules\FreeProcedureSlot;
-use App\Support\PatientDocumentsDisk;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
@@ -193,14 +192,8 @@ class WaitlistEntryResource extends Resource
                     ->required()
                     ->maxLength(255),
 
-                FileUpload::make('files')
-                    ->multiple()
-                    ->required()
-                    ->disk(PatientDocumentsDisk::name())
-                    ->visibility('private')
-                    ->directory('patient-documents')
-                    ->acceptedFileTypes(['application/pdf', 'image/*'])
-                    ->maxSize(10240),
+                DocumentUpload::make('files')
+                    ->required(),
             ])
             ->action(function (WaitlistEntry $record, array $data) {
                 PatientDocument::create([
