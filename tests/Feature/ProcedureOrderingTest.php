@@ -129,6 +129,25 @@ class ProcedureOrderingTest extends TestCase
         $this->assertSame(0, $this->patient->interventions()->count());
     }
 
+    public function test_case_discussions_cannot_be_added_to_the_waitlist(): void
+    {
+        $this->book(['mode' => 'waitlist', 'category' => 'case_discussion', 'procedure' => 'Timing of Glenn', 'diagnosis' => 'HLHS', 'priority' => 1])
+            ->assertHasFormErrors(['category']);
+
+        Livewire::actingAs($this->doctor)
+            ->test(CreateWaitlistEntry::class)
+            ->fillForm(['patient_id' => $this->patient->id, 'category' => 'case_discussion', 'procedure' => 'Timing of Glenn', 'diagnosis' => 'HLHS'])
+            ->call('create')
+            ->assertHasFormErrors(['category']);
+
+        Livewire::actingAs($this->doctor)
+            ->test(ListMdtDiscussions::class)
+            ->assertActionDoesNotExist('addToWaitlist');
+
+        $this->assertSame(0, WaitlistEntry::count());
+    }
+
+    // Entries wait-listed before case discussions were taken off the wait-list can still be scheduled.
     public function test_scheduling_a_waitlisted_case_discussion_puts_it_on_the_calendar_and_its_tab(): void
     {
         $entry = WaitlistEntry::create([
@@ -181,7 +200,6 @@ class ProcedureOrderingTest extends TestCase
             ListEpStudies::class => 'ep',
             ListInterventions::class => 'interventions',
             ListImagingReports::class => 'imaging',
-            ListMdtDiscussions::class => 'case_discussion',
         ];
 
         foreach ($pages as $page => $group) {

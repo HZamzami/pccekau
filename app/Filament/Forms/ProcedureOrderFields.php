@@ -30,17 +30,28 @@ class ProcedureOrderFields
             ->getOptionLabelFromRecordUsing(fn (Patient $record) => "{$record->mrn} — {$record->name}");
     }
 
-    public static function categorySelect(): Select
+    /** @param bool $waitlist true on the wait-list form, where the category is always one that can wait */
+    public static function categorySelect(bool $waitlist = false): Select
     {
         // The "Add to wait-list" buttons open the form pre-set to one kind of
         // procedure; the page keeps that in its URL-bound $group property.
         $group = fn ($livewire) => array_key_exists((string) ($livewire->group ?? null), ProcedureCategory::GROUP_LABELS) ? $livewire->group : null;
 
+        // Case discussions go straight onto a meeting date, never the
+        // wait-list. An older entry that already is one keeps its category.
+        $options = fn ($livewire, Get $get, $record) => array_filter(
+            ProcedureCategory::options($group($livewire)),
+            fn (string $value) => $value !== ProcedureCategory::CaseDiscussion->value
+                || ! ($waitlist || $get('mode') === 'waitlist')
+                || $record?->category === ProcedureCategory::CaseDiscussion,
+            ARRAY_FILTER_USE_KEY,
+        );
+
         return Select::make('category')
-            ->options(fn ($livewire) => ProcedureCategory::options($group($livewire)))
+            ->options($options)
             ->in(fn (Select $component) => array_keys($component->getOptions()))
-            ->default(function ($livewire) use ($group) {
-                $options = ProcedureCategory::options($group($livewire));
+            ->default(function (Select $component) {
+                $options = $component->getOptions();
 
                 return count($options) === 1 ? array_key_first($options) : null;
             })

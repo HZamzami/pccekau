@@ -84,6 +84,7 @@ class ProcedureBookingResource extends Resource
                     ->options(['schedule' => 'Schedule now', 'waitlist' => 'Add to wait-list'])
                     ->icons(['schedule' => 'heroicon-o-calendar-days', 'waitlist' => 'heroicon-o-queue-list'])
                     ->default('schedule')
+                    ->disableOptionWhen(fn (string $value, Get $get) => $value === 'waitlist' && ProcedureOrderFields::category($get) === ProcedureCategory::CaseDiscussion)
                     ->inline()
                     ->live()
                     ->visibleOn('create'),

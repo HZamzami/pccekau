@@ -70,7 +70,7 @@ class WaitlistEntryResource extends Resource
                 ]),
 
                 Grid::make(3)->schema([
-                    ProcedureOrderFields::categorySelect(),
+                    ProcedureOrderFields::categorySelect(waitlist: true),
                     ProcedureOrderFields::interventionType()->required(false),
                     ProcedureOrderFields::procedure(),
                 ]),
@@ -260,7 +260,7 @@ class WaitlistEntryResource extends Resource
             ->filters([
                 ChipFilter::make('category')
                     ->quick()
-                    ->options(ProcedureCategory::options()),
+                    ->options(array_diff_key(ProcedureCategory::options(), [ProcedureCategory::CaseDiscussion->value => true])),
 
                 ChipFilter::make('priority')
                     ->options(WaitlistPriority::class),
