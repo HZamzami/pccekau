@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\EpStudyType;
 use App\Enums\InterventionType;
 use App\Enums\ProcedureCategory;
 use App\Enums\ProcedureStatus;
@@ -41,7 +42,6 @@ class ProcedureBooking extends Model
         'booking_date' => 'date',
         'procedure_status' => ProcedureStatus::class,
         'category' => ProcedureCategory::class,
-        'intervention_type' => InterventionType::class,
     ];
 
     public static array $slotTypeLabels = [
@@ -51,6 +51,19 @@ class ProcedureBooking extends Model
         'or' => 'Surgery',
         'echo' => 'Echo',
     ];
+
+    /** The exact procedure ordered: a cath/surgery type, or an invasive EP type for EP. */
+    public function exactProcedure(): InterventionType|EpStudyType|null
+    {
+        return $this->category?->exactProcedure($this->intervention_type);
+    }
+
+    // Holds an InterventionType or an EpStudyType depending on the category,
+    // so it's stored as a plain string; enums are accepted for convenience.
+    public function setInterventionTypeAttribute(\BackedEnum|string|null $value): void
+    {
+        $this->attributes['intervention_type'] = $value instanceof \BackedEnum ? $value->value : $value;
+    }
 
     public function patient(): BelongsTo
     {

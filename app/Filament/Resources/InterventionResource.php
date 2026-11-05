@@ -37,8 +37,7 @@ class InterventionResource extends Resource
 
     protected static ?string $navigationGroup = 'Reports & Documents';
 
-    // The sidebar shows Surgery and Cath as separate pages over this one list;
-    // Invasive EP is reached from Electrophysiology.
+    // The sidebar shows Surgery and Cath as separate pages over this one list.
     public static function getNavigationItems(): array
     {
         return [
@@ -175,8 +174,8 @@ class InterventionResource extends Resource
                     ->tooltip(fn (TextColumn $column): ?string => strlen((string) $column->getState()) > 40 ? $column->getState() : null),
             ])
             ->filters([
-                // The unscoped list (reached from Electrophysiology's link) splits by
-                // category; the Surgery and Cath pages already are one.
+                // The unscoped "All procedures" list splits by category; the
+                // Surgery and Cath pages already are one.
                 ChipFilter::make('category')
                     ->quick()
                     ->hidden(fn ($livewire) => filled($livewire->category ?? null))

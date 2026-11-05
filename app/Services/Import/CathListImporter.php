@@ -2,9 +2,11 @@
 
 namespace App\Services\Import;
 
+use App\Enums\EpStudyType;
 use App\Enums\InterventionType;
 use App\Enums\PatientStatus;
 use App\Enums\ProcedureStatus;
+use App\Models\EpStudy;
 use App\Models\Intervention;
 use App\Services\Import\Concerns\ParsesImportValues;
 use Illuminate\Support\Collection;
@@ -76,20 +78,34 @@ class CathListImporter
             "Imported from: {$sheetName} sheet",
         ]);
 
-        $intervention = new Intervention([
-            'date' => $this->parseFlexibleDate($this->cell($row, $header, 'Date if avaliable') ?? $this->cell($row, $header, 'Date if available')),
-            'type' => $this->inferInterventionType($procedure),
-            'name' => $procedure ?: 'Unspecified procedure',
-            'procedure_status' => ProcedureStatus::Requested,
-            'notes' => implode("\n", $notesParts) ?: null,
-        ]);
+        $date = $this->parseFlexibleDate($this->cell($row, $header, 'Date if avaliable') ?? $this->cell($row, $header, 'Date if available'));
+        $name = $procedure ?: 'Unspecified procedure';
+        $notes = implode("\n", $notesParts) ?: null;
+
+        // Ablations are invasive EP, which lives with the other EP studies.
+        $record = str_contains(strtolower((string) $procedure), 'ablation')
+            ? new EpStudy([
+                'date' => $date,
+                'type' => EpStudyType::Ablation,
+                'procedure' => $name,
+                'procedure_status' => ProcedureStatus::Requested,
+                'report' => '',
+                'notes' => $notes,
+            ])
+            : new Intervention([
+                'date' => $date,
+                'type' => $this->inferInterventionType($procedure),
+                'name' => $name,
+                'procedure_status' => ProcedureStatus::Requested,
+                'notes' => $notes,
+            ]);
 
         $childSummary = [
-            'Intervention: '.$intervention->name
-                .($intervention->date ? ' — '.$intervention->date->format('d M Y') : ' — no date'),
+            ($record instanceof EpStudy ? 'EP study: ' : 'Intervention: ').$name
+                .($date ? ' — '.$date->format('d M Y') : ' — no date'),
         ];
 
-        return ImportRowResult::ok($raw, $patient, $isNew, [$intervention], $this->currentRowChanges, $childSummary);
+        return ImportRowResult::ok($raw, $patient, $isNew, [$record], $this->currentRowChanges, $childSummary);
     }
 
     protected function inferInterventionType(?string $procedure): InterventionType
@@ -100,7 +116,6 @@ class CathListImporter
             str_contains($text, 'diagnostic') => InterventionType::DiagnosticCath,
             str_contains($text, 'device') || str_contains($text, 'stent') || str_contains($text, 'occlud') => InterventionType::InterventionalCathDevice,
             str_contains($text, 'balloon') => InterventionType::InterventionalCathBalloon,
-            str_contains($text, 'ablation') => InterventionType::Ablation,
             default => InterventionType::Other,
         };
     }

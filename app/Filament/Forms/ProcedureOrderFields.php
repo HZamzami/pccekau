@@ -67,8 +67,8 @@ class ProcedureOrderFields
     {
         return Select::make('intervention_type')
             ->label('Exact procedure')
-            ->options(fn (Get $get) => self::category($get)?->interventionTypeOptions() ?? [])
-            ->visible(fn (Get $get) => self::category($get)?->needsInterventionType() ?? false)
+            ->options(fn (Get $get) => self::category($get)?->exactProcedureOptions() ?? [])
+            ->visible(fn (Get $get) => self::category($get)?->needsExactProcedure() ?? false)
             ->required();
     }
 

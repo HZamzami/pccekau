@@ -17,6 +17,7 @@ class PatientSummaryPdfController extends Controller
 
         $patient->load([
             'interventions.operator',
+            'epStudies.performedBy',
             'clinicVisits' => fn ($q) => $q->limit(1),
             'imagingReports' => fn ($q) => $q->with('readers')->limit(5),
         ]);

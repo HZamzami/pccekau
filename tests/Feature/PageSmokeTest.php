@@ -30,7 +30,6 @@ use Carbon\Carbon;
 use Filament\Facades\Filament;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Resources\Pages\ListRecords;
-use Filament\Resources\RelationManagers\RelationGroup;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -195,10 +194,7 @@ class PageSmokeTest extends TestCase
             }
         }
 
-        $managers = collect(PatientResource::getRelations())
-            ->flatMap(fn ($manager) => $manager instanceof RelationGroup ? $manager->ownerRecord($patient)->pageClass(ViewPatient::class)->getManagers() : [$manager]);
-
-        foreach ($managers as $manager) {
+        foreach (PatientResource::getRelations() as $manager) {
             if (! $manager::canViewForRecord($patient, ViewPatient::class)) {
                 continue;
             }

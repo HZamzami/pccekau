@@ -12,7 +12,6 @@ use App\Filament\Resources\PatientResource\RelationManagers\EpStudiesRelationMan
 use App\Filament\Resources\PatientResource\RelationManagers\ImagingReportsRelationManager;
 use App\Enums\InterventionType;
 use App\Filament\Resources\PatientResource\RelationManagers\CathsRelationManager;
-use App\Filament\Resources\PatientResource\RelationManagers\InvasiveEpRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\OtherProceduresRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\SurgeriesRelationManager;
 use App\Models\EpStudy;
@@ -73,7 +72,7 @@ class ViewPatientPageTest extends TestCase
         }
     }
 
-    public function test_interventions_split_into_surgery_cath_and_invasive_ep_tabs(): void
+    public function test_interventions_split_into_surgery_and_cath_tabs(): void
     {
         $doctor = User::factory()->create(['role' => UserRole::Doctor]);
         $patient = Patient::factory()->create();
@@ -81,13 +80,11 @@ class ViewPatientPageTest extends TestCase
 
         $surgery = $make(InterventionType::Surgery);
         $cath = $make(InterventionType::DiagnosticCath);
-        $ablation = $make(InterventionType::Ablation);
         $other = $make(InterventionType::Other);
 
         $tabs = [
             SurgeriesRelationManager::class => ['surgery', $surgery],
             CathsRelationManager::class => ['cath', $cath],
-            InvasiveEpRelationManager::class => ['ep', $ablation],
             OtherProceduresRelationManager::class => [null, $other],
         ];
 
@@ -95,7 +92,7 @@ class ViewPatientPageTest extends TestCase
             Livewire::actingAs($doctor)
                 ->test($manager, ['ownerRecord' => $patient, 'pageClass' => ViewPatient::class])
                 ->assertCanSeeTableRecords([$record])
-                ->assertCanNotSeeTableRecords(collect([$surgery, $cath, $ablation, $other])->reject(fn ($r) => $r->is($record)))
+                ->assertCanNotSeeTableRecords(collect([$surgery, $cath, $other])->reject(fn ($r) => $r->is($record)))
                 ->assertTableActionHasUrl('create', \App\Filament\Resources\InterventionResource::getUrl('create', array_filter(['patient_id' => $patient->id, 'category' => $category])));
         }
 
@@ -107,14 +104,13 @@ class ViewPatientPageTest extends TestCase
     {
         $doctor = User::factory()->create(['role' => UserRole::Doctor]);
         $patient = Patient::factory()->create();
-        EpStudy::create(['patient_id' => $patient->id, 'type' => 'holter', 'report' => 'Sinus rhythm', 'procedure_status' => \App\Enums\ProcedureStatus::Requested]);
-        Intervention::create(['patient_id' => $patient->id, 'type' => InterventionType::Ablation, 'name' => 'SVT ablation', 'procedure_status' => \App\Enums\ProcedureStatus::Requested]);
+        $holter = EpStudy::create(['patient_id' => $patient->id, 'type' => 'holter', 'report' => 'Sinus rhythm', 'procedure_status' => \App\Enums\ProcedureStatus::Requested]);
+        $ablation = EpStudy::create(['patient_id' => $patient->id, 'type' => 'ablation', 'procedure' => 'SVT ablation', 'report' => '', 'procedure_status' => \App\Enums\ProcedureStatus::Requested]);
 
         Livewire::actingAs($doctor)
-            ->test(ViewPatient::class, ['record' => $patient->getRouteKey()])
-            ->set('activeRelationManager', '1')
-            ->assertSeeLivewire(EpStudiesRelationManager::class)
-            ->assertSeeLivewire(InvasiveEpRelationManager::class);
+            ->test(EpStudiesRelationManager::class, ['ownerRecord' => $patient, 'pageClass' => ViewPatient::class])
+            ->assertCanSeeTableRecords([$holter, $ablation])
+            ->assertSee('SVT ablation');
     }
 
     public function test_create_pages_prefill_the_patient_from_the_query_string(): void

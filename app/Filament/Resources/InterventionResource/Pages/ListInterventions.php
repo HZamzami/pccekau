@@ -15,7 +15,7 @@ class ListInterventions extends ListRecords
 {
     protected static string $resource = InterventionResource::class;
 
-    /** Set by the Surgery / Cath sidebar items and the Invasive EP link; null lists every procedure. */
+    /** Set by the Surgery / Cath sidebar items; null lists every procedure. */
     #[Url]
     public ?string $category = null;
 

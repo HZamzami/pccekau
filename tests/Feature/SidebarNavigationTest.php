@@ -75,34 +75,29 @@ class SidebarNavigationTest extends TestCase
     {
         $surgery = Intervention::factory()->for($this->patient)->create(['type' => InterventionType::Surgery]);
         $cath = Intervention::factory()->for($this->patient)->create(['type' => InterventionType::DiagnosticCath]);
-        $ablation = Intervention::factory()->for($this->patient)->create(['type' => InterventionType::Ablation]);
+        $other = Intervention::factory()->for($this->patient)->create(['type' => InterventionType::Other]);
         $doctor = User::factory()->create(['role' => UserRole::Doctor]);
 
         Livewire::actingAs($doctor)->test(ListInterventions::class)
-            ->assertCanSeeTableRecords([$surgery, $cath, $ablation])
+            ->assertCanSeeTableRecords([$surgery, $cath, $other])
             ->filterTable('category', ['surgery'])
             ->assertCanSeeTableRecords([$surgery])
-            ->assertCanNotSeeTableRecords([$cath, $ablation])
+            ->assertCanNotSeeTableRecords([$cath, $other])
             ->filterTable('category', ['surgery', 'cath'])
             ->assertCanSeeTableRecords([$surgery, $cath])
-            ->assertCanNotSeeTableRecords([$ablation]);
+            ->assertCanNotSeeTableRecords([$other]);
 
-        // The Surgery and Cath sidebar pages (and Electrophysiology's Invasive EP
-        // link) are scoped lists titled by their category.
+        // The Surgery and Cath sidebar pages are scoped lists titled by their category.
         Livewire::withQueryParams(['category' => 'surgery'])->actingAs($doctor)->test(ListInterventions::class)
             ->assertSee('Surgery')
             ->assertCanSeeTableRecords([$surgery])
-            ->assertCanNotSeeTableRecords([$cath, $ablation]);
+            ->assertCanNotSeeTableRecords([$cath, $other]);
 
         Livewire::withQueryParams(['category' => 'cath'])->actingAs($doctor)->test(ListInterventions::class)
             ->assertCanSeeTableRecords([$cath])
-            ->assertCanNotSeeTableRecords([$surgery, $ablation])
+            ->assertCanNotSeeTableRecords([$surgery, $other])
             ->filterTable('type', [InterventionType::DiagnosticCath->value])
             ->assertCanSeeTableRecords([$cath]);
-
-        Livewire::withQueryParams(['category' => 'ep'])->actingAs($doctor)->test(ListInterventions::class)
-            ->assertCanSeeTableRecords([$ablation])
-            ->assertCanNotSeeTableRecords([$surgery, $cath]);
 
         // Adding from the Surgery page pre-fills the type; Cath has several, so it doesn't guess
         Livewire::withQueryParams(['category' => 'surgery'])->actingAs($doctor)->test(CreateIntervention::class)

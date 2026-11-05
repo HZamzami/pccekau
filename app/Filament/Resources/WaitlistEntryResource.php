@@ -105,9 +105,9 @@ class WaitlistEntryResource extends Resource
             ->form([
                 Select::make('intervention_type')
                     ->label('Exact procedure')
-                    ->options(fn (WaitlistEntry $record) => $record->category?->interventionTypeOptions() ?? [])
-                    ->default(fn (WaitlistEntry $record) => $record->intervention_type?->value)
-                    ->visible(fn (WaitlistEntry $record) => $record->category?->needsInterventionType() ?? false)
+                    ->options(fn (WaitlistEntry $record) => $record->category?->exactProcedureOptions() ?? [])
+                    ->default(fn (WaitlistEntry $record) => $record->intervention_type)
+                    ->visible(fn (WaitlistEntry $record) => $record->category?->needsExactProcedure() ?? false)
                     ->required(),
 
                 DatePicker::make('booking_date')

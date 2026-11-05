@@ -7,7 +7,6 @@ use App\Enums\ProcedureStatus;
 use App\Enums\ReportStatus;
 use App\Filament\Actions\ReportWorkflowActions;
 use App\Filament\Resources\EpStudyResource\Pages;
-use App\Filament\Resources\EpStudyResource\Widgets\InvasiveEpWidget;
 use App\Filament\Tables\Filters\ChipFilter;
 use App\Models\EpStudy;
 use App\Models\Patient;
@@ -18,8 +17,9 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
-use Filament\Navigation\NavigationItem;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkActionGroup;
@@ -28,6 +28,7 @@ use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class EpStudyResource extends Resource
 {
@@ -44,16 +45,6 @@ class EpStudyResource extends Resource
     protected static ?string $modelLabel = 'EP study';
 
     protected static ?string $pluralModelLabel = 'EP studies';
-
-    // Invasive EP lives in Interventions but belongs here in the sidebar
-    public static function getNavigationItems(): array
-    {
-        return array_map(
-            fn (NavigationItem $item) => $item->isActiveWhen(fn () => request()->routeIs(static::getRouteBaseName().'.*')
-                || InterventionResource::currentCategory() === 'ep'),
-            parent::getNavigationItems(),
-        );
-    }
 
     public static function getNavigationBadge(): ?string
     {
@@ -85,8 +76,11 @@ class EpStudyResource extends Resource
 
                         Select::make('type')
                             ->options(EpStudyType::class)
-                            ->required(),
+                            ->required()
+                            ->live(),
                     ]),
+
+                    static::procedureField(),
 
                     Grid::make(3)->schema([
                         DatePicker::make('date'),
@@ -98,7 +92,7 @@ class EpStudyResource extends Resource
                             ->required(),
 
                         Select::make('performed_by_id')
-                            ->label('Performed by')
+                            ->label('Performed by / Operator')
                             ->relationship('performedBy', 'name', fn ($query) => $query->active())
                             ->searchable()
                             ->preload(),
@@ -145,7 +139,11 @@ class EpStudyResource extends Resource
 
                 TextColumn::make('type')
                     ->badge()
-                    ->color('info'),
+                    ->color(fn (EpStudy $record) => $record->type?->isInvasive() ? 'success' : 'info'),
+
+                TextColumn::make('procedure')
+                    ->placeholder('—')
+                    ->toggleable(),
 
                 TextColumn::make('status')
                     ->badge(),
@@ -175,8 +173,9 @@ class EpStudyResource extends Resource
                     ->tooltip(fn (TextColumn $column): ?string => strlen((string) $column->getState()) > 50 ? $column->getState() : null),
             ])
             ->filters([
+                static::kindFilter()->quick(),
+
                 ChipFilter::make('type')
-                    ->quick()
                     ->options(EpStudyType::labels()),
 
                 ChipFilter::make('status')
@@ -213,11 +212,30 @@ class EpStudyResource extends Resource
             ->defaultSort('date', 'desc');
     }
 
-    public static function getWidgets(): array
+    /** Free-text detail for invasive EP, e.g. "AVNRT slow-pathway ablation". Shared with the patient chart. */
+    public static function procedureField(): TextInput
     {
-        return [
-            InvasiveEpWidget::class,
-        ];
+        return TextInput::make('procedure')
+            ->label('Procedure details')
+            ->placeholder('e.g. AVNRT slow-pathway ablation')
+            ->maxLength(255)
+            ->visible(fn (Get $get) => EpStudyType::tryFrom((string) $get('type'))?->isInvasive() ?? false)
+            ->columnSpanFull();
+    }
+
+    /** Invasive / Non-invasive chips. Shared with the patient chart. */
+    public static function kindFilter(): ChipFilter
+    {
+        return ChipFilter::make('kind')
+            ->label('Kind')
+            ->options(['invasive' => 'Invasive', 'non_invasive' => 'Non-invasive'])
+            ->query(fn (Builder $query, array $data) => $query->when(
+                count($data['values'] ?? []) === 1 ? $data['values'][0] : null,
+                fn (Builder $query, string $kind) => $query->whereIn('type', collect(EpStudyType::cases())
+                    ->filter(fn (EpStudyType $type) => $type->isInvasive() === ($kind === 'invasive'))
+                    ->map(fn (EpStudyType $type) => $type->value)
+                    ->all()),
+            ));
     }
 
     public static function getRelations(): array

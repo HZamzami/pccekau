@@ -80,9 +80,9 @@ enum ProcedureCategory: string implements HasColor, HasLabel
     public function group(): ?string
     {
         return match ($this) {
-            self::Surgery, self::Cath, self::Ep => 'interventions',
+            self::Surgery, self::Cath => 'interventions',
             self::Mri, self::Ct, self::Echo, self::Tee, self::Echo3d, self::FetalEcho => 'imaging',
-            self::Ecg, self::Holter, self::StressEcg => 'ep',
+            self::Ep, self::Ecg, self::Holter, self::StressEcg => 'ep',
             self::CaseDiscussion => 'case_discussion',
             self::Other => null,
         };
@@ -128,27 +128,37 @@ enum ProcedureCategory: string implements HasColor, HasLabel
         };
     }
 
-    /** @return array<InterventionType> exact procedures the booking form offers for this category */
-    public function interventionTypes(): array
+    /** @return array<InterventionType|EpStudyType> exact procedures the booking form offers for this category */
+    public function exactProcedures(): array
     {
         return match ($this) {
             self::Surgery => [InterventionType::Surgery],
             self::Cath => [InterventionType::DiagnosticCath, InterventionType::InterventionalCathDevice, InterventionType::InterventionalCathBalloon],
-            self::Ep => [InterventionType::EpStudy, InterventionType::Ablation, InterventionType::TransvenousPacing],
+            self::Ep => EpStudyType::invasive(),
             default => [],
         };
     }
 
     /** @return array<string, string> */
-    public function interventionTypeOptions(): array
+    public function exactProcedureOptions(): array
     {
-        return collect($this->interventionTypes())->mapWithKeys(fn (InterventionType $t) => [$t->value => $t->getLabel()])->all();
+        return collect($this->exactProcedures())->mapWithKeys(fn (InterventionType|EpStudyType $t) => [$t->value => $t->getLabel()])->all();
     }
 
     /** True when the booking must say which exact procedure it is. */
-    public function needsInterventionType(): bool
+    public function needsExactProcedure(): bool
     {
-        return count($this->interventionTypes()) > 1;
+        return count($this->exactProcedures()) > 1;
+    }
+
+    /** A booking's stored exact procedure (its intervention_type column), read as this category's type. */
+    public function exactProcedure(?string $value): InterventionType|EpStudyType|null
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return $this->group() === 'ep' ? EpStudyType::tryFrom($value) : InterventionType::tryFrom($value);
     }
 
     /** Used when a booking doesn't say which exact procedure it is (e.g. older bookings). */
@@ -157,7 +167,6 @@ enum ProcedureCategory: string implements HasColor, HasLabel
         return match ($this) {
             self::Surgery => InterventionType::Surgery,
             self::Cath => InterventionType::CathIntervention,
-            self::Ep => InterventionType::EpProcedure,
             default => null,
         };
     }
@@ -181,6 +190,7 @@ enum ProcedureCategory: string implements HasColor, HasLabel
             self::Ecg => EpStudyType::Ecg,
             self::Holter => EpStudyType::Holter,
             self::StressEcg => EpStudyType::StressEcg,
+            self::Ep => EpStudyType::EpStudy,
             default => null,
         };
     }

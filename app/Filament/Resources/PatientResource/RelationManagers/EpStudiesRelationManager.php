@@ -29,7 +29,7 @@ class EpStudiesRelationManager extends RelationManager
 {
     protected static string $relationship = 'epStudies';
 
-    protected static ?string $title = 'Non-invasive EP';
+    protected static ?string $title = 'Electrophysiology';
 
     public function form(Form $form): Form
     {
@@ -40,7 +40,8 @@ class EpStudiesRelationManager extends RelationManager
                     Grid::make(3)->schema([
                         Select::make('type')
                             ->options(EpStudyType::class)
-                            ->required(),
+                            ->required()
+                            ->live(),
 
                         DatePicker::make('date'),
 
@@ -51,9 +52,11 @@ class EpStudiesRelationManager extends RelationManager
                             ->required(),
                     ]),
 
+                    EpStudyResource::procedureField(),
+
                     Grid::make(2)->schema([
                         Select::make('performed_by_id')
-                            ->label('Performed by')
+                            ->label('Performed by / Operator')
                             ->relationship('performedBy', 'name', fn ($query) => $query->active())
                             ->searchable()
                             ->preload(),
@@ -84,7 +87,10 @@ class EpStudiesRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('type')
                     ->badge()
-                    ->color('info'),
+                    ->color(fn (EpStudy $record) => $record->type?->isInvasive() ? 'success' : 'info'),
+
+                TextColumn::make('procedure')
+                    ->placeholder('—'),
 
                 TextColumn::make('status')
                     ->badge(),
@@ -102,6 +108,8 @@ class EpStudiesRelationManager extends RelationManager
                     ->tooltip(fn (TextColumn $column): ?string => strlen((string) $column->getState()) > 60 ? $column->getState() : null),
             ])
             ->filters([
+                EpStudyResource::kindFilter(),
+
                 ChipFilter::make('type')
                     ->options(EpStudyType::labels()),
 

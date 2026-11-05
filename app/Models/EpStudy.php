@@ -24,6 +24,7 @@ class EpStudy extends Model
     protected $fillable = [
         'patient_id',
         'type',
+        'procedure',
         'status',
         'date',
         'procedure_status',

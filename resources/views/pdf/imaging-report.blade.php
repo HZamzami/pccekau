@@ -35,7 +35,7 @@
         </tr>
         <tr>
             <td class="label">Date of birth</td><td>{{ $patient->date_of_birth?->format('d M Y') ?? '—' }}</td>
-            <td class="label">Age at study</td><td>{{ $patient->date_of_birth ? \App\Models\Patient::computeAgeLabel($patient->date_of_birth, $report->date) : '—' }}</td>
+            <td class="label">Age at study</td><td>{{ $patient->date_of_birth && $report->date ? \App\Models\Patient::computeAgeLabel($patient->date_of_birth, $report->date) : '—' }}</td>
         </tr>
         <tr>
             <td class="label">Gender</td><td>{{ $patient->gender ? ucfirst($patient->gender) : '—' }}</td>
@@ -47,7 +47,7 @@
     <table class="meta">
         <tr>
             <td class="label">Type</td><td>{{ $report->type->getLabel() }}</td>
-            <td class="label">Date</td><td>{{ $report->date->format('d M Y') }}</td>
+            <td class="label">Date</td><td>{{ $report->date?->format('d M Y') ?? '—' }}</td>
         </tr>
         <tr>
             <td class="label">Performed by</td><td>{{ $report->performers->pluck('name')->join(', ') ?: '—' }}</td>

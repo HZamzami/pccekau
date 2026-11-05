@@ -19,7 +19,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
 // The chart shows interventions one category per tab (Surgery, Cath, and
-// Invasive EP inside Electrophysiology); each tab is a subclass of this.
+// Other when there is any); each tab is a subclass of this.
 abstract class InterventionsRelationManager extends RelationManager
 {
     protected static string $relationship = 'interventions';

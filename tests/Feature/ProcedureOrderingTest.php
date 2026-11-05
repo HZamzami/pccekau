@@ -217,20 +217,53 @@ class ProcedureOrderingTest extends TestCase
 
     public function test_electrophysiology_page_lists_invasive_and_non_invasive_ep(): void
     {
-        $holter = \App\Models\EpStudy::create(['patient_id' => $this->patient->id, 'type' => 'holter', 'report' => 'Sinus rhythm', 'procedure_status' => \App\Enums\ProcedureStatus::Requested]);
-        $ablation = \App\Models\Intervention::create(['patient_id' => $this->patient->id, 'type' => \App\Enums\InterventionType::Ablation, 'name' => 'SVT ablation', 'procedure_status' => \App\Enums\ProcedureStatus::Requested]);
-        $surgery = \App\Models\Intervention::create(['patient_id' => $this->patient->id, 'type' => \App\Enums\InterventionType::Surgery, 'name' => 'Glenn', 'procedure_status' => \App\Enums\ProcedureStatus::Requested]);
+        $holter = \App\Models\EpStudy::create(['patient_id' => $this->patient->id, 'type' => EpStudyType::Holter, 'report' => 'Sinus rhythm', 'procedure_status' => ProcedureStatus::Requested]);
+        $ablation = \App\Models\EpStudy::create(['patient_id' => $this->patient->id, 'type' => EpStudyType::Ablation, 'procedure' => 'SVT ablation', 'report' => '', 'procedure_status' => ProcedureStatus::Requested]);
 
         Livewire::actingAs($this->doctor)
             ->test(ListEpStudies::class, ['activeTab' => 'all'])
-            ->assertCanSeeTableRecords([$holter])
-            ->assertSeeLivewire(\App\Filament\Resources\EpStudyResource\Widgets\InvasiveEpWidget::class);
-
-        Livewire::actingAs($this->doctor)
-            ->test(\App\Filament\Resources\EpStudyResource\Widgets\InvasiveEpWidget::class)
+            ->assertCanSeeTableRecords([$holter, $ablation])
+            ->assertSee('SVT ablation')
+            ->filterTable('kind', ['invasive'])
             ->assertCanSeeTableRecords([$ablation])
-            ->assertCanNotSeeTableRecords([$surgery])
-            ->assertTableActionHasUrl('create', \App\Filament\Resources\InterventionResource::getUrl('create', ['category' => 'ep']));
+            ->assertCanNotSeeTableRecords([$holter])
+            ->filterTable('kind', ['non_invasive'])
+            ->assertCanSeeTableRecords([$holter])
+            ->assertCanNotSeeTableRecords([$ablation]);
+
+        $this->assertSame(6, count(EpStudyType::cases()));
+    }
+
+    public function test_an_ep_booking_creates_an_ep_study_with_its_operator(): void
+    {
+        $operator = \App\Models\Staff::factory()->create();
+
+        $this->book([
+            'category' => 'ep',
+            'intervention_type' => EpStudyType::Ablation->value,
+            'slot_type' => 'cath_day_care',
+            'staff_id' => $operator->id,
+            'procedure' => 'AVNRT slow-pathway ablation',
+        ])->assertHasNoFormErrors();
+
+        $study = $this->patient->epStudies()->sole();
+        $this->assertSame(EpStudyType::Ablation, $study->type);
+        $this->assertSame('AVNRT slow-pathway ablation', $study->procedure);
+        $this->assertSame($operator->id, $study->performed_by_id);
+        $this->assertSame(0, $this->patient->interventions()->count());
+        $this->assertSame($study->id, ProcedureBooking::sole()->ep_study_id);
+        $this->assertSame(EpStudyType::Ablation, ProcedureBooking::sole()->exactProcedure());
+    }
+
+    public function test_invasive_ep_recorded_on_the_chart_goes_on_the_calendar(): void
+    {
+        $pacing = \App\Models\EpStudy::create(['patient_id' => $this->patient->id, 'type' => EpStudyType::TransvenousPacing, 'date' => now()->addDay(), 'report' => '', 'procedure_status' => ProcedureStatus::Scheduled]);
+        \App\Models\EpStudy::create(['patient_id' => $this->patient->id, 'type' => EpStudyType::Holter, 'date' => now()->addDay(), 'report' => 'Sinus', 'procedure_status' => ProcedureStatus::Scheduled]);
+
+        $booking = ProcedureBooking::sole();
+        $this->assertSame(ProcedureCategory::Ep, $booking->category);
+        $this->assertSame($pacing->id, $booking->ep_study_id);
+        $this->assertSame(EpStudyType::TransvenousPacing, $booking->exactProcedure());
     }
 
     public function test_waitlist_create_page_is_limited_to_its_group(): void

@@ -11,21 +11,16 @@ enum InterventionType: string implements HasColor, HasLabel
     case DiagnosticCath = 'diagnostic_cath';
     case InterventionalCathDevice = 'interventional_cath_device';
     case InterventionalCathBalloon = 'interventional_cath_balloon';
-    case EpStudy = 'ep_study';
-    case Ablation = 'ablation';
-    case TransvenousPacing = 'transvenous_pacing_implant';
     case Other = 'other';
 
-    // Legacy broad categories kept so existing rows still cast and display;
+    // Legacy broad category kept so existing rows still cast and display;
     // not offered when recording new interventions.
     case CathIntervention = 'cath_intervention';
-    case EpProcedure = 'ep_procedure';
 
     /** Filtered views of the interventions list: category key => page title */
     public const CATEGORIES = [
         'surgery' => 'Surgery',
         'cath' => 'Cath',
-        'ep' => 'Invasive EP',
     ];
 
     public function getLabel(): string
@@ -35,12 +30,8 @@ enum InterventionType: string implements HasColor, HasLabel
             self::DiagnosticCath => 'Diagnostic cath',
             self::InterventionalCathDevice => 'Interventional cath (Device)',
             self::InterventionalCathBalloon => 'Interventional cath (Balloon)',
-            self::EpStudy => 'Electrophysiology study',
-            self::Ablation => 'Ablation',
-            self::TransvenousPacing => 'Transvenous pacing system implant',
             self::Other => 'Other',
             self::CathIntervention => 'Cath intervention',
-            self::EpProcedure => 'EP procedure',
         };
     }
 
@@ -52,10 +43,6 @@ enum InterventionType: string implements HasColor, HasLabel
             self::InterventionalCathDevice,
             self::InterventionalCathBalloon,
             self::CathIntervention => 'warning',
-            self::EpStudy,
-            self::Ablation,
-            self::EpProcedure => 'success',
-            self::TransvenousPacing => 'primary',
             self::Other => 'gray',
         };
     }
@@ -69,10 +56,6 @@ enum InterventionType: string implements HasColor, HasLabel
             self::InterventionalCathDevice,
             self::InterventionalCathBalloon,
             self::CathIntervention => 'cath',
-            self::EpStudy,
-            self::Ablation,
-            self::TransvenousPacing,
-            self::EpProcedure => 'ep',
             self::Other => null,
         };
     }
@@ -85,7 +68,7 @@ enum InterventionType: string implements HasColor, HasLabel
 
     public function isLegacy(): bool
     {
-        return $this === self::CathIntervention || $this === self::EpProcedure;
+        return $this === self::CathIntervention;
     }
 
     /** @return array<string, string> value => label, excluding legacy categories */

@@ -59,7 +59,7 @@ abstract class WeeklyBookingsWidget extends TableWidget
                     ->label('Patient')
                     ->placeholder('Unassigned')
                     ->description(fn (ProcedureBooking $record) => collect([
-                        $record->procedure ?: $record->intervention_type?->getLabel(),
+                        $record->procedure ?: $record->exactProcedure()?->getLabel(),
                         $record->staff?->name,
                     ])->filter()->implode(' · ') ?: null)
                     ->url(fn (ProcedureBooking $record) => $record->patient ? PatientResource::getUrl('view', ['record' => $record->patient_id]) : null),

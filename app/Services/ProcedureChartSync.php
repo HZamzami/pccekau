@@ -132,7 +132,8 @@ class ProcedureChartSync
                 ? ProcedureCategory::fromInterventionCategory($record->type->category())
                 : null,
             ImagingReport::class => null,
-            EpStudy::class => null,
+            // Invasive EP takes a cath lab slot, so it goes on the calendar.
+            EpStudy::class => $record->type?->isInvasive() ? ProcedureCategory::Ep : null,
             MdtDiscussion::class => ProcedureCategory::CaseDiscussion,
             default => null,
         };
@@ -165,6 +166,12 @@ class ProcedureChartSync
                 $booking->procedure = $record->name;
             }
 
+            if ($record instanceof EpStudy) {
+                $booking->intervention_type = $record->type;
+                $booking->staff_id = $record->performed_by_id;
+                $booking->procedure = $record->procedure;
+            }
+
             $booking->save();
 
             $booking->$column = $record->getKey();
@@ -192,11 +199,7 @@ class ProcedureChartSync
                 'date' => $booking->booking_date,
                 'procedure_status' => $booking->procedure_status,
             ]),
-            EpStudy::class => $record->fill([
-                'type' => $booking->category->epStudyType(),
-                'date' => $booking->booking_date,
-                'procedure_status' => $booking->procedure_status,
-            ]),
+            EpStudy::class => self::fillEpStudy($record, $booking),
             MdtDiscussion::class => self::fillMdtDiscussion($record, $booking),
         };
 
@@ -209,9 +212,29 @@ class ProcedureChartSync
         return $record;
     }
 
+    private static function fillEpStudy(EpStudy $record, ProcedureBooking $booking): void
+    {
+        $type = $booking->exactProcedure() ?? $booking->category->epStudyType();
+
+        $record->fill([
+            'type' => $type,
+            'date' => $booking->booking_date,
+            'procedure_status' => $booking->procedure_status,
+        ]);
+
+        // Invasive EP: the booking's consultant is the operator.
+        if ($type->isInvasive()) {
+            $record->performed_by_id = $booking->staff_id;
+
+            if ($booking->procedure) {
+                $record->procedure = $booking->procedure;
+            }
+        }
+    }
+
     private static function fillIntervention(Intervention $record, ProcedureBooking $booking): void
     {
-        $type = $booking->intervention_type ?? $booking->category->fallbackInterventionType();
+        $type = $booking->exactProcedure() ?? $booking->category->fallbackInterventionType();
 
         $record->fill([
             'date' => $booking->booking_date,

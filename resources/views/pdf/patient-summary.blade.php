@@ -65,10 +65,25 @@
             <tr><th>Date</th><th>Type</th><th>Procedure</th><th>Operator</th></tr>
             @foreach ($patient->interventions->sortBy('date') as $intervention)
                 <tr>
-                    <td>{{ $intervention->date->format('d M Y') }}</td>
+                    <td>{{ $intervention->date?->format('d M Y') ?? '—' }}</td>
                     <td>{{ $intervention->type?->getLabel() ?? $intervention->type }}</td>
                     <td>{{ $intervention->name }}</td>
                     <td>{{ $intervention->operator?->name ?? '—' }}</td>
+                </tr>
+            @endforeach
+        </table>
+    @endif
+
+    @if ($patient->epStudies->isNotEmpty())
+        <h2>Electrophysiology</h2>
+        <table class="list">
+            <tr><th>Date</th><th>Type</th><th>Procedure</th><th>Performed by</th></tr>
+            @foreach ($patient->epStudies->sortBy('date') as $study)
+                <tr>
+                    <td>{{ $study->date?->format('d M Y') ?? '—' }}</td>
+                    <td>{{ $study->type?->getLabel() ?? $study->type }}</td>
+                    <td>{{ $study->procedure ?? '—' }}</td>
+                    <td>{{ $study->performedBy?->name ?? '—' }}</td>
                 </tr>
             @endforeach
         </table>
@@ -82,7 +97,7 @@
             <tr><th>Date</th><th>Type</th><th>Status</th><th>Reader</th></tr>
             @foreach ($patient->imagingReports as $report)
                 <tr>
-                    <td>{{ $report->date->format('d M Y') }}</td>
+                    <td>{{ $report->date?->format('d M Y') ?? '—' }}</td>
                     <td>{{ $report->type->getLabel() }}</td>
                     <td>{{ $report->status->getLabel() }}</td>
                     <td>{{ $report->readers->pluck('name')->join(', ') ?: '—' }}</td>
