@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Services\Import\CasesDiscussionImporter;
 use App\Services\Import\CathListImporter;
 use App\Services\Import\HolterReportImporter;
+use App\Support\PatientDocumentsDisk;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
@@ -66,19 +67,27 @@ class ImportPatientData extends Page implements HasActions, HasForms
                     ])
                     ->helperText(fn ($state) => match ($state) {
                         'cases_discussion' => 'Google Forms export: MRN, Name, Age, Gender, Diagnosis, Discussion Date, etc. Creates patients + MDT Discussions.',
-                        'cath_list' => 'Cath/MRI/CT booking list: MRN, Name, Nationality, Date, Procedure, Cost. Creates patients + Interventions.',
+                        'cath_list' => 'Cath/MRI/CT booking list: MRN, Name, Nationality, Date, Procedure, Cost. Creates patients + Interventions (ablations as EP studies).',
                         'holter' => 'MRN, Name, Date of Holter Hookup, Holter Report, Stress ECG Report. Creates patients + EP Studies.',
                         default => 'Choose the kind of spreadsheet you\'re uploading.',
                     })
                     ->required()
                     ->live()
-                    ->afterStateUpdated(fn ($set) => $set('file', null))
+                    ->afterStateUpdated(function ($set) {
+                        $this->discardImportFile();
+                        $set('file', null);
+                    })
                     ->native(false),
 
+                // On the private documents bucket, not the server's own disk:
+                // Analyze and Import are separate requests that can land on
+                // different Laravel Cloud instances, and the sheet holds
+                // patient data, so it's deleted once the import is done.
                 FileUpload::make('file')
                     ->label('Excel file (.xlsx)')
-                    ->disk('local')
+                    ->disk(fn () => PatientDocumentsDisk::name())
                     ->directory('imports')
+                    ->visibility('private')
                     ->acceptedFileTypes([
                         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                         'application/vnd.ms-excel',
@@ -92,10 +101,9 @@ class ImportPatientData extends Page implements HasActions, HasForms
     public function analyze(): void
     {
         $state = $this->form->getState();
-        $path = Storage::disk('local')->path($state['file']);
         $this->sourceLabel = basename($state['file']);
 
-        $rows = $this->importer($state['import_type'])->preview($path);
+        $rows = $this->withLocalCopy($state['file'], fn (string $path) => $this->importer($state['import_type'])->preview($path));
 
         $this->previewRows = $rows->values()->map(fn ($row, int $index) => [
             'index' => $index,
@@ -191,16 +199,16 @@ class ImportPatientData extends Page implements HasActions, HasForms
     protected function confirm(): void
     {
         $state = $this->form->getState();
-        $path = Storage::disk('local')->path($state['file']);
         $importer = $this->importer($state['import_type']);
 
-        $rows = $importer->preview($path)
+        $rows = $this->withLocalCopy($state['file'], fn (string $path) => $importer->preview($path))
             ->filter(fn ($row, int $index) => $row->status !== 'error' && ($this->selected[$index] ?? false))
             ->values();
 
         $this->summary = $importer->commit($rows);
         $this->previewRows = null;
         $this->selected = null;
+        $this->discardImportFile();
 
         Notification::make()
             ->title('Import complete')
@@ -232,6 +240,7 @@ class ImportPatientData extends Page implements HasActions, HasForms
 
     public function startOver(): void
     {
+        $this->discardImportFile();
         $this->previewRows = null;
         $this->selected = null;
         $this->summary = null;
@@ -241,12 +250,45 @@ class ImportPatientData extends Page implements HasActions, HasForms
         $this->form->fill();
     }
 
+    /**
+     * The spreadsheet reader needs a file on this server, so the upload is
+     * copied down from the bucket for the duration of the read.
+     *
+     * @template T
+     *
+     * @param  callable(string): T  $read
+     * @return T
+     */
+    protected function withLocalCopy(string $file, callable $read): mixed
+    {
+        $base = tempnam(sys_get_temp_dir(), 'import');
+        $path = $base.'.'.pathinfo($file, PATHINFO_EXTENSION);
+        file_put_contents($path, Storage::disk(PatientDocumentsDisk::name())->get($file));
+
+        try {
+            return $read($path);
+        } finally {
+            @unlink($path);
+            @unlink($base);
+        }
+    }
+
+    protected function discardImportFile(): void
+    {
+        $file = $this->data['file'] ?? null;
+        $file = is_array($file) ? reset($file) : $file;
+
+        if (is_string($file) && $file !== '') {
+            Storage::disk(PatientDocumentsDisk::name())->delete($file);
+        }
+    }
+
     protected function importer(string $type): CasesDiscussionImporter|CathListImporter|HolterReportImporter
     {
         return match ($type) {
-            'cases_discussion' => new CasesDiscussionImporter(),
-            'cath_list' => new CathListImporter(),
-            'holter' => new HolterReportImporter(),
+            'cases_discussion' => new CasesDiscussionImporter,
+            'cath_list' => new CathListImporter,
+            'holter' => new HolterReportImporter,
         };
     }
 }

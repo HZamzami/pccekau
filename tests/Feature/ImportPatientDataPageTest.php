@@ -4,11 +4,12 @@ namespace Tests\Feature;
 
 use App\Enums\UserRole;
 use App\Filament\Pages\ImportPatientData;
-use App\Models\EpStudy;
 use App\Models\Patient;
 use App\Models\User;
+use App\Support\PatientDocumentsDisk;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -18,18 +19,29 @@ class ImportPatientDataPageTest extends TestCase
 {
     use RefreshDatabase;
 
+    private string $disk;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Uploads live on the documents disk; a fake one keeps test files out of storage/.
+        $this->disk = PatientDocumentsDisk::name();
+        Storage::fake($this->disk);
+    }
+
     /**
      * Filament's FileUpload component is awkward to drive through Livewire's
      * upload-simulation testing helpers (it expects a live JS upload
      * lifecycle this doesn't go through). Instead, write the file straight
-     * onto the 'local' disk at the path the component would have stored it
+     * onto the documents disk at the path the component would have stored it
      * at, and set the form field to that already-stored relative path —
      * exactly the state analyze()/confirm() see once a real upload finishes.
      */
     /** @return array<string, string> Filament's FileUpload stores state as {uuid: path}, even for a single file. */
     private function fakeStoredHolterUpload(): array
     {
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->fromArray([
             ['MRN', null, 'Date of Holter Hookup', 'Holter Report', 'Stress ECG Report'],
@@ -41,9 +53,10 @@ class ImportPatientDataPageTest extends TestCase
         (new Xlsx($spreadsheet))->save($tempPath);
 
         $relativePath = 'imports/'.uniqid('test-holter-').'.xlsx';
-        Storage::disk('local')->put($relativePath, file_get_contents($tempPath));
+        Storage::disk($this->disk)->put($relativePath, file_get_contents($tempPath));
+        unlink($tempPath);
 
-        return [(string) \Illuminate\Support\Str::uuid() => $relativePath];
+        return [(string) Str::uuid() => $relativePath];
     }
 
     public function test_analyzing_a_file_builds_a_rich_preview(): void
@@ -98,12 +111,17 @@ class ImportPatientDataPageTest extends TestCase
     {
         $doctor = User::factory()->create(['role' => UserRole::Doctor]);
 
+        $upload = $this->fakeStoredHolterUpload();
+
         Livewire::actingAs($doctor)
             ->test(ImportPatientData::class)
             ->set('data.import_type', 'holter')
-            ->set('data.file', $this->fakeStoredHolterUpload())
+            ->set('data.file', $upload)
             ->call('analyze')
             ->callAction('import');
+
+        // The sheet holds patient data; it doesn't outlive the import.
+        Storage::disk($this->disk)->assertMissing(reset($upload));
 
         $this->assertDatabaseCount('patients', 2);
         $this->assertDatabaseCount('ep_studies', 3); // patient two has both a Holter and a Stress ECG record
@@ -112,5 +130,19 @@ class ImportPatientDataPageTest extends TestCase
         $this->assertNotNull($patient);
         $this->assertTrue($patient->epStudies()->where('type', 'holter')->exists());
         $this->assertTrue($patient->epStudies()->where('type', 'stress_ecg')->exists());
+    }
+
+    public function test_starting_over_deletes_the_uploaded_file(): void
+    {
+        $upload = $this->fakeStoredHolterUpload();
+
+        Livewire::actingAs(User::factory()->create(['role' => UserRole::Doctor]))
+            ->test(ImportPatientData::class)
+            ->set('data.import_type', 'holter')
+            ->set('data.file', $upload)
+            ->call('analyze')
+            ->call('startOver');
+
+        Storage::disk($this->disk)->assertMissing(reset($upload));
     }
 }
