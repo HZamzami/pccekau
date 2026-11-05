@@ -43,8 +43,14 @@ class CasesDiscussionImporter
             return ImportRowResult::error($raw, 'Missing MRN');
         }
 
-        if ($this->blank($diagnosis) || $this->blank($reason) || ! $discussionDate) {
-            return ImportRowResult::error($raw, 'Missing required field (diagnosis, reason for discussion, or a parseable discussion date)');
+        $missing = array_keys(array_filter([
+            'diagnosis' => $this->blank($diagnosis),
+            'reason for discussion' => $this->blank($reason),
+            $this->blank($this->cell($row, $header, 'Discussion Date')) ? 'discussion date' : 'a readable discussion date' => ! $discussionDate,
+        ]));
+
+        if ($missing) {
+            return ImportRowResult::error($raw, 'Missing '.implode(', ', $missing));
         }
 
         [$patient, $isNew] = $this->findOrNewPatient($mrn);

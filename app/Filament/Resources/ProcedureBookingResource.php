@@ -160,6 +160,10 @@ class ProcedureBookingResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            // Case discussions live on their own page, not the booking list.
+            ->modifyQueryUsing(fn (Builder $query) => $query->where(fn (Builder $q) => $q
+                ->whereNull('category')
+                ->orWhere('category', '!=', ProcedureCategory::CaseDiscussion->value)))
             ->columns([
                 TextColumn::make('booking_date')
                     ->label('Date')
@@ -200,7 +204,7 @@ class ProcedureBookingResource extends Resource
             ->filters([
                 ChipFilter::make('category')
                     ->quick()
-                    ->options(ProcedureCategory::options()),
+                    ->options(array_diff_key(ProcedureCategory::options(), [ProcedureCategory::CaseDiscussion->value => true])),
 
                 // Scheduled and Postponed first: those are what the list is mostly worked from.
                 ChipFilter::make('procedure_status')
@@ -236,7 +240,7 @@ class ProcedureBookingResource extends Resource
             ])
             ->defaultSort('booking_date', 'desc')
             ->emptyStateHeading('No procedure bookings yet')
-            ->emptyStateDescription('Order any procedure here: cath, surgery, imaging, EP tests or case discussions. Schedule it now or add it to the wait-list.');
+            ->emptyStateDescription('Order any procedure here: cath, surgery, imaging or EP tests. Schedule it now or add it to the wait-list.');
     }
 
     public static function returnToWaitlistAction(): Action

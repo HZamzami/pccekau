@@ -120,7 +120,7 @@ class ChipFiltersAndDashboardTest extends TestCase
             ->assertOk()
             ->assertSee(['pc-quick', 'pc-pill', '.pc-chip:has(input:checked)'], false)
             // Category is pinned as chips, main six first; the rest are pills.
-            ->assertSeeTextInOrder(['Surgery', 'Cath', 'EP (invasive)', 'MRI', 'CT', '3D Echo', '+8 more', 'Status', 'Slot', 'Consultant', 'Date']);
+            ->assertSeeTextInOrder(['Surgery', 'Cath', 'EP (invasive)', 'MRI', 'CT', '3D Echo', '+7 more', 'Status', 'Slot', 'Consultant', 'Date']);
     }
 
     public function test_a_set_pill_shows_its_value(): void

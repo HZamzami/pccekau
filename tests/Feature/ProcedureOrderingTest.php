@@ -20,6 +20,7 @@ use App\Filament\Resources\PatientResource\Pages\ViewPatient;
 use App\Filament\Resources\PatientResource\RelationManagers\WaitlistEntriesRelationManager;
 use App\Filament\Resources\ProcedureBookingResource;
 use App\Filament\Resources\ProcedureBookingResource\Pages\CreateProcedureBooking;
+use App\Filament\Resources\ProcedureBookingResource\Pages\ListProcedureBookings;
 use App\Filament\Resources\StaffResource;
 use App\Filament\Resources\WaitlistEntryResource;
 use App\Filament\Resources\WaitlistEntryResource\Pages\CreateWaitlistEntry;
@@ -145,6 +146,19 @@ class ProcedureOrderingTest extends TestCase
         $this->assertSame(WaitlistStatus::Scheduled, $entry->fresh()->status);
         $this->assertNull(ProcedureBooking::sole()->slot_type);
         $this->assertSame('Surgical options', $this->patient->mdtDiscussions()->sole()->reason_for_discussion);
+    }
+
+    public function test_booking_list_leaves_out_case_discussions(): void
+    {
+        $date = now()->addWeek()->toDateString();
+        $cath = ProcedureBooking::create(['patient_id' => $this->patient->id, 'booking_date' => $date, 'procedure_status' => ProcedureStatus::Scheduled, 'category' => ProcedureCategory::Cath]);
+        $uncategorised = ProcedureBooking::create(['patient_id' => $this->patient->id, 'booking_date' => $date, 'procedure_status' => ProcedureStatus::Scheduled]);
+        $discussion = ProcedureBooking::create(['patient_id' => $this->patient->id, 'booking_date' => $date, 'procedure_status' => ProcedureStatus::Scheduled, 'category' => ProcedureCategory::CaseDiscussion]);
+
+        Livewire::actingAs($this->doctor)
+            ->test(ListProcedureBookings::class)
+            ->assertCanSeeTableRecords([$cath, $uncategorised])
+            ->assertCanNotSeeTableRecords([$discussion]);
     }
 
     public function test_patient_page_waitlist_tab_lists_and_schedules(): void
