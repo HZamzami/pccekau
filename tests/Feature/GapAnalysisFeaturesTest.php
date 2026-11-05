@@ -26,7 +26,7 @@ class GapAnalysisFeaturesTest extends TestCase
     public function test_procedure_booking_pages_load(): void
     {
         $doctor = User::factory()->create(['role' => UserRole::Doctor]);
-        $patient = Patient::factory()->create();
+        $patient = Patient::factory()->create(['name' => 'Calendar Test Child']);
 
         $this->actingAs($doctor)
             ->get(ProcedureBookingResource::getUrl())
@@ -62,7 +62,7 @@ class GapAnalysisFeaturesTest extends TestCase
     public function test_waitlist_pages_load_and_schedule_action_creates_a_booking(): void
     {
         $doctor = User::factory()->create(['role' => UserRole::Doctor]);
-        $patient = Patient::factory()->create();
+        $patient = Patient::factory()->create(['name' => 'Waitlist Test Child']);
         $staff = Staff::factory()->create();
 
         $entry = WaitlistEntry::create([

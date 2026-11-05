@@ -116,7 +116,9 @@ class ViewPatientPageTest extends TestCase
     public function test_create_pages_prefill_the_patient_from_the_query_string(): void
     {
         $doctor = User::factory()->create(['role' => UserRole::Doctor]);
-        $patient = Patient::factory()->create();
+        // A fixed name: a random one with an apostrophe (O'Keefe) is encoded
+        // differently in the select's markup and failed the check now and then.
+        $patient = Patient::factory()->create(['name' => 'Prefill Test Child']);
 
         $this->actingAs($doctor)
             ->get(\App\Filament\Resources\ClinicVisitResource::getUrl('create', ['patient_id' => $patient->id]))
