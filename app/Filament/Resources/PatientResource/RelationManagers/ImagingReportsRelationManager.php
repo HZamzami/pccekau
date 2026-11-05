@@ -39,7 +39,7 @@ class ImagingReportsRelationManager extends RelationManager
                 ->schema([
                     Grid::make(3)->schema([
                         Select::make('type')
-                            ->options(ImagingType::selectableLabels())
+                            ->options(ImagingType::class)
                             ->required(),
 
                         DatePicker::make('date'),

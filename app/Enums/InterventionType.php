@@ -13,10 +13,6 @@ enum InterventionType: string implements HasColor, HasLabel
     case InterventionalCathBalloon = 'interventional_cath_balloon';
     case Other = 'other';
 
-    // Legacy broad category kept so existing rows still cast and display;
-    // not offered when recording new interventions.
-    case CathIntervention = 'cath_intervention';
-
     /** Filtered views of the interventions list: category key => page title */
     public const CATEGORIES = [
         'surgery' => 'Surgery',
@@ -31,7 +27,6 @@ enum InterventionType: string implements HasColor, HasLabel
             self::InterventionalCathDevice => 'Interventional cath (Device)',
             self::InterventionalCathBalloon => 'Interventional cath (Balloon)',
             self::Other => 'Other',
-            self::CathIntervention => 'Cath intervention',
         };
     }
 
@@ -41,8 +36,7 @@ enum InterventionType: string implements HasColor, HasLabel
             self::Surgery => 'danger',
             self::DiagnosticCath => 'info',
             self::InterventionalCathDevice,
-            self::InterventionalCathBalloon,
-            self::CathIntervention => 'warning',
+            self::InterventionalCathBalloon => 'warning',
             self::Other => 'gray',
         };
     }
@@ -54,8 +48,7 @@ enum InterventionType: string implements HasColor, HasLabel
             self::Surgery => 'surgery',
             self::DiagnosticCath,
             self::InterventionalCathDevice,
-            self::InterventionalCathBalloon,
-            self::CathIntervention => 'cath',
+            self::InterventionalCathBalloon => 'cath',
             self::Other => null,
         };
     }
@@ -64,19 +57,5 @@ enum InterventionType: string implements HasColor, HasLabel
     public static function ofCategory(string $category): array
     {
         return array_values(array_filter(self::cases(), fn (self $type) => $type->category() === $category));
-    }
-
-    public function isLegacy(): bool
-    {
-        return $this === self::CathIntervention;
-    }
-
-    /** @return array<string, string> value => label, excluding legacy categories */
-    public static function selectableLabels(): array
-    {
-        return collect(self::cases())
-            ->reject(fn (self $type) => $type->isLegacy())
-            ->mapWithKeys(fn (self $type) => [$type->value => $type->getLabel()])
-            ->all();
     }
 }

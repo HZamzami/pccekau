@@ -166,7 +166,7 @@ enum ProcedureCategory: string implements HasColor, HasLabel
     {
         return match ($this) {
             self::Surgery => InterventionType::Surgery,
-            self::Cath => InterventionType::CathIntervention,
+            self::Cath => InterventionType::DiagnosticCath,
             default => null,
         };
     }
@@ -200,9 +200,8 @@ enum ProcedureCategory: string implements HasColor, HasLabel
     {
         return match ($category) {
             'surgery' => self::Surgery,
-            'cath'    => self::Cath,
-            'ep'      => self::Ep,
-            default   => null,
+            'cath' => self::Cath,
+            default => null,
         };
     }
 }

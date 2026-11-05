@@ -24,7 +24,6 @@ use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -103,10 +102,10 @@ class InterventionResource extends Resource
                     ->required(),
 
                 Select::make('type')
-                    ->options(InterventionType::selectableLabels())
+                    ->options(InterventionType::class)
                     // Opened from Surgery, the type is already known
                     ->default(function () {
-                        $types = array_filter(InterventionType::ofCategory((string) request()->query('category')), fn (InterventionType $type) => ! $type->isLegacy());
+                        $types = InterventionType::ofCategory((string) request()->query('category'));
 
                         return count($types) === 1 ? reset($types)->value : null;
                     })

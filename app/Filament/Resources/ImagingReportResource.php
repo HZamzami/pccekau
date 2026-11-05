@@ -67,7 +67,7 @@ class ImagingReportResource extends Resource
                             ->getOptionLabelFromRecordUsing(fn (Patient $record) => "{$record->mrn} — {$record->name}"),
 
                         Select::make('type')
-                            ->options(ImagingType::selectableLabels())
+                            ->options(ImagingType::class)
                             // Opened from Fetal Echo, MRI or CT, the type is already known
                             ->default(function () {
                                 $types = ImagingType::ofModality((string) request()->query('modality'));

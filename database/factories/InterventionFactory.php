@@ -17,7 +17,7 @@ class InterventionFactory extends Factory
         return [
             'patient_id' => Patient::factory(),
             'date' => fake()->dateTimeBetween('-5 years'),
-            'type' => fake()->randomElement(array_keys(InterventionType::selectableLabels())),
+            'type' => fake()->randomElement(InterventionType::cases()),
             'name' => fake()->randomElement(['BT shunt', 'Glenn', 'Fontan', 'VSD closure', 'ASD device closure', 'PDA ligation', 'Coarctation repair', 'Balloon valvuloplasty']),
         ];
     }
