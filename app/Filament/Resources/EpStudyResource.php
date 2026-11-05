@@ -7,6 +7,7 @@ use App\Enums\ProcedureStatus;
 use App\Enums\ReportStatus;
 use App\Filament\Actions\ReportWorkflowActions;
 use App\Filament\Resources\EpStudyResource\Pages;
+use App\Filament\Resources\EpStudyResource\Widgets\InvasiveEpWidget;
 use App\Filament\Tables\Filters\ChipFilter;
 use App\Models\EpStudy;
 use App\Models\Patient;
@@ -210,6 +211,13 @@ class EpStudyResource extends Resource
                 ]),
             ])
             ->defaultSort('date', 'desc');
+    }
+
+    public static function getWidgets(): array
+    {
+        return [
+            InvasiveEpWidget::class,
+        ];
     }
 
     public static function getRelations(): array

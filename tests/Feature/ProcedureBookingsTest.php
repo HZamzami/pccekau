@@ -11,7 +11,8 @@ use App\Enums\WaitlistStatus;
 use App\Filament\Pages\ProcedureCalendarPage;
 use App\Filament\Resources\PatientResource;
 use App\Filament\Resources\PatientResource\Pages\ViewPatient;
-use App\Filament\Resources\PatientResource\RelationManagers\InterventionsRelationManager;
+use App\Filament\Resources\PatientResource\RelationManagers\CathsRelationManager;
+use Filament\Resources\RelationManagers\RelationGroup;
 use App\Filament\Resources\ProcedureBookingResource\Pages\CreateProcedureBooking;
 use App\Filament\Resources\WaitlistEntryResource\Pages\ListWaitlistEntries;
 use App\Models\Patient;
@@ -42,7 +43,7 @@ class ProcedureBookingsTest extends TestCase
         ]);
     }
 
-    public function test_a_cath_booking_lands_on_the_interventions_tab_not_its_own_tab(): void
+    public function test_a_cath_booking_lands_on_the_cath_tab_not_its_own_tab(): void
     {
         $doctor = User::factory()->create(['role' => UserRole::Doctor]);
         $patient = Patient::factory()->create();
@@ -73,10 +74,10 @@ class ProcedureBookingsTest extends TestCase
         $this->assertSame(0, $patient->imagingReports()->count());
 
         Livewire::actingAs($doctor)
-            ->test(InterventionsRelationManager::class, ['ownerRecord' => $patient, 'pageClass' => ViewPatient::class])
+            ->test(CathsRelationManager::class, ['ownerRecord' => $patient, 'pageClass' => ViewPatient::class])
             ->assertCanSeeTableRecords([$intervention]);
 
-        $tabs = array_map(fn ($manager) => $manager::getTitle($patient, ViewPatient::class), PatientResource::getRelations());
+        $tabs = array_map(fn ($manager) => $manager instanceof RelationGroup ? $manager->getLabel() : $manager::getTitle($patient, ViewPatient::class), PatientResource::getRelations());
         $this->assertNotContains('Procedure Bookings', $tabs);
         $this->assertContains('Wait-list', $tabs);
     }

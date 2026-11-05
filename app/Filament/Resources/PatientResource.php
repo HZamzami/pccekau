@@ -7,12 +7,15 @@ use App\Enums\PatientStatus;
 use App\Filament\Resources\PatientResource\Pages;
 use App\Filament\Resources\PatientResource\RelationManagers\AdmissionsRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\ApprovalRequestsRelationManager;
+use App\Filament\Resources\PatientResource\RelationManagers\CathsRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\ClinicVisitsRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\DocumentsRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\EpStudiesRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\ImagingReportsRelationManager;
-use App\Filament\Resources\PatientResource\RelationManagers\InterventionsRelationManager;
+use App\Filament\Resources\PatientResource\RelationManagers\InvasiveEpRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\MdtDiscussionsRelationManager;
+use App\Filament\Resources\PatientResource\RelationManagers\OtherProceduresRelationManager;
+use App\Filament\Resources\PatientResource\RelationManagers\SurgeriesRelationManager;
 use App\Filament\Resources\PatientResource\RelationManagers\WaitlistEntriesRelationManager;
 use App\Filament\Tables\Filters\ChipFilter;
 use App\Models\Patient;
@@ -28,6 +31,7 @@ use Filament\Infolists\Components\Grid as InfolistGrid;
 use Filament\Infolists\Components\Section as InfolistSection;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Infolist;
+use Filament\Resources\RelationManagers\RelationGroup;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
@@ -362,8 +366,15 @@ class PatientResource extends Resource
     {
         return [
             ImagingReportsRelationManager::class,
-            EpStudiesRelationManager::class,
-            InterventionsRelationManager::class,
+            // Non-invasive studies and invasive EP procedures are stored apart
+            // but read as one tab, stacked.
+            RelationGroup::make('Electrophysiology', [
+                EpStudiesRelationManager::class,
+                InvasiveEpRelationManager::class,
+            ]),
+            SurgeriesRelationManager::class,
+            CathsRelationManager::class,
+            OtherProceduresRelationManager::class,
             WaitlistEntriesRelationManager::class,
             ClinicVisitsRelationManager::class,
             AdmissionsRelationManager::class,

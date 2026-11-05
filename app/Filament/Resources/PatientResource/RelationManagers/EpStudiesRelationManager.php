@@ -29,7 +29,7 @@ class EpStudiesRelationManager extends RelationManager
 {
     protected static string $relationship = 'epStudies';
 
-    protected static ?string $title = 'Electrophysiology';
+    protected static ?string $title = 'Non-invasive EP';
 
     public function form(Form $form): Form
     {

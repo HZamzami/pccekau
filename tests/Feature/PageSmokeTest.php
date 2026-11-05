@@ -8,6 +8,8 @@ use App\Enums\ProcedureStatus;
 use App\Enums\UserRole;
 use App\Filament\Pages\ProcedureCalendarPage;
 use App\Filament\Pages\SchedulesPage;
+use App\Filament\Resources\PatientResource;
+use App\Filament\Resources\PatientResource\Pages\ViewPatient;
 use App\Models\Admission;
 use App\Models\ApprovalRequest;
 use App\Models\ClinicVisit;
@@ -28,6 +30,7 @@ use Carbon\Carbon;
 use Filament\Facades\Filament;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Resources\RelationManagers\RelationGroup;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -162,6 +165,79 @@ class PageSmokeTest extends TestCase
             }
         }
 
+        $this->assertSame([], $failures);
+    }
+
+    // Dashboard widgets and chart tabs load in their own Livewire requests
+    // after the page, so the GETs above never render them.
+    #[DataProvider('roles')]
+    public function test_every_widget_and_patient_tab_renders_for_every_role(UserRole $role): void
+    {
+        $user = User::factory()->create(['role' => $role]);
+        $this->actingAs($user);
+        $patient = $this->records[Patient::class];
+        $failures = [];
+
+        $widgets = [
+            ...Filament::getPanel('admin')->getWidgets(),
+            ...collect(Filament::getPanel('admin')->getResources())->flatMap(fn ($resource) => $resource::getWidgets())->all(),
+        ];
+
+        foreach ($widgets as $widget) {
+            if (! $widget::canView()) {
+                continue;
+            }
+
+            try {
+                Livewire::test($widget)->assertSuccessful();
+            } catch (\Throwable $e) {
+                $failures[] = class_basename($widget).': '.$e->getMessage();
+            }
+        }
+
+        $managers = collect(PatientResource::getRelations())
+            ->flatMap(fn ($manager) => $manager instanceof RelationGroup ? $manager->ownerRecord($patient)->pageClass(ViewPatient::class)->getManagers() : [$manager]);
+
+        foreach ($managers as $manager) {
+            if (! $manager::canViewForRecord($patient, ViewPatient::class)) {
+                continue;
+            }
+
+            try {
+                Livewire::test($manager, ['ownerRecord' => $patient, 'pageClass' => ViewPatient::class])->assertSuccessful();
+            } catch (\Throwable $e) {
+                $failures[] = class_basename($manager).': '.$e->getMessage();
+            }
+        }
+
+        $this->assertSame([], $failures);
+    }
+
+    // Reported: dashboard -> any page -> dashboard gave a 500.
+    public function test_dashboard_after_visiting_each_page_still_loads(): void
+    {
+        $this->actingAs(User::factory()->create(['role' => UserRole::Admin]));
+        $panel = Filament::getPanel('admin');
+        $dashboard = $panel->getUrl();
+        $failures = [];
+
+        $urls = collect($panel->getNavigation())
+            ->flatMap(fn ($group) => $group->getItems())
+            ->map(fn ($item) => $item->getUrl())
+            ->filter()
+            ->unique();
+
+        foreach ($urls as $url) {
+            foreach ([$dashboard, $url, $dashboard] as $step) {
+                $status = $this->get($step)->status();
+
+                if ($status >= 500) {
+                    $failures[] = "{$status} {$step} (via {$url})";
+                }
+            }
+        }
+
+        $this->assertNotEmpty($urls);
         $this->assertSame([], $failures);
     }
 

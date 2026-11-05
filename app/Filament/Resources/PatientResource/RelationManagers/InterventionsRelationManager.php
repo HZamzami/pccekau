@@ -16,12 +16,22 @@ use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
-class InterventionsRelationManager extends RelationManager
+// The chart shows interventions one category per tab (Surgery, Cath, and
+// Invasive EP inside Electrophysiology); each tab is a subclass of this.
+abstract class InterventionsRelationManager extends RelationManager
 {
     protected static string $relationship = 'interventions';
 
-    protected static ?string $title = 'Interventions';
+    /** Key into InterventionType::CATEGORIES; null lists the uncategorised "Other" procedures. */
+    protected static ?string $category = null;
+
+    /** @return array<InterventionType> */
+    protected static function types(): array
+    {
+        return static::$category ? InterventionType::ofCategory(static::$category) : [InterventionType::Other];
+    }
 
     public function form(Form $form): Form
     {
@@ -33,6 +43,7 @@ class InterventionsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query) => $query->whereIn('type', static::types()))
             ->recordTitleAttribute('name')
             ->columns([
                 TextColumn::make('date')
@@ -56,10 +67,11 @@ class InterventionsRelationManager extends RelationManager
             ])
             ->filters([
                 ChipFilter::make('type')
-                    ->options(InterventionType::class),
+                    ->options(collect(static::types())->mapWithKeys(fn (InterventionType $type) => [$type->value => $type->getLabel()])->all())
+                    ->hidden(count(static::types()) < 2),
             ])
             ->headerActions([
-                CreateAction::make()->url(fn () => InterventionResource::getUrl('create', ['patient_id' => $this->getOwnerRecord()->getKey()]))->openUrlInNewTab(),
+                CreateAction::make()->url(fn () => InterventionResource::getUrl('create', array_filter(['patient_id' => $this->getOwnerRecord()->getKey(), 'category' => static::$category])))->openUrlInNewTab(),
             ])
             ->actions([
                 ViewAction::make(),

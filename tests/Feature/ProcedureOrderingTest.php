@@ -215,6 +215,24 @@ class ProcedureOrderingTest extends TestCase
             ->assertDontSee('Holter');
     }
 
+    public function test_electrophysiology_page_lists_invasive_and_non_invasive_ep(): void
+    {
+        $holter = \App\Models\EpStudy::create(['patient_id' => $this->patient->id, 'type' => 'holter', 'report' => 'Sinus rhythm', 'procedure_status' => \App\Enums\ProcedureStatus::Requested]);
+        $ablation = \App\Models\Intervention::create(['patient_id' => $this->patient->id, 'type' => \App\Enums\InterventionType::Ablation, 'name' => 'SVT ablation', 'procedure_status' => \App\Enums\ProcedureStatus::Requested]);
+        $surgery = \App\Models\Intervention::create(['patient_id' => $this->patient->id, 'type' => \App\Enums\InterventionType::Surgery, 'name' => 'Glenn', 'procedure_status' => \App\Enums\ProcedureStatus::Requested]);
+
+        Livewire::actingAs($this->doctor)
+            ->test(ListEpStudies::class, ['activeTab' => 'all'])
+            ->assertCanSeeTableRecords([$holter])
+            ->assertSeeLivewire(\App\Filament\Resources\EpStudyResource\Widgets\InvasiveEpWidget::class);
+
+        Livewire::actingAs($this->doctor)
+            ->test(\App\Filament\Resources\EpStudyResource\Widgets\InvasiveEpWidget::class)
+            ->assertCanSeeTableRecords([$ablation])
+            ->assertCanNotSeeTableRecords([$surgery])
+            ->assertTableActionHasUrl('create', \App\Filament\Resources\InterventionResource::getUrl('create', ['category' => 'ep']));
+    }
+
     public function test_waitlist_create_page_is_limited_to_its_group(): void
     {
         Livewire::actingAs($this->doctor)
