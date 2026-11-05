@@ -1,12 +1,16 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "hzamzami/pccekau",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
-    "license": "MIT",
+    "description": "Clinical workspace for a paediatric cardiology centre.",
+    "keywords": [
+        "laravel",
+        "filament",
+        "cardiology"
+    ],
+    "license": "proprietary",
     "require": {
-        "php": "^8.3",
+        "php": "^8.4",
         "barryvdh/laravel-dompdf": "^3.1",
         "fakerphp/faker": "^1.24",
         "filament/filament": "^3.2",
